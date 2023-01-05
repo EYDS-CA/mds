@@ -141,11 +141,11 @@ class MinePartyApptResource(Resource, UserMixin):
 
         permit = None
         tsf = None
-        if mine_party_appt_type_code in PERMIT_LINKED_CONTACT_TYPES:
-            permit = Permit.find_by_permit_guid(related_guid)
-            if permit is None:
-                raise NotFound('Permit not found')
-        elif mine_party_appt_type_code in TSF_ALLOWED_CONTACT_TYPES:
+
+        permit = Permit.find_by_permit_guid(related_guid)
+        if permit is None and mine_party_appt_type_code in PERMIT_LINKED_CONTACT_TYPES::
+            raise NotFound('Permit not found')
+        if mine_party_appt_type_code in TSF_ALLOWED_CONTACT_TYPES:
             tsf = MineTailingsStorageFacility.find_by_tsf_guid(related_guid)
             if tsf is None:
                 raise NotFound('TSF not found')
@@ -206,15 +206,17 @@ class MinePartyApptResource(Resource, UserMixin):
 
         if Config.ENVIRONMENT_NAME != 'prod':
             # TODO: Remove this once TSF functionality is ready to go live
+            current_app.logger.info(permit)
+            extra_data = {'permit': {'permit_no': permit.permit_no}}
             if mine_party_appt_type_code == "EOR":
 
-                trigger_notification(f'A new Engineer of Record for {mine.mine_name} has been assigned and requires Ministry Acknowledgement to allow for the mine\'s compliance.', ActivityType.eor_created, mine, "EngineerOfRecord", tsf.mine_tailings_storage_facility_guid)
+                trigger_notification(f'A new Engineer of Record for {mine.mine_name} has been assigned and requires Ministry Acknowledgement to allow for the mine\'s compliance.', ActivityType.eor_created, mine, "EngineerOfRecord", tsf.mine_tailings_storage_facility_guid, extra_data)
 
                 if is_minespace_user():
                     new_mpa.send_party_assigned_email()
                     
             if mine_party_appt_type_code == "TQP":
-                trigger_notification(f'A new Qualified Person for {mine.mine_name} has been assigned.', ActivityType.qfp_created, mine, "QualifiedPerson", tsf.mine_tailings_storage_facility_guid)
+                trigger_notification(f'A new Qualified Person for {mine.mine_name} has been assigned.', ActivityType.qfp_created, mine, "QualifiedPerson", tsf.mine_tailings_storage_facility_guid, extra_data)
 
         return new_mpa.json()
 
