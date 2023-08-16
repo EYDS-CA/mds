@@ -23,13 +23,11 @@ class Validator {
 
   NUMBERS_OR_EMPTY_STRING_REGEX = /^-?\d*\.?\d*$/;
 
-  URL_REGEX =
-    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
+  URL_REGEX = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
 
   LAT_REGEX = /^(\+|-)?(?:90(?:(?:\.0{1,7})?)|(?:[0-9]|[1-8][0-9])(?:(?:\.[0-9]{1,7})?))$/;
 
-  LON_REGEX =
-    /^(\+|-)?(?:180(?:(?:\.0{1,7})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,7})?))$/;
+  LON_REGEX = /^(\+|-)?(?:180(?:(?:\.0{1,7})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,7})?))$/;
 
   CURRENCY_REGEX = /^-?\d{1,12}(?:\.\d{0,2})?$/;
 
@@ -94,20 +92,31 @@ export const requiredList = (value) =>
 
 export const notnone = (value) => (value === "None" ? "Please select an item" : undefined);
 
-export const maxLength = memoize(
-  (max) => (value) => value && value.length > max ? `Must be ${max} characters or less` : undefined
+export const maxLength = memoize((max) => (value) =>
+  value && value.length > max ? `Must be ${max} characters or less` : undefined
 );
 
-export const minLength = memoize(
-  (min) => (value) => value && value.length < min ? `Must be ${min} characters or more` : undefined
+export const minLength = memoize((min) => (value) =>
+  value && value.length < min ? `Must be ${min} characters or more` : undefined
 );
 
-export const exactLength = memoize(
-  (min) => (value) => value && value.length !== min ? `Must be ${min} characters long` : undefined
+export const exactLength = memoize((min) => (value) =>
+  value && value.length !== min ? `Must be ${min} characters long` : undefined
 );
 
 export const number = (value) =>
   value && Number.isNaN(Number(value)) ? "Input must be a number" : undefined;
+
+export const numberPositiveInteger = (value) =>
+  number(value) || value < 1 || !Number.isInteger(Number(value))
+    ? "Input must be a positive integer"
+    : undefined;
+
+export const numberRange = memoize((min, max) => (value) =>
+  value && (Number.isNaN(value) || value < min || value > max)
+    ? `Must be a number between ${min} and ${max}`
+    : undefined
+);
 
 export const date = (value) =>
   value && Number.isNaN(Date.parse(value)) ? "Input must be a date" : undefined;
@@ -135,9 +144,8 @@ export const phoneNumber = (value) =>
 
 export const postalCode = (value, allValues, formProps) => {
   const { sub_division_code } = allValues;
-  const country = formProps.provinceOptions.find(
-    (prov) => prov.value === sub_division_code
-  )?.subType;
+  const country = formProps.provinceOptions.find((prov) => prov.value === sub_division_code)
+    ?.subType;
   return value && !Validate.checkPostalCode(value, country)
     ? "Invalid postal code or zip code"
     : undefined;
@@ -152,16 +160,13 @@ export const email = (value) =>
 export const currency = (value) =>
   value && !Validate.checkCurrency(value) ? "Invalid dollar amount" : undefined;
 
-export const validSearchSelection =
-  ({ key, err }) =>
-  (value, allValues, formProps) =>
-    !Object.keys(formProps[key]).includes(value) ? err || "Invalid Selection" : undefined;
+export const validSearchSelection = ({ key, err }) => (value, allValues, formProps) =>
+  !Object.keys(formProps[key]).includes(value) ? err || "Invalid Selection" : undefined;
 
-export const validateStartDate = memoize(
-  (previousStartDate) => (value) =>
-    value <= previousStartDate
-      ? "New manager's start date cannot be on or before the previous manager's start date."
-      : undefined
+export const validateStartDate = memoize((previousStartDate) => (value) =>
+  value <= previousStartDate
+    ? "New manager's start date cannot be on or before the previous manager's start date."
+    : undefined
 );
 
 export const alertStartDateNotBeforeHistoric = memoize((mineAlerts) => (value) => {
@@ -171,11 +176,10 @@ export const alertStartDateNotBeforeHistoric = memoize((mineAlerts) => (value) =
     : undefined;
 });
 
-export const alertNotInFutureIfCurrentActive = memoize(
-  (mineAlert) => (value) =>
-    value && mineAlert.start_date && new Date(value) >= new Date()
-      ? "Start date cannot be in the future if there is a current active alert.  Please update or remove current alert first"
-      : undefined
+export const alertNotInFutureIfCurrentActive = memoize((mineAlert) => (value) =>
+  value && mineAlert.start_date && new Date(value) >= new Date()
+    ? "Start date cannot be in the future if there is a current active alert.  Please update or remove current alert first"
+    : undefined
 );
 
 export const dateNotInFuture = (value) =>
@@ -193,16 +197,14 @@ export const dateTimezoneRequired = memoize((timezoneField) => (_value, allValue
 export const dateInFuture = (value) =>
   value && new Date(value) < new Date() ? "Date must be in the future" : undefined;
 
-export const dateNotBeforeOther = memoize(
-  (other) => (value) =>
-    value && other && new Date(value) <= new Date(other)
-      ? `Date cannot be on or before ${new Date(other).toDateString()}`
-      : undefined
+export const dateNotBeforeOther = memoize((other) => (value) =>
+  value && other && new Date(value) <= new Date(other)
+    ? `Date cannot be on or before ${new Date(other).toDateString()}`
+    : undefined
 );
 
-export const dateNotBeforeStrictOther = memoize(
-  (other) => (value) =>
-    value && other && moment(value).isBefore(other) ? `Date cannot be before ${other}` : undefined
+export const dateNotBeforeStrictOther = memoize((other) => (value) =>
+  value && other && moment(value).isBefore(other) ? `Date cannot be before ${other}` : undefined
 );
 
 export const timeNotBeforeOther = memoize(
@@ -217,21 +219,19 @@ export const timeNotBeforeOther = memoize(
       : undefined
 );
 
-export const dateNotAfterOther = memoize(
-  (other) => (value) =>
-    value && other && new Date(value) >= new Date(other)
-      ? `Date cannot be on or after ${new Date(other).toDateString()}`
-      : undefined
+export const dateNotAfterOther = memoize((other) => (value) =>
+  value && other && new Date(value) >= new Date(other)
+    ? `Date cannot be on or after ${new Date(other).toDateString()}`
+    : undefined
 );
 
 export const yearNotInFuture = (value) =>
   value && value > new Date().getFullYear() ? "Year cannot be in the future" : undefined;
 
-export const validateIncidentDate = memoize(
-  (reportedDate) => (value) =>
-    value <= reportedDate
-      ? "Incident date and time cannot occur before reporting occurence."
-      : undefined
+export const validateIncidentDate = memoize((reportedDate) => (value) =>
+  value <= reportedDate
+    ? "Incident date and time cannot occur before reporting occurence."
+    : undefined
 );
 
 // eslint-disable-next-line consistent-return

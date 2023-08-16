@@ -23,6 +23,8 @@ import {
   requiredRadioButton,
   validateSelectOptions,
   number,
+  numberPositiveInteger,
+  numberRange,
 } from "@common/utils/Validate";
 import * as Strings from "@common/constants/strings";
 import { USER_ROLES } from "@mds/common";
@@ -93,7 +95,7 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
   props
 ) => {
   const isAdmin = props.userRoles.includes(USER_ROLES[Permission.ADMIN]);
-
+  console.log(props);
   const renderCodeValues = (codeHash, value) => {
     if (value === Strings.EMPTY_FIELD) {
       return value;
@@ -216,14 +218,6 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
             validate={[validateSelectOptions(props.regionDropdownOptions)]}
             disabled
           />
-          <div className="field-title">Life of the Mine</div>
-          <Field
-            id="term_of_application"
-            name="term_of_application"
-            component={RenderField}
-            disabled
-          />
-
           <div className="field-title">
             Proposed Annual Maximum Tonnage
             {props.isPreLaunch && <NOWFieldOriginTooltip />}
@@ -252,18 +246,15 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
 
   const renderPermitType = () => (
     <Row gutter={16}>
-      <Col span={24}>
-        <div className="field-title">First year of multi-year, area based application?</div>
+      <Col md={12} sm={24}>
+        <div className="field-title">Years Sought for Authorization to Complete this Work</div>
         <Field
-          id="is_first_year_of_multi"
-          name="is_first_year_of_multi"
-          component={RenderRadioButtons}
+          id="term_of_application"
+          name="term_of_application"
+          component={RenderField}
+          validate={[numberPositiveInteger, numberRange(1, 5)]}
           disabled={props.isViewMode}
-          validate={[requiredRadioButton]}
-          data={[
-            { value: true, label: "Yes" },
-            { value: false, label: "No" },
-          ]}
+          props={{ type: "number" }}
         />
       </Col>
       <Col md={12} sm={24}>
@@ -284,6 +275,20 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
           data={props.permitTypeOptions}
           disabled={props.isViewMode}
           validate={[validateSelectOptions(props.permitTypeOptions)]}
+        />
+      </Col>
+      <Col md={12} sm={24}>
+        <div className="field-title">First year of multi-year, area based application?</div>
+        <Field
+          id="is_first_year_of_multi"
+          name="is_first_year_of_multi"
+          component={RenderRadioButtons}
+          disabled={props.isViewMode}
+          validate={[requiredRadioButton]}
+          data={[
+            { value: true, label: "Yes" },
+            { value: false, label: "No" },
+          ]}
         />
       </Col>
       <Col md={12} sm={24}>
@@ -351,20 +356,20 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
             <Field id="mine_no" name="mine_no" component={RenderField} disabled />
           </Col>
         </Row>
+
         <Row gutter={16}>
           <Col md={12} sm={24}>
-            <div className="field-title">
-              Type of Application
-              <NOWOriginalValueTooltip
-                originalValue={props.renderOriginalValues("type_of_application").value}
-                isVisible={props.renderOriginalValues("type_of_application").edited}
-              />
-            </div>
+            <div className="field-title">This mine is proposed for:</div>
             <Field
-              id="type_of_application"
-              name="type_of_application"
-              component={RenderField}
-              disabled
+              id=""
+              name=""
+              component={RenderRadioButtons}
+              disabled={props.isViewMode}
+              customOptions={[
+                { label: "Exploration Activities", value: "EXPL" },
+                { label: "Production Mining", value: "PRMI" },
+                { label: "Both", value: "BOTH" },
+              ]}
             />
           </Col>
           <Col md={12} sm={24}>
@@ -393,7 +398,52 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
             )}
           </Col>
         </Row>
+
         <Row gutter={16}>
+          <Col md={12} sm={24}>
+            <div className="field-title">
+              Type of Application
+              <NOWOriginalValueTooltip
+                originalValue={props.renderOriginalValues("type_of_application").value}
+                isVisible={props.renderOriginalValues("type_of_application").edited}
+              />
+            </div>
+            <Field
+              id="type_of_application"
+              name="type_of_application"
+              component={RenderField}
+              disabled
+            />
+          </Col>
+          <Col md={12} sm={24}>
+            <div className="field-title">
+              Tracking Number
+              <NOWOriginalValueTooltip
+                originalValue={props.renderOriginalValues("now_tracking_number").value}
+                isVisible={props.renderOriginalValues("now_tracking_number").edited}
+              />
+            </div>
+            <Field
+              id="now_tracking_number"
+              name="now_tracking_number"
+              component={RenderField}
+              disabled
+            />
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col md={12} sm={24}>
+            <div className="field-title">Life of Mine</div>
+            <Field
+              id="life_of_mine"
+              name="life_of_mine"
+              component={RenderField}
+              type="number"
+              validate={[required, numberPositiveInteger, numberRange(1, 99)]}
+              disabled={props.isViewMode}
+            />
+          </Col>
           <Col md={12} sm={24}>
             {props.typeOfApplication !== "New Permit" && (
               <>
@@ -430,21 +480,6 @@ export const ReviewNOWApplication: FC<InjectedFormProps<any> & ReviewNOWApplicat
               name="ats_authorization_number"
               component={RenderField}
               disabled={props.isViewMode || !isAdmin}
-            />
-          </Col>
-          <Col md={12} sm={24}>
-            <div className="field-title">
-              Tracking Number
-              <NOWOriginalValueTooltip
-                originalValue={props.renderOriginalValues("now_tracking_number").value}
-                isVisible={props.renderOriginalValues("now_tracking_number").edited}
-              />
-            </div>
-            <Field
-              id="now_tracking_number"
-              name="now_tracking_number"
-              component={RenderField}
-              disabled
             />
           </Col>
           <Col md={12} sm={24}>

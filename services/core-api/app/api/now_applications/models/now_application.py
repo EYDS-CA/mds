@@ -60,7 +60,7 @@ class NOWApplication(Base, AuditMixin):
     now_tracking_number = db.Column(db.Integer)
     proponent_submitted_permit_number = db.Column(db.String)
     annual_summary_submitted = db.Column(db.Boolean)
-    is_first_year_of_multi = db.Column(db.Boolean)
+    is_first_year_of_multi = db.Column(db.String)
     mine_purpose = db.Column(db.String)
     ats_authorization_number = db.Column(db.Numeric)
     ats_project_number = db.Column(db.Numeric)
@@ -127,6 +127,7 @@ class NOWApplication(Base, AuditMixin):
     is_applicant_individual_or_company = db.Column(db.String)
     relationship_to_applicant = db.Column(db.String)
     merchantable_timber_volume = db.Column(db.Numeric(14, 2))
+    life_of_mine = db.Column(db.Numeric(14, 0))
 
     reviews = db.relationship('NOWApplicationReview', lazy='select', backref='now_application')
 

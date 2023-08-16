@@ -128,7 +128,7 @@ def _transmogrify_now_details(now_app, now_sub, mms_now_sub):
     now_app.is_pre_launch = now_sub.is_pre_launch
     now_app.proponent_submitted_permit_number = now_sub.permitnumber
     now_app.annual_summary_submitted = get_boolean_value(now_sub.annualsummarysubmitted)
-    now_app.is_first_year_of_multi = get_boolean_value(now_sub.firstyearofmulti)
+    now_app.is_first_year_of_multi = now_sub.firstyearofmulti
     now_app.ats_authorization_number = now_sub.atsauthorizationnumber
     now_app.ats_project_number = now_sub.atsprojectnumber
     now_app.original_start_date = now_sub.originalstartdate

@@ -580,6 +580,8 @@ NOW_APPLICATION_MODEL = api.model(
         fields.String,
         'term_of_application':
         fields.Integer,
+        'life_of_mine':
+        fields.Integer,
         'is_applicant_individual_or_company':
         fields.String,
         'relationship_to_applicant':
@@ -611,7 +613,7 @@ NOW_APPLICATION_MODEL = api.model(
         'annual_summary_submitted':
         fields.Boolean,
         'is_first_year_of_multi':
-        fields.Boolean,
+        fields.String,
         'mine_purpose':
         fields.String,
         'ats_authorization_number':
@@ -659,7 +661,7 @@ NOW_APPLICATION_MODEL_EXPORT = api.model(
         'status_reason': fields.String,
         'submitted_date': Date,
         'received_date': Date,
-        'is_first_year_of_multi': fields.Boolean,
+        'is_first_year_of_multi': fields.String,
         'latitude': fields.Fixed(decimals=7),
         'longitude': fields.Fixed(decimals=7),
         'gate_latitude': fields.Fixed(decimals=7),

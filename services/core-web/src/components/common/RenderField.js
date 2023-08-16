@@ -19,6 +19,7 @@ const propTypes = {
   defaultValue: PropTypes.string,
   allowClear: PropTypes.bool,
   blockLabelText: PropTypes.string,
+  type: PropTypes.string,
 };
 
 const defaultProps = {
@@ -29,6 +30,7 @@ const defaultProps = {
   defaultValue: "",
   allowClear: false,
   blockLabelText: "",
+  type: "text",
 };
 
 const RenderField = (props) => {
@@ -60,6 +62,7 @@ const RenderField = (props) => {
           id={props.id}
           placeholder={props.placeholder}
           allowClear={props.allowClear}
+          type={props.type}
           {...props.input}
         />
         {props.blockLabelText && <div className="block flex-start">{props.blockLabelText}</div>}
