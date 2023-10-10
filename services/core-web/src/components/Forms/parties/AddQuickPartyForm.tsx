@@ -1,6 +1,5 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Field, reduxForm } from "redux-form";
+import React, { FC } from "react";
+import { Field, InjectedFormProps, reduxForm } from "redux-form";
 import { Form } from "@ant-design/compatible";
 import "@ant-design/compatible/assets/index.css";
 import { Button, Col, Row } from "antd";
@@ -16,16 +15,15 @@ import {
 import { resetForm, normalizePhone, upperCase } from "@common/utils/helpers";
 import * as FORM from "@/constants/forms";
 import { renderConfig } from "@/components/common/config";
-import CustomPropTypes from "@/customPropTypes";
+import { IOption } from "@mds/common";
 
-const propTypes = {
-  handleSubmit: PropTypes.func.isRequired,
-  isPerson: PropTypes.bool.isRequired,
-  submitting: PropTypes.bool.isRequired,
-  provinceOptions: PropTypes.arrayOf(CustomPropTypes.dropdownListItem).isRequired,
-};
+interface AddQuickPartyFormProps {
+  onSubmit: any;
+  isPerson: boolean;
+  provinceOptions: IOption[];
+}
 
-export const AddQuickPartyForm = (props) => (
+export const AddQuickPartyForm: FC<AddQuickPartyFormProps & InjectedFormProps<any>> = (props) => (
   <div>
     <Form layout="vertical" onSubmit={props.handleSubmit}>
       {props.isPerson && (
@@ -255,10 +253,8 @@ export const AddQuickPartyForm = (props) => (
   </div>
 );
 
-AddQuickPartyForm.propTypes = propTypes;
-
-export default reduxForm({
+export default (reduxForm({
   form: FORM.ADD_QUICK_PARTY,
   touchOnBlur: false,
   onSubmitSuccess: resetForm(FORM.ADD_QUICK_PARTY),
-})(AddQuickPartyForm);
+})(AddQuickPartyForm) as any) as FC<AddQuickPartyFormProps>;

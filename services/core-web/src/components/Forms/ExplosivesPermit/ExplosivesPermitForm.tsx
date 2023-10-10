@@ -25,7 +25,6 @@ import {
 import { getNoticeOfWorkList } from "@common/selectors/noticeOfWorkSelectors";
 import {
   required,
-  validateSelectOptions,
   maxLength,
   dateNotInFuture,
   number,
@@ -216,8 +215,8 @@ export const ExplosivesPermitForm: FC<ExplosivesPermitFormProps &
                   label="Mines Act Permit*"
                   component={renderConfig.SELECT}
                   data={permitDropdown}
-                  validate={[required, validateSelectOptions(permitDropdown, true)]}
                   disabled={disabled}
+                  validate={[required]}
                 />
               </Form.Item>
             </Col>
@@ -229,7 +228,6 @@ export const ExplosivesPermitForm: FC<ExplosivesPermitFormProps &
               placeholder="Select a NoW"
               label="Notice of Work Number"
               component={renderConfig.SELECT}
-              validate={[validateSelectOptions(nowDropdown, true)]}
               data={nowDropdown}
               disabled={disabled}
             />
@@ -243,11 +241,7 @@ export const ExplosivesPermitForm: FC<ExplosivesPermitFormProps &
                   label={props.isPermitTab ? "Mine Manager" : "Mine Manager*"}
                   placeholder="Select Mine Manager"
                   partyLabel="Mine Manager"
-                  validate={
-                    props.isPermitTab
-                      ? [validateSelectOptions(mineManagersDropdown, true)]
-                      : [required, validateSelectOptions(mineManagersDropdown, true)]
-                  }
+                  validate={props.isPermitTab ? [] : [required]}
                   component={renderConfig.SELECT}
                   data={mineManagersDropdown}
                   disabled={disabled}
@@ -262,7 +256,7 @@ export const ExplosivesPermitForm: FC<ExplosivesPermitFormProps &
                   label="Permittee*"
                   component={renderConfig.SELECT}
                   placeholder="Select Permittee"
-                  validate={[required, validateSelectOptions(permitteeDropdown, true)]}
+                  validate={[required]}
                   data={permitteeDropdown}
                   disabled={disabled || !mines_permit_guid}
                 />

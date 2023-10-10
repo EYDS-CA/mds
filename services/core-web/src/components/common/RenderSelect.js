@@ -34,6 +34,15 @@ const defaultProps = {
 };
 
 const RenderSelect = (props) => {
+  // clear search text on blur
+  const onBlur = () => {
+    const valueIsNotOption =
+      props.input.value && !props.data.find((opt) => opt.value === props.input.value);
+    if (valueIsNotOption) {
+      props.input.onChange(null);
+    }
+  };
+
   return (
     <Form.Item
       label={props.label}
@@ -69,6 +78,7 @@ const RenderSelect = (props) => {
         value={props.input.value ? props.input.value : null}
         onChange={props.input.onChange}
         onSelect={props.onSelect}
+        onBlur={onBlur}
       >
         {props.data.map((opt) => (
           <Select.Option
