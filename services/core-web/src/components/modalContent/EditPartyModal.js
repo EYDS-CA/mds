@@ -1,10 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { getParties } from "@common/selectors/partiesSelectors";
+import { getParties } from "@mds/common/redux/selectors/partiesSelectors";
 import CustomPropTypes from "@/customPropTypes";
 import EditFullPartyForm from "@/components/Forms/parties/EditFullPartyForm";
-import { getDropdownProvinceOptions } from "@common/selectors/staticContentSelectors";
+import { getDropdownProvinceOptions } from "@mds/common/redux/selectors/staticContentSelectors";
 import moment from "moment";
 import { formatDate } from "@common/utils/helpers";
 
@@ -50,7 +50,7 @@ export const EditPartyModal = (props) => {
     party.project_lead_start_date = moment(formatDate(projectLeadInfo.start_date)).format(
       "YYYY-MM-DD"
     );
-    party.project_end_date = projectLeadInfo.end_date
+    party.project_lead_end_date = projectLeadInfo.end_date
       ? moment(formatDate(projectLeadInfo.end_date)).format("YYYY-MM-DD")
       : null;
   }

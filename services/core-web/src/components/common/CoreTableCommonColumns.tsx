@@ -1,23 +1,28 @@
 import React, { ReactNode } from "react";
 import Highlight from "react-highlighter";
 import { dateSorter, formatDate, nullableStringSorter } from "@common/utils/helpers";
+import { EMPTY_FIELD } from "@mds/common/constants/strings";
 import { ColumnType } from "antd/lib/table";
 import { Button, Dropdown } from "antd";
-import { CARAT } from "@/constants/assets";
+import { CaretDownOutlined } from "@ant-design/icons";
 import { generateActionMenuItems } from "./ActionMenu";
 
 export const renderTextColumn = (
   dataIndex: string,
   title: string,
   sortable = false,
-  placeHolder = "",
+  placeHolder = EMPTY_FIELD,
   width?: number
 ): ColumnType<any> => {
   return {
     title,
     dataIndex,
     key: dataIndex,
-    render: (text: string) => <div title={title}>{text ?? placeHolder}</div>,
+    render: (text: string) => (
+      <div title={title} className={`${dataIndex}-column`}>
+        {text ?? placeHolder}
+      </div>
+    ),
     ...(width !== undefined ? { width } : null),
     ...(sortable ? { sorter: nullableStringSorter(dataIndex) } : null),
   };
@@ -28,7 +33,7 @@ export const renderDateColumn = (
   title = "Date",
   sortable = false,
   format: (date: any) => string | null = null,
-  placeHolder = ""
+  placeHolder = EMPTY_FIELD
 ) => {
   const formatFunction = format ?? formatDate;
   return {
@@ -45,7 +50,7 @@ export const renderCategoryColumn = (
   title: string,
   categoryMap: any,
   sortable = false,
-  placeHolder = ""
+  placeHolder = EMPTY_FIELD
 ) => {
   return {
     title,
@@ -82,7 +87,7 @@ export interface ITableAction {
 
 export const renderActionsColumn = (
   actions: ITableAction[],
-  recordActionsFilter: (record, actions) => ITableAction[],
+  recordActionsFilter?: (record, actions) => ITableAction[],
   isRowSelected = false,
   text = "Actions",
   dropdownAltText = "Menu"
@@ -98,14 +103,9 @@ export const renderActionsColumn = (
           {items.length > 0 && (
             <Dropdown menu={{ items }} placement="bottomLeft" disabled={isRowSelected}>
               {/* // TODO: change button classname to something generic */}
-              <Button className="permit-table-button">
+              <Button data-cy="menu-actions-button" className="permit-table-button">
                 {text}
-                <img
-                  className="padding-sm--right icon-svg-filter"
-                  src={CARAT}
-                  alt={dropdownAltText}
-                  style={{ paddingLeft: "5px" }}
-                />
+                <CaretDownOutlined alt={dropdownAltText} />
               </Button>
             </Dropdown>
           )}

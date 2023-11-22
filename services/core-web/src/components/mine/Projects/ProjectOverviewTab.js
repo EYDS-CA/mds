@@ -8,11 +8,11 @@ import {
   getProjectSummaryStatusCodesHash,
   getInformationRequirementsTableStatusCodesHash,
   getMajorMinesApplicationStatusCodesHash,
-} from "@common/selectors/staticContentSelectors";
-import { getProjectLeads } from "@common/selectors/partiesSelectors";
+} from "@mds/common/redux/selectors/staticContentSelectors";
+import { getProjectLeads } from "@mds/common/redux/selectors/partiesSelectors";
 import { formatDate } from "@common/utils/helpers";
-import * as Strings from "@common/constants/strings";
-import { getProject } from "@common/selectors/projectSelectors";
+import * as Strings from "@mds/common/constants/strings";
+import { getProject } from "@mds/common/redux/selectors/projectSelectors";
 import * as routes from "@/constants/routes";
 import CustomPropTypes from "@/customPropTypes";
 import ProjectStagesTable from "./ProjectStagesTable";
@@ -128,7 +128,7 @@ export class ProjectOverviewTab extends Component {
         payload: this.props.project.project_summary,
         statusHash: this.props.projectSummaryStatusCodesHash,
         link: (
-          <Link to={routes.PRE_APPLICATIONS.dynamicRoute(project_guid, project_summary_guid)}>
+          <Link data-cy="project-description-view-link" to={routes.PRE_APPLICATIONS.dynamicRoute(project_guid, project_summary_guid)}>
             <Button className="full-mobile margin-small" type="secondary">
               View
             </Button>
@@ -142,7 +142,7 @@ export class ProjectOverviewTab extends Component {
         payload: this.props.project.major_mine_application,
         statusHash: this.props.majorMineApplicationStatusCodeHash,
         link: (
-          <Link to={routes.PROJECT_FINAL_APPLICATION.dynamicRoute(project_guid)}>
+          <Link data-cy="final-application-view-link" to={routes.PROJECT_FINAL_APPLICATION.dynamicRoute(project_guid)}>
             <Button className="full-mobile margin-small" type="secondary">
               View
             </Button>
@@ -159,6 +159,7 @@ export class ProjectOverviewTab extends Component {
       statusHash: this.props.informationRequirementsTableStatusCodesHash,
       link: (
         <Link
+          data-cy="final-irt-view-link"
           to={routes.INFORMATION_REQUIREMENTS_TABLE.dynamicRoute(
             project_guid,
             this.props.project.information_requirements_table.irt_guid

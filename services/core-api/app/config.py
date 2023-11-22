@@ -1,24 +1,74 @@
+import logging
 import os
 
-from logging.handlers import SysLogHandler
 from dotenv import load_dotenv, find_dotenv
 from celery.schedules import crontab
+from flask import current_app
+from opentelemetry import trace
+import requests
+
 
 ENV_FILE = find_dotenv()
 if ENV_FILE:
     load_dotenv(ENV_FILE)
 
 
+
+class CustomFormatter(logging.Formatter):
+    def format(self, record):
+        KEY_CLOAK_CLIENT_ID = None
+        def get_key_cloak_client_id():
+            try:
+                # Check if the request is a valid HTTP request
+                if current_app and hasattr(current_app, 'extensions'):
+                    from app.extensions import getJwtManager
+                    if getJwtManager().audience:
+                        return getJwtManager().audience
+            except Exception as e:
+                # Handle the exception here (e.g., log it)
+                print(f"An error occurred: {e}")
+
+            return None
+
+        def get_traceid_from_telemetry():
+            current_span = trace.get_current_span()
+            if current_span:
+                traceid = current_span.get_span_context().trace_id
+                return traceid
+            return None
+
+        # Get the traceid from the telemetry
+        traceid = get_traceid_from_telemetry()
+
+        # Add the traceid to the log message
+        record.traceid = traceid
+        if get_key_cloak_client_id() and not KEY_CLOAK_CLIENT_ID:
+            KEY_CLOAK_CLIENT_ID = get_key_cloak_client_id()
+
+        # Call the parent formatter to format the log message
+        formatted_message = super().format(record)
+
+        # Add the traceid, keycloak client id and message to the formatted log message
+        formatted_message = f'{formatted_message} [trace_id={traceid} client={KEY_CLOAK_CLIENT_ID}]: {record.message}'
+
+        return formatted_message
+
+
 class Config(object):
     # Environment config
     FLASK_LOGGING_LEVEL = os.environ.get('FLASK_LOGGING_LEVEL',
                                          'INFO')                # ['DEBUG','INFO','WARN','ERROR','CRITICAL']
+    WERKZEUG_LOGGING_LEVEL = os.environ.get('WERKZEUG_LOGGING_LEVEL',
+                                         'INFO')  # ['DEBUG','INFO','WARN','ERROR','CRITICAL']
+    DISPLAY_WERKZEUG_LOG = os.environ.get('DISPLAY_WERKZEUG_LOG',
+                                            True)
 
     LOGGING_DICT_CONFIG = {
         'version': 1,
         'formatters': {
             'default': {
-                'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+                '()': CustomFormatter,
+                'format': '%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d]',
             }
         },
         'handlers': {
@@ -40,6 +90,13 @@ class Config(object):
         'root': {
             'level': FLASK_LOGGING_LEVEL,
             'handlers': ['file', 'console']
+        },
+        'loggers': {
+            'werkzeug': {
+                'level': WERKZEUG_LOGGING_LEVEL,
+                'handlers': ['file', 'console'],
+                'propagate': DISPLAY_WERKZEUG_LOG
+            }
         }
     }
 
@@ -203,7 +260,7 @@ class Config(object):
     TRACTION_HOST = os.environ.get("TRACTION_HOST","https://traction-tenant-proxy-dev.apps.silver.devops.gov.bc.ca")
     TRACTION_TENANT_ID = os.environ.get("TRACTION_TENANT_ID","GET_TENANT_ID_FROM_TRACTION")
     TRACTION_WALLET_API_KEY = os.environ.get("TRACTION_WALLET_API_KEY","GET_WALLET_API_KEY_FROM_TRACTION")
-
+    TRACTION_WEBHOOK_X_API_KEY = os.environ.get("TRACTION_WEBHOOK_X_API_KEY","NO_X_API_KEY")
     CRED_DEF_ID_MINES_ACT_PERMIT = os.environ.get("CRED_DEF_ID_MINES_ACT_PERMIT","CRED_DEF_ID_MINES_ACT_PERMIT")
 
 class TestConfig(Config):

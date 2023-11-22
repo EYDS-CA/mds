@@ -1,22 +1,28 @@
 import React, { ReactNode } from "react";
 import Highlight from "react-highlighter";
 import { dateSorter, formatDate, nullableStringSorter } from "@common/utils/helpers";
+import { EMPTY_FIELD } from "@mds/common/constants/strings";
 import { ColumnType } from "antd/lib/table";
 import { Button, Dropdown } from "antd";
-import { CaretDownOutlined } from "@ant-design/icons";
+import CaretDownOutlined from "@ant-design/icons/CaretDownOutlined";
+import { generateActionMenuItems } from "./ActionMenu";
 
 export const renderTextColumn = (
   dataIndex: string,
   title: string,
   sortable = false,
-  placeHolder = "",
+  placeHolder = EMPTY_FIELD,
   width?: number
 ): ColumnType<any> => {
   return {
     title,
     dataIndex,
     key: dataIndex,
-    render: (text: string) => <div title={title}>{text ?? placeHolder}</div>,
+    render: (text: string) => (
+      <div title={title} className={`${dataIndex}-column`}>
+        {text ?? placeHolder}
+      </div>
+    ),
     ...(width !== undefined ? { width } : null),
     ...(sortable ? { sorter: nullableStringSorter(dataIndex) } : null),
   };
@@ -27,7 +33,7 @@ export const renderDateColumn = (
   title = "Date",
   sortable = false,
   format: (date: any) => string | null = null,
-  placeHolder = ""
+  placeHolder = EMPTY_FIELD
 ) => {
   const formatFunction = format ?? formatDate;
   return {
@@ -44,7 +50,7 @@ export const renderCategoryColumn = (
   title: string,
   categoryMap: any,
   sortable = false,
-  placeHolder = ""
+  placeHolder = EMPTY_FIELD
 ) => {
   return {
     title,
@@ -81,40 +87,23 @@ export interface ITableAction {
 
 export const renderActionsColumn = (
   actions: ITableAction[],
-  recordActionsFilter: (record, actions) => ITableAction[],
+  recordActionsFilter?: (record, actions) => ITableAction[],
   isRowSelected = false,
   text = "Actions",
-  classPrefix = "",
   dropdownAltText = "Menu"
 ) => {
-  const labelClass = classPrefix ? `${classPrefix}-dropdown-button` : "actions-dropdown-button";
-
   return {
     key: "actions",
     render: (record) => {
       const filteredActions = recordActionsFilter ? recordActionsFilter(record, actions) : actions;
-      const items = filteredActions.map((action) => {
-        return {
-          key: action.key,
-          icon: action.icon,
-          label: (
-            <button
-              type="button"
-              className={`full ${labelClass}`}
-              onClick={(event) => action.clickFunction(event, record)}
-            >
-              <div>{action.label}</div>
-            </button>
-          ),
-        };
-      });
+      const items = generateActionMenuItems(filteredActions, record);
 
       return (
         <div>
           {items.length > 0 && (
             <Dropdown menu={{ items }} placement="bottomLeft" disabled={isRowSelected}>
               {/* // TODO: change button classname to something generic */}
-              <Button className="permit-table-button">
+              <Button data-cy="menu-actions-button" className="permit-table-button">
                 {text}
                 <CaretDownOutlined alt={dropdownAltText} />
               </Button>

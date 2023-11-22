@@ -5,10 +5,10 @@ import {
   fetchExplosivesPermits,
   updateExplosivesPermit,
   deleteExplosivesPermit,
-} from "@common/actionCreators/explosivesPermitActionCreator";
-import * as genericActions from "@common/actions/genericActions";
+} from "@mds/common/redux/actionCreators/explosivesPermitActionCreator";
+import * as genericActions from "@mds/common/redux/actions/genericActions";
 import { ENVIRONMENT } from "@mds/common";
-import * as API from "@common/constants/API";
+import * as API from "@mds/common/constants/API";
 import * as MOCK from "@/tests/mocks/dataMocks";
 
 const dispatch = jest.fn();
@@ -81,18 +81,18 @@ describe("`updateExplosivesPermit` action creator", () => {
   const mine_guid = "12345-6789";
   const permit_guid = "12345-6789";
   const url = `${ENVIRONMENT.apiUrl}${API.EXPLOSIVES_PERMIT(mine_guid, permit_guid)}`;
-
   const permit_status_code = "C";
   const description = "test description";
 
-  const mockPayload = { permit_status_code, description };
+  const mockPayload = { permit_status_code, description, generate_documents: true };
   it("Request successful, dispatches `success` with correct response", () => {
     const mockResponse = { data: { success: true } };
     mockAxios.onPut(url, mockPayload).reply(200, mockResponse);
     return updateExplosivesPermit(
       mine_guid,
       permit_guid,
-      mockPayload
+      mockPayload,
+      true
     )(dispatch).then(() => {
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(successSpy).toHaveBeenCalledTimes(1);

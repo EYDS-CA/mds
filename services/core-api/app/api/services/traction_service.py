@@ -40,19 +40,21 @@ class TractionService():
             current_app.logger.error(f"party_guid={party.party_guid} already has wallet connection, do not create another one")
             raise VerificableCredentialWorkflowError("cannot make invitation if mine already has active connection")
         
+        #only have suffix if non-prod environment
+        my_label_suffix = (" "+Config.ENVIRONMENT_NAME) if (Config.ENVIRONMENT_NAME in ["test","dev"]) else ""
         payload = {
             "accept": [
                 "didcomm/aip1",
                 "didcomm/aip2;env=rfc19"
             ],
-            "alias": str(party.party_guid),
+            "alias": f"{party.party_name}:{str(party.party_guid)}",
             "attachments": [],
             "goal": f"To establish a secure connection between BC Government Mines Permitting and the mining company ({party.party_name})",
             "goal_code": "issue-vc",
             "handshake_protocols": [
                 "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0"
             ],
-            "my_label": f"Invitation to {str(party.party_guid)}",
+            "my_label": f"BC Mines - Chief Permitting Officer{my_label_suffix}",
             "use_public_did": False
         }
 
@@ -69,7 +71,6 @@ class TractionService():
 
         payload = {
             "auto_issue": True,
-            "auto_remove": True,
             "comment": "VC to provide proof of a permit and some basic details",
             "connection_id": str(connection_id),
             "cred_def_id": Config.CRED_DEF_ID_MINES_ACT_PERMIT,
@@ -80,15 +81,6 @@ class TractionService():
             "trace": True
         }
 
-        # TODO STORE LOCAL RECORD THAT THIS CREDENTIAL WAS OFFERED/ISSUED
-
-        current_app.logger.warning("CREDENTIAL TO BE ISSUED")
-        current_app.logger.warning(payload)
         cred_offer_resp = requests.post(traction_offer_credential, json=payload,headers=self.get_headers())
-
-        current_app.logger.warning("CREDENTIAL_OFFER response")
-        resp = cred_offer_resp.json()
-        current_app.logger.warning(resp)
-
 
         return cred_offer_resp.json()

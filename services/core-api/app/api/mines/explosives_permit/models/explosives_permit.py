@@ -14,6 +14,17 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.schema import FetchedValue, Sequence
+from sqlalchemy import and_, func
+from sqlalchemy.sql import update
+
+from app.api.utils.models_mixins import SoftDeleteMixin, AuditMixin, PermitMixin, Base
+from app.extensions import db
+from app.api.mines.explosives_permit.models.explosives_permit_document_type import ExplosivesPermitDocumentType
+from app.api.mines.explosives_permit.models.explosives_permit_magazine import ExplosivesPermitMagazine
+from app.api.mines.explosives_permit.models.explosives_permit_document_xref import ExplosivesPermitDocumentXref
+from app.api.mines.documents.models.mine_document import MineDocument
+from app.api.parties.party.models.party import Party
+from app.api.utils.include.user_info import User
 
 
 class ExplosivesPermit(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
@@ -24,9 +35,24 @@ class ExplosivesPermit(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
 
     permit_number = db.Column(db.String, unique=True)
 
+    is_closed = db.Column(db.Boolean)
+
+    closed_by = db.Column(db.String(60))
+
+    explosive_magazines = db.relationship(
+        'ExplosivesPermitMagazine',
+        lazy='select',
+        primaryjoin='and_(ExplosivesPermitMagazine.explosives_permit_id == ExplosivesPermit.explosives_permit_id, ExplosivesPermitMagazine.explosives_permit_magazine_type_code == "EXP", ExplosivesPermitMagazine.deleted_ind == False)'
+    )
+    detonator_magazines = db.relationship(
+        'ExplosivesPermitMagazine',
+        lazy='select',
+        primaryjoin='and_(ExplosivesPermitMagazine.explosives_permit_id == ExplosivesPermit.explosives_permit_id, ExplosivesPermitMagazine.explosives_permit_magazine_type_code == "DET", ExplosivesPermitMagazine.deleted_ind == False)'
+    )
     explosives_permit_amendments = db.relationship('ExplosivesPermitAmendment', lazy='select',
         primaryjoin='ExplosivesPermit.explosives_permit_id == ExplosivesPermitAmendment.explosives_permit_id',
-        back_populates='explosives_permit')
+        back_populates='explosives_permit',
+        order_by='ExplosivesPermitAmendment.explosives_permit_amendment_id')
 
     explosive_magazines = db.relationship('ExplosivesPermitMagazine', lazy='select',
         primaryjoin='and_(ExplosivesPermitMagazine.explosives_permit_id == ExplosivesPermit.explosives_permit_id, ExplosivesPermitMagazine.explosives_permit_magazine_type_code == "EXP", ExplosivesPermitMagazine.deleted_ind == False)')
@@ -53,7 +79,7 @@ class ExplosivesPermit(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
     def update(self, permit_guid, now_application_guid, issuing_inspector_party_guid, mine_manager_mine_party_appt_id,
                permittee_mine_party_appt_id, application_status, issue_date, expiry_date, decision_reason, is_closed,
                closed_reason, closed_timestamp, latitude, longitude, application_date, description, letter_date,
-               letter_body, explosive_magazines=[], detonator_magazines=[], documents=[], add_to_session=True):
+               letter_body, explosive_magazines=[], detonator_magazines=[], documents=[], generate_documents=False, add_to_session=True):
 
         # Update simple properties.
         self.permit_guid = permit_guid
@@ -67,6 +93,7 @@ class ExplosivesPermit(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
         self.expiry_date = expiry_date
         self.latitude = latitude
         self.longitude = longitude
+        self.closed_by = User().get_user_username()
 
         # Check for permit closed changes.
         self.is_closed = is_closed
@@ -177,8 +204,10 @@ class ExplosivesPermit(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
 
                 if self.application_status == 'REC' and application_status == 'APP':
                     self.permit_number = ExplosivesPermit.get_next_permit_number()
-                create_permit_enclosed_letter()
-                create_issued_permit()
+
+                if generate_documents:
+                    create_permit_enclosed_letter()
+                    create_issued_permit()
 
             self.application_status = application_status
 
@@ -212,6 +241,15 @@ class ExplosivesPermit(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
         sequence = Sequence('explosives_permit_number_sequence')
         next_value = sequence.next_value()
         return func.concat(prefix, next_value)
+
+    @classmethod
+    def update_permit_status(self, explosives_permit_id, is_closed_status):
+        update_stmt = update(self)\
+            .where(self.explosives_permit_id == explosives_permit_id)\
+            .values(is_closed = is_closed_status)
+        update_result = db.session.execute(update_stmt)
+        db.session.commit()
+        return update_result.rowcount
 
     @classmethod
     def create(cls, mine, permit_guid, application_date, originating_system, latitude, longitude, description,

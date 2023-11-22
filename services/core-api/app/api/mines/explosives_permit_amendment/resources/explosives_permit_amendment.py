@@ -3,6 +3,7 @@ from datetime import datetime
 
 from werkzeug.exceptions import NotFound
 from flask_restplus import Resource, inputs
+from flask import current_app
 
 from app.api.mines.explosives_permit.response_models import EXPLOSIVES_PERMIT_AMENDMENT_MODEL
 from app.api.mines.mine.models.mine import Mine
@@ -13,6 +14,12 @@ from app.api.utils.custom_reqparser import CustomReqparser
 from app.api.mines.explosives_permit_amendment.models.explosives_permit_amendment import ExplosivesPermitAmendment
 class ExplosivesPermitAmendmentResource(Resource, UserMixin):
     parser = CustomReqparser()
+    parser.add_argument(
+        'amendment_count',
+        type=int,
+        store_missing=False,
+        required=False,
+    )
     parser.add_argument(
         'explosives_permit_id',
         type=str,
@@ -148,6 +155,18 @@ class ExplosivesPermitAmendmentResource(Resource, UserMixin):
         store_missing=False,
         required=False,
     )
+    parser.add_argument(
+        'generate_documents',
+        type=inputs.boolean,
+        store_missing=False,
+        required=False,
+    )
+    parser.add_argument(
+        'issue_date',
+        type=lambda x: inputs.datetime_from_iso8601(x) if x else None,
+        store_missing=False,
+        required=False,
+    )
 
     @api.doc(
         description='Get an Explosives Permit Amendment.',
@@ -165,8 +184,9 @@ class ExplosivesPermitAmendmentResource(Resource, UserMixin):
         return explosives_permit_amendment
 
     @api.doc(
-        description='Update an Explosives Permit.',
+        description='Update an Explosives Permit Amendment.',
         params={
+            'amendment_count': 'Number of amendments created.',
             'mine_guid': 'The GUID of the mine the Explosives Permit belongs to.',
             'explosives_permit_amendment_guid': 'The GUID of the Explosives Permit Amendment to update.'
         })
@@ -178,8 +198,10 @@ class ExplosivesPermitAmendmentResource(Resource, UserMixin):
             raise NotFound('Explosives Permit Amendment not found')
 
         data = self.parser.parse_args()
-
+        current_app.logger.debug('DOCUMENTS')
+        current_app.logger.debug(data.get('documents', []))
         explosives_permit_amendment.update(
+            data.get('amendment_count'),
             data.get('explosives_permit_id'),
             data.get('permit_guid'), data.get('now_application_guid'),
             data.get('issuing_inspector_party_guid'), data.get('mine_manager_mine_party_appt_id'),
@@ -189,8 +211,12 @@ class ExplosivesPermitAmendmentResource(Resource, UserMixin):
             data.get('latitude'), data.get('longitude'), data.get('application_date'),
             data.get('description'),data.get('letter_date'),
             data.get('letter_body'),
+            data.get('issue_date'),
             data.get('explosive_magazines', []),
-            data.get('detonator_magazines', []), data.get('documents', []))
+            data.get('detonator_magazines', []),
+            data.get('documents', []),
+            data.get('generate_documents', False)
+        )
 
         explosives_permit_amendment.save()
         return explosives_permit_amendment

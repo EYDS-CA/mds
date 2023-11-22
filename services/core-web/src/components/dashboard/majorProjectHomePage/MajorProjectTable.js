@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Button, Col, Row } from "antd";
 import { uniqBy, flattenDeep } from "lodash";
-import * as Strings from "@common/constants/strings";
+import * as Strings from "@mds/common/constants/strings";
 import { formatDate } from "@common/utils/helpers";
 import CoreTable from "@/components/common/CoreTable";
 import CustomPropTypes from "@/customPropTypes";
@@ -124,7 +124,7 @@ export const MajorProjectTable = (props) => {
       key: "project",
       dataIndex: "project",
       render: (text, record) => (
-        <div title="" align="right">
+        <div title="" align="right" data-cy="major-projects-table-open-button">
           <Row gutter={1}>
             <Col span={12}>
               <Link to={router.PROJECTS.dynamicRoute(record.key)}>

@@ -4,17 +4,20 @@ from pytz import timezone
 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.schema import Sequence
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.api.mines.documents.models.mine_document import MineDocument
 from app.api.mines.explosives_permit.models.explosives_permit import ExplosivesPermit
 from app.api.mines.explosives_permit.models.explosives_permit_document_type import ExplosivesPermitDocumentType
+from app.api.parties.party.models.party import Party
 
 from app.api.mines.explosives_permit_amendment.models.explosives_permit_amendment_document_xref import \
     ExplosivesPermitAmendmentDocumentXref
 from app.api.mines.explosives_permit_amendment.models.explosives_permit_amendment_magazine import \
     ExplosivesPermitAmendmentMagazine
 from app.api.utils.models_mixins import Base, SoftDeleteMixin, AuditMixin, PermitMixin
-from sqlalchemy import func
+from sqlalchemy import func, and_
+from sqlalchemy.sql import update
 
 from app.extensions import db
 
@@ -31,6 +34,9 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
 
     explosives_permit_id = db.Column(
         db.Integer, db.ForeignKey('explosives_permit.explosives_permit_id'), nullable=False)
+
+    explosives_permit_guid = db.Column(
+        UUID(as_uuid=True), db.ForeignKey('explosives_permit.explosives_permit_guid'), nullable=False)
 
     explosives_permit = db.relationship(
         'ExplosivesPermit',
@@ -63,6 +69,13 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
     def __repr__(self):
         return f'<{self.__class__.__name__} {self.explosives_permit_amendment_id}>'
 
+    @hybrid_property
+    def issuing_inspector_name(self):
+        if self.issuing_inspector_party_guid:
+            party = Party.find_by_party_guid(self.issuing_inspector_party_guid)
+            return party.name
+        return None
+
     @classmethod
     def get_next_application_number(cls):
         now = datetime.now(timezone('US/Pacific'))
@@ -74,10 +87,36 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
         return func.concat(next_value, f'-{year}-{month}')
 
     @classmethod
+    def update_amendment_status_by_explosives_permit_id(cls, explosives_permit_id, is_closed_status, amendment_guid_to_exclude = None):
+
+        and_clause = None
+
+        if amendment_guid_to_exclude is not None:
+            and_clause = and_(
+                cls.explosives_permit_id == explosives_permit_id,
+                cls.is_closed != is_closed_status,
+                cls.explosives_permit_amendment_guid != amendment_guid_to_exclude
+            )
+        else:
+            and_clause = and_(
+                cls.explosives_permit_id == explosives_permit_id,
+                cls.is_closed != is_closed_status,
+            )
+
+        update_stmt = update(cls)\
+            .where(and_clause)\
+            .values(is_closed = is_closed_status)
+
+        update_result = db.session.execute(update_stmt)
+        db.session.commit()
+        return update_result.rowcount
+
+    @classmethod
     def create(cls,
                mine,
                permit_guid,
                explosives_permit_id,
+               explosives_permit_guid,
                application_date,
                originating_system,
                latitude,
@@ -121,6 +160,7 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
         explosives_permit_amendment = cls(
             permit_guid=permit_guid,
             explosives_permit_id=explosives_permit_id,
+            explosives_permit_guid=explosives_permit_guid,
             application_status=application_status,
             application_number=application_number,
             received_timestamp=received_timestamp,
@@ -176,6 +216,7 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
             explosives_permit_amendment_guid=explosives_permit_amendment_guid, deleted_ind=False).one_or_none()
 
     def update(self,
+               amendment_count,
                explosives_permit_id,
                permit_guid,
                now_application_guid,
@@ -194,9 +235,11 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
                description,
                letter_date,
                letter_body,
+               issue_date,
                explosive_magazines=[],
                detonator_magazines=[],
                documents=[],
+               generate_documents=False,
                add_to_session=True):
 
         # Update simple properties.
@@ -210,6 +253,7 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
         self.expiry_date = expiry_date
         self.latitude = latitude
         self.longitude = longitude
+        self.issue_date = issue_date
 
         # Check for permit closed changes.
         self.is_closed = is_closed
@@ -285,6 +329,7 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
                     or self.application_status == 'APP') and application_status == 'APP':
                 from app.api.document_generation.resources.explosives_permit_amendment_document_resource import ExplosivesPermitAmendmentDocumentResource
                 from app.api.mines.explosives_permit.resources.explosives_permit_document_type import ExplosivesPermitDocumentGenerateResource
+                amendment_info = ExplosivesPermitDocumentType.get_amendment_info(amendment_count, str(issue_date))
 
                 def create_permit_enclosed_letter():
                     mine = self.mine
@@ -298,7 +343,8 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
                         mine.region.regional_contact_office.mailing_address_line_1,
                         'rc_office_mailing_address_line_2':
                         mine.region.regional_contact_office.mailing_address_line_2,
-                        'is_draft': False
+                        'is_draft': False,
+                        'amendment_with_date': amendment_info['amendment_with_date']
                     }
                     explosives_permit_amendment_document_type = ExplosivesPermitDocumentType.get_with_context(
                         'LET', self.explosives_permit_amendment_guid)
@@ -314,7 +360,7 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
                         token, True, False, False)
 
                 def create_issued_permit():
-                    template_data = {'is_draft': False}
+                    template_data = {'is_draft': False, 'amendment': amendment_info['amendment']}
                     explosives_permit_amendment_document_type = ExplosivesPermitDocumentType.get_with_context(
                         'PER', self.explosives_permit_amendment_guid)
                     template_data = explosives_permit_amendment_document_type.transform_template_data(
@@ -329,8 +375,9 @@ class ExplosivesPermitAmendment(SoftDeleteMixin, AuditMixin, PermitMixin, Base):
                         token, True, False, False)
 
                 permit_number = ExplosivesPermit.find_permit_number_by_explosives_permit_id(explosives_permit_id)
-                create_permit_enclosed_letter()
-                create_issued_permit()
+                if generate_documents:
+                    create_permit_enclosed_letter()
+                    create_issued_permit()
 
         self.application_status = application_status
 

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Field } from "redux-form";
 import { Form } from "@ant-design/compatible";
 import "@ant-design/compatible/assets/index.css";
-import { EXPLOSIVES_PERMIT_DOCUMENTS } from "@common/constants/API";
+import { EXPLOSIVES_PERMIT_DOCUMENTS } from "@mds/common/constants/API";
 import FileUpload from "@/components/common/FileUpload";
 import { DOCUMENT, EXCEL } from "@/constants/fileTypes";
 
@@ -11,6 +11,7 @@ const propTypes = {
   onFileLoad: PropTypes.func.isRequired,
   onRemoveFile: PropTypes.func.isRequired,
   mineGuid: PropTypes.string.isRequired,
+  esupGuid: PropTypes.string.isRequired,
 };
 
 export const ExplosivesPermitFileUpload = (props) => {
@@ -20,7 +21,7 @@ export const ExplosivesPermitFileUpload = (props) => {
         id="fileUpload"
         name="fileUpload"
         component={FileUpload}
-        uploadUrl={EXPLOSIVES_PERMIT_DOCUMENTS(props.mineGuid)}
+        uploadUrl={EXPLOSIVES_PERMIT_DOCUMENTS(props.mineGuid, props.esupGuid)}
         acceptedFileTypesMap={{ ...DOCUMENT, ...EXCEL }}
         onFileLoad={props.onFileLoad}
         onRemoveFile={props.onRemoveFile}

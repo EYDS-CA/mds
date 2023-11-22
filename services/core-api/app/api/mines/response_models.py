@@ -207,6 +207,7 @@ PERMIT_AMENDMENT_SHORT_MODEL = api.model(
         'permit_conditions_last_updated_by': fields.String,
         'permit_conditions_last_updated_date': fields.DateTime,
         'has_permit_conditions': fields.Boolean,
+        'vc_credential_exch_state': fields.String,
         'is_generated_in_core': fields.Boolean,
     })
 
@@ -274,6 +275,8 @@ PERMIT_AMENDMENT_MODEL = api.model(
             fields.DateTime,
         'has_permit_conditions':
             fields.Boolean,
+        'vc_credential_exch_state':
+            fields.String,
         'conditions':
             fields.List(PermitCondition),
         'is_generated_in_core':
@@ -291,6 +294,8 @@ PERMIT_MODEL = api.model(
         'permit_no': fields.String,
         'permit_status_code': fields.String,
         'current_permittee': fields.String,
+        'current_permittee_guid': fields.String,
+        'current_permittee_digital_wallet_connection_state': fields.String,
         'project_id': fields.String,
         'permit_amendments': fields.List(fields.Nested(PERMIT_AMENDMENT_MODEL)),
         'remaining_static_liability': fields.Float,
@@ -428,7 +433,8 @@ MINES_MODEL = api.model(
         'verified_status': fields.Nested(MINE_VERIFIED_MODEL, skip_none=True),
         'has_minespace_users': fields.Boolean,
         'mms_alias': fields.String,
-        'mine_work_information': fields.Nested(MINE_WORK_INFORMATION_MODEL, skip_none=True)
+        'mine_work_information': fields.Nested(MINE_WORK_INFORMATION_MODEL, skip_none=True),
+        'latest_mine_status': fields.Nested(STATUS_MODEL)
     })
 
 MINE_MODEL = api.inherit(

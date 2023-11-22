@@ -3,7 +3,7 @@ import {
   CONSEQUENCE_CLASSIFICATION_RANK_HASH,
   DATETIME_TZ_FORMAT,
   DEFAULT_TIMEZONE,
-} from "@common/constants/strings";
+} from "@mds/common/constants/strings";
 import { get, isEmpty, isNil, sortBy } from "lodash";
 import { createNumberMask } from "redux-form-input-masks";
 import moment from "moment-timezone";
@@ -111,6 +111,16 @@ export const formatPostalCode = (code) => code && code.replace(/.{3}$/, " $&");
 
 export const formatTitleString = (input) =>
   input.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+
+export const formatSnakeCaseToSentenceCase = (text: string | null) => {
+  if (!text || !text.length) {
+    return "";
+  }
+  const words = text
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
+  return words.join(" ");
+};
 
 export const currencyMask = createNumberMask({
   prefix: "$",

@@ -1,5 +1,5 @@
 import { Button, Dropdown, Modal } from "antd";
-import { CARAT } from "@/constants/assets";
+import { CaretDownOutlined } from "@ant-design/icons";
 import React, { FC } from "react";
 import { ITableAction } from "@/components/common/CoreTableCommonColumns";
 
@@ -45,12 +45,7 @@ const ActionMenu: FC<ActionMenuProps> = ({ record, actionItems, category }) => {
     <Dropdown menu={{ items }} placement="bottomLeft">
       <Button type="text" className="permit-table-button">
         Actions
-        <img
-          className="padding-sm--right icon-svg-filter"
-          src={CARAT}
-          alt={`${category} Actions`}
-          style={{ paddingLeft: "5px" }}
-        />
+        <CaretDownOutlined alt={`${category} Actions`} />
       </Button>
     </Dropdown>
   );

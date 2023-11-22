@@ -1,4 +1,5 @@
 from datetime import datetime
+from flask import current_app
 import re
 
 from sqlalchemy import func, case, and_
@@ -10,6 +11,7 @@ from sqlalchemy.orm import validates
 from app.extensions import db
 from app.api.utils.models_mixins import SoftDeleteMixin, AuditMixin, Base
 from app.api.parties.party.models.address import Address
+from app.api.verifiable_credentials.models.connection import PartyVerifiableCredentialConnection
 
 MAX_NAME_LENGTH = 100
 
@@ -68,6 +70,21 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
         uselist=False,
         remote_side=[party_guid],
         foreign_keys=[organization_guid])
+    
+    digital_wallet_invitations = db.relationship(
+        'PartyVerifiableCredentialConnection',
+        lazy='select',
+        uselist=True,
+        order_by='desc(PartyVerifiableCredentialConnection.update_timestamp)',)
+        
+    active_digital_wallet_connection = db.relationship(
+        'PartyVerifiableCredentialConnection',
+        lazy='select',
+        uselist=False,
+        remote_side=[party_guid],
+        primaryjoin=
+        'and_(PartyVerifiableCredentialConnection.party_guid == Party.party_guid, PartyVerifiableCredentialConnection.connection_state==\'active\')')
+
 
     @hybrid_property
     def name(self):
@@ -105,6 +122,18 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
             if (not x.end_date or x.end_date > datetime.utcnow().date())
         ]
 
+    @hybrid_property
+    def digital_wallet_connection_status(self):
+        dwi = list(set([i.connection_state for i in self.digital_wallet_invitations if i.connection_state]))
+        dwi.sort() 
+        if dwi:
+            if "completed" in dwi or "active" in dwi:
+                return "active"
+            else:       
+                return dwi[0]
+        else:
+            return None
+
     def __repr__(self):
         return '<Party %r>' % self.party_guid
 
@@ -128,7 +157,6 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
             'postnominal_letters': self.postnominal_letters,
             'idir_username': self.idir_username,
             'organization_guid': str(self.organization_guid) if self.organization_guid else None,
-            'job_title_code': self.job_title_code
         }
 
         if self.party_type_code == 'PER':
