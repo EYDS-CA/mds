@@ -5,10 +5,13 @@ import { Button, Col, Row } from "antd";
 import { uniqBy, flattenDeep } from "lodash";
 import * as Strings from "@mds/common/constants/strings";
 import { formatDate } from "@common/utils/helpers";
-import CoreTable from "@/components/common/CoreTable";
+import CoreTable from "@mds/common/components/common/CoreTable";
 import CustomPropTypes from "@/customPropTypes";
 import * as router from "@/constants/routes";
-import { renderCategoryColumn, renderTextColumn } from "@/components/common/CoreTableCommonColumns";
+import {
+  renderCategoryColumn,
+  renderTextColumn,
+} from "@mds/common/components/common/CoreTableCommonColumns";
 
 const propTypes = {
   projects: PropTypes.arrayOf(CustomPropTypes.project).isRequired,
@@ -44,7 +47,7 @@ const transformRowData = (projects, mineCommodityHash) =>
       .map((contact) => contact.name)[0],
     project_lead_name: project.project_lead_name,
     commodity:
-      project.mine.mine_type && project.mine.mine_type.length > 0
+      project?.mine?.mine_type && project.mine.mine_type.length > 0
         ? uniqBy(
             flattenDeep(
               project.mine.mine_type.reduce((result, type) => {

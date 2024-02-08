@@ -54,6 +54,7 @@ import MineIncident from "@/components/mine/Incidents/MineIncident";
 import MineReportTailingsInfo from "@/components/mine/Tailings/MineReportTailingsInfo";
 import MineTailingsDetailsPage from "@/components/mine/Tailings/MineTailingsDetailsPage";
 import DamsDetailsPage from "@/components/mine/Tailings/DamsDetailsPage";
+import ReportPage from "@/components/mine/Reports/ReportPage";
 
 const withoutDefaultParams = (params, defaults) => {
   const newParams = JSON.parse(JSON.stringify(params));
@@ -255,16 +256,22 @@ export const MINE_TAILINGS = {
 };
 
 export const MINE_TAILINGS_DETAILS = {
-  route: "/mine-dashboard/:id/permits-and-approvals/tailings/:tailingsStorageFacilityGuid/:tab",
-  dynamicRoute: (tsfGuid, mineGuid, tab = "basic-information") =>
-    `/mine-dashboard/${mineGuid}/permits-and-approvals/tailings/${tsfGuid}/${tab}`,
+  route:
+    "/mine-dashboard/:id/permits-and-approvals/tailings/:tailingsStorageFacilityGuid/:tab/:userAction",
+  dynamicRoute: (tsfGuid, mineGuid, tab = "basic-information", isEditMode = false) =>
+    `/mine-dashboard/${mineGuid}/permits-and-approvals/tailings/${tsfGuid}/${tab}/${
+      isEditMode ? "edit" : "view"
+    }`,
   component: MineTailingsDetailsPage,
 };
 
 export const EDIT_TAILINGS_STORAGE_FACILITY = {
-  route: "/mine-dashboard/:id/permits-and-approvals/tailings/:tailingsStorageFacilityGuid/:tab",
-  dynamicRoute: (tsfGuid, mineGuid, tab = "basic-information") =>
-    `/mine-dashboard/${mineGuid}/permits-and-approvals/tailings/${tsfGuid}/${tab}`,
+  route:
+    "/mine-dashboard/:id/permits-and-approvals/tailings/:tailingsStorageFacilityGuid/:tab/:userAction",
+  dynamicRoute: (tsfGuid, mineGuid, tab = "basic-information", isEditMode = false) =>
+    `/mine-dashboard/${mineGuid}/permits-and-approvals/tailings/${tsfGuid}/${tab}/${
+      isEditMode ? "edit" : "view"
+    }`,
   component: MineTailingsDetailsPage,
 };
 
@@ -330,6 +337,15 @@ export const MINE_PERMIT_REQUIRED_REPORTS = {
   dynamicRoute: (id, filterParams) =>
     `/mine-dashboard/${id}/reports/permit-required-reports?${queryString.stringify(filterParams)}`,
   component: PermitRequiredReports,
+};
+
+export const REPORT_VIEW_EDIT = {
+  route: "/dashboard/reporting/mine/:mineGuid/code-required-reports/:reportGuid",
+  dynamicRoute: (mineGuid: string, reportGuid: string) =>
+    `/dashboard/reporting/mine/${mineGuid}/code-required-reports/${reportGuid}`,
+  hashRoute: (mineGuid: string, reportGuid: string, link) =>
+    `/dashboard/reporting/mine/${mineGuid}/code-required-reports/${reportGuid}/${link}`,
+  component: ReportPage,
 };
 
 export const MINE_TAILINGS_REPORTS = {
@@ -497,16 +513,24 @@ export const ORGBOOK_CREDENTIAL_URL = (sourceId, credentialId) =>
 
 export const ADD_DAM = {
   route:
-    "/mine-dashboard/:mineGuid/tailings-storage-facility/:tailingsStorageFacilityGuid/dam/new/",
-  dynamicRoute: (mineGuid, tailingsStorageFacilityGuid) =>
-    `/mine/${mineGuid}/tailings-storage-facility/${tailingsStorageFacilityGuid}/dam/new/`,
+    "/mine-dashboard/:mineGuid/tailings-storage-facility/:tailingsStorageFacilityGuid/dam/:parentTSFFormMode/:userAction",
+  dynamicRoute: (mineGuid, tailingsStorageFacilityGuid, editMode = "edit", userAction = "newDam") =>
+    `/mine/${mineGuid}/tailings-storage-facility/${tailingsStorageFacilityGuid}/dam/${editMode}/${userAction}`,
   component: DamsDetailsPage,
 };
 
 export const EDIT_DAM = {
   route:
-    "/mine-dashboard/:mineGuid/tailings-storage-facility/:tailingsStorageFacilityGuid/dam/:damGuid",
-  dynamicRoute: (mineGuid, tailingsStorageFacilityGuid, damGuid) =>
-    `/mine-dashboard/${mineGuid}/tailings-storage-facility/${tailingsStorageFacilityGuid}/dam/${damGuid}`,
+    "/mine-dashboard/:mineGuid/tailings-storage-facility/:tailingsStorageFacilityGuid/:parentTSFFormMode/:userAction/dam/:damGuid",
+  dynamicRoute: (
+    mineGuid,
+    tailingsStorageFacilityGuid,
+    damGuid,
+    isEditMode = false,
+    canEditDam = false
+  ) =>
+    `/mine-dashboard/${mineGuid}/tailings-storage-facility/${tailingsStorageFacilityGuid}/${
+      isEditMode ? "edit" : "view"
+    }/${canEditDam ? "editDam" : "viewDam"}/dam/${damGuid}`,
   component: DamsDetailsPage,
 };

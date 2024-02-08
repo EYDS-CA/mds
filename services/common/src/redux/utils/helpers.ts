@@ -9,15 +9,16 @@ import { createNumberMask } from "redux-form-input-masks";
 import moment from "moment-timezone";
 import { reset } from "redux-form";
 import { ItemMap } from "@mds/common";
+import { IMineReportDefinition } from "@mds/common/interfaces";
 
 /**
  * Helper function to clear redux form after submission
  *
  * Usage:
  *  export default (reduxForm({
-    form: formName,
-    onSubmitSuccess: resetForm(formName),
-  })(Component)
+ form: formName,
+ onSubmitSuccess: resetForm(formName),
+ })(Component)
  );
  *
  */
@@ -146,7 +147,7 @@ export const isDateRangeValid = (start, end) => {
   return Math.sign(milliseconds) !== -1;
 };
 
-export const dateSorter = (key: string) => (a: any, b: any) => {
+export const dateSorter = (key: string, ascending = true) => (a: any, b: any) => {
   if (a[key] === b[key]) {
     return 0;
   }
@@ -156,12 +157,16 @@ export const dateSorter = (key: string) => (a: any, b: any) => {
   if (!b[key]) {
     return -1;
   }
-  return moment(a[key]).diff(moment(b[key]));
+
+  return ascending ? moment(a[key]).diff(moment(b[key])) : moment(b[key]).diff(moment(a[key]));
 };
 
 export const nullableStringSorter = (path) => (a, b) => {
   const aObj = get(a, path, null);
   const bObj = get(b, path, null);
+  if (typeof aObj === "number" && typeof bObj === "number") {
+    return aObj - bObj;
+  }
   if (aObj === bObj) {
     return 0;
   }
@@ -180,8 +185,9 @@ export const sortListObjectsByPropertyLocaleCompare = (list, property) =>
 export const sortListObjectsByPropertyDate = (list, property) => list.sort(dateSorter(property));
 
 // Case insensitive filter for a SELECT field by label string
+// NOTE: this is for the NEW ant design component in common, which has option.label, not option.children
 export const caseInsensitiveLabelFilter = (input, option) =>
-  option.children.toLowerCase().includes(input.toLowerCase());
+  option.label.toLowerCase().includes(input.toLowerCase());
 
 // function taken directly from redux-forms (https://redux-form.com/6.0.0-rc.1/examples/normalizing)
 // automatically adds dashes to phone number
@@ -328,6 +334,16 @@ export const formatComplianceCodeValueOrLabel = (code, showDescription) => {
   const formattedDescription = showDescription ? ` - ${description}` : "";
 
   return `${section}${formattedSubSection}${formattedParagraph}${formattedSubParagraph}${formattedDescription}`;
+};
+
+export const formatComplianceCodeReportName = (report: IMineReportDefinition) => {
+  const { section, sub_section, paragraph, sub_paragraph } = report?.compliance_articles[0];
+  const formattedSubSection = sub_section ? `.${sub_section}` : "";
+  const formattedParagraph = paragraph ? `.${paragraph}` : "";
+  const formattedSubParagraph = sub_paragraph !== null ? `.${sub_paragraph}` : "";
+  const formattedReportName = ` - ${report.report_name}`;
+
+  return `${section}${formattedSubSection}${formattedParagraph}${formattedSubParagraph}${formattedReportName}`;
 };
 
 // function to flatten an object for nested items in redux form

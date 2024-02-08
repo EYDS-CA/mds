@@ -46,6 +46,13 @@ be:
 	@docker-compose $(DC_FILE) build --force-rm --no-cache --parallel backend
 	@docker-compose $(DC_FILE) up -d --build backend
 
+cypress-keycloak:
+	@docker-compose $(DC_FILE) build --force-rm --no-cache keycloak
+	@docker-compose $(DC_FILE) up -d keycloak
+
+run-cypress-core:
+	cd services/core-web && npx cypress open
+
 testbe:
 	@echo "+\n++ Running tests in backend container ...\n+"
 	@docker-compose $(DC_FILE) exec backend pytest
@@ -65,6 +72,10 @@ testms:
 ms:
 	@echo "+\n++ Building minespace ...\n+"
 	@docker-compose $(DC_FILE) up -d minespace
+
+permits:
+	@echo "+\n++ Running Permit Service ...\n+"
+	@docker-compose -f services/permits/docker-compose.yaml up -d
 
 extra:
 	@echo "+\n++ Building tertiary services ...\n+"

@@ -4,8 +4,8 @@ import PropTypes from "prop-types";
 import * as Strings from "@mds/common/constants/strings";
 import { TRASHCAN, EDIT_OUTLINE_VIOLET } from "@/constants/assets";
 import CustomPropTypes from "@/customPropTypes";
-import CoreTable from "../common/CoreTable";
-import { renderTextColumn } from "../common/CoreTableCommonColumns";
+import CoreTable from "@mds/common/components/common/CoreTable";
+import { renderTextColumn } from "@mds/common/components/common/CoreTableCommonColumns";
 
 const propTypes = {
   minespaceUsers: PropTypes.arrayOf(CustomPropTypes.minespaceUser),

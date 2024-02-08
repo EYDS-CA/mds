@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from "react";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { compose } from "redux";
 import {
   Field,
@@ -31,32 +31,36 @@ import {
   maxLength,
   number,
   required,
-  validateSelectOptions,
 } from "@common/utils/Validate";
 import { createDropDownList, formatDate, resetForm } from "@common/utils/helpers";
-import {
-  getAllPartyRelationships,
-  getPartyRelationships,
-} from "@mds/common/redux/selectors/partiesSelectors";
+import { getAllPartyRelationships } from "@mds/common/redux/selectors/partiesSelectors";
 import { getPermits } from "@mds/common/redux/selectors/permitSelectors";
+import { getIsFormLoading } from "@mds/common/redux/reducers/modalReducer";
 import { renderConfig } from "@/components/common/config";
 import * as FORM from "@/constants/forms";
-import ExplosivesPermitMap from "@/components/maps/ExplosivesPermitMap";
 import DocumentCategoryForm from "@/components/Forms/DocumentCategoryForm";
 import MagazineFormNew from "@/components/Forms/ExplosivesPermit/MagazineFormNew";
 import {
   generatedDocColumns,
   supportingDocColumns,
-} from "@/components/modalContent/ExplosivesPermitViewModal";
+} from "@mds/common/components/explosivespermits/ExplosivesPermitViewModal";
+import ExplosivesPermitMap from "@mds/common/components/explosivespermits/ExplosivesPermitMap";
+
+export enum EsupFormMode {
+  select_type_modal,
+  create_new,
+  create_historic,
+  amend,
+  edit_document,
+}
 
 interface ExplosivesPermitFormProps {
   closeModal: () => void;
   initialValues: any;
   mineGuid: string;
-  isProcessed: boolean;
   documentTypeDropdownOptions: IOption[];
   isPermitTab: boolean;
-  isAmendment?: boolean;
+  formMode?: EsupFormMode;
   inspectors: IGroupedDropdownList[];
   documents: IExplosivesPermitDocument[];
   dispatch: any;
@@ -66,7 +70,6 @@ interface StateProps {
   permits: IPermit[];
   mines_permit_guid: string;
   formValues: IExplosivesPermit;
-  partyRelationships: IPermitPartyRelationship[];
   allPartyRelationships: IPermitPartyRelationship[];
   noticeOfWorkApplications: IimportedNOWApplication[];
   submitting: boolean;
@@ -78,22 +81,21 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
   InjectedFormProps<any>> = ({
   initialValues = {},
   mines_permit_guid = null,
-  isProcessed = false,
-  isAmendment = false,
+  formMode = EsupFormMode.select_type_modal,
   documents,
   ...props
 }) => {
   const [generatedDocs, setGeneratedDocs] = useState([]);
   const [supportingDocs, setSupportingDocs] = useState([]);
 
-  const partiesData = props.isPermitTab ? props.allPartyRelationships : props.partyRelationships;
-  const mineManagers = partiesData.filter(
-    ({ mine_party_appt_type_code }) => mine_party_appt_type_code === "MMG"
+  const [isHistoric, setIsHistoric] = useState<boolean>(!initialValues?.explosives_permit_id);
+  const [radioSelection, setRadioSelection] = useState<EsupFormMode>(
+    props.isPermitTab ? EsupFormMode.create_historic : EsupFormMode.create_new
   );
-  const permittee = partiesData.filter(
-    ({ mine_party_appt_type_code, related_guid }) =>
-      mine_party_appt_type_code === "PMT" && related_guid === mines_permit_guid
-  );
+  const [currentFormMode, setCurrentFormMode] = useState<EsupFormMode>(formMode);
+  const [isAmendSelected, setIsAmendSelected] = useState<boolean>(false);
+
+  const isDocumentUploading = useSelector(getIsFormLoading);
 
   useEffect(() => {
     if (documents) {
@@ -109,16 +111,36 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
     }
   }, [documents]);
 
-  const dropdown = (array) =>
-    array.length > 0
-      ? array.map((item) => {
-          const endDate = formatDate(item.end_date) || "Present";
-          return {
-            value: item.mine_party_appt_id,
-            label: `${item.party.name} (${formatDate(item.start_date)} - ${endDate})`,
-          };
-        })
-      : [];
+  useEffect(() => {
+    if (currentFormMode === EsupFormMode.select_type_modal) {
+      props.dispatch(change(FORM.EXPLOSIVES_PERMIT_NEW, "is_historic", isHistoric));
+    }
+  }, [isHistoric]);
+
+  useEffect(() => {
+    if (currentFormMode === EsupFormMode.select_type_modal) {
+      setIsHistoric(radioSelection === EsupFormMode.create_historic);
+      setIsAmendSelected(radioSelection === EsupFormMode.amend);
+    }
+  }, [radioSelection]);
+
+  const partiesData = props.allPartyRelationships;
+  const mineManagers = partiesData.filter(
+    ({ mine_party_appt_type_code }) => mine_party_appt_type_code === "MMG"
+  );
+  const permittee = partiesData.filter(
+    ({ mine_party_appt_type_code, related_guid }) =>
+      mine_party_appt_type_code === "PMT" && related_guid === mines_permit_guid
+  );
+
+  const dropdown = (array = []) =>
+    array.map((item) => {
+      const endDate = formatDate(item.end_date) || "Present";
+      return {
+        value: item.mine_party_appt_id,
+        label: `${item.party.name} (${formatDate(item.start_date)} - ${endDate})`,
+      };
+    });
   const mineManagersDropdown = dropdown(mineManagers);
   const permitteeDropdown = dropdown(permittee);
   const permitDropdown = createDropDownList(props.permits, "permit_no", "permit_guid");
@@ -128,32 +150,29 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
     "now_application_guid"
   );
 
-  const [isHistoric, setIsHistoric] = useState<boolean>(!initialValues?.explosives_permit_id);
-
-  const disabled = isProcessed;
-
-  const [radioSelection, setRadioSelection] = useState<number>(props.isPermitTab ? 1 : 2);
-  const [parentView, setParentView] = useState<boolean>(!isAmendment);
-  const [isAmendSelected, setIsAmend] = useState<boolean>(false);
-
-  useEffect(() => {
-    props.dispatch(change(FORM.EXPLOSIVES_PERMIT_NEW, "is_historic", isHistoric));
-  }, [isHistoric]);
-
-  useEffect(() => {
-    setIsHistoric(radioSelection === 1);
-  }, []);
-
-  const handleRadioChange = (e) => {
-    setRadioSelection(e.target.value);
-    setIsHistoric(e.target.value === 1);
-    setIsAmend(e.target.value === 3);
-  };
-
   const handleOpenAddExplosivesPermitModal = (e) => {
     e.preventDefault();
-    setParentView(false);
+    // selecting amend DOES NOT take you to the amend screen (no record)
+    const isAmend = radioSelection === EsupFormMode.amend;
+    if (!isAmend) {
+      setCurrentFormMode(radioSelection);
+    }
+    setIsAmendSelected(isAmend);
   };
+
+  // go to the issue modal next unless adding documents or creating historic record
+  // controlled in parent, this is just for button text.
+  const showIssueModal = ![EsupFormMode.edit_document, EsupFormMode.create_historic].includes(
+    currentFormMode
+  );
+  const disabled = formMode === EsupFormMode.edit_document;
+  const showBackButton = formMode === EsupFormMode.select_type_modal;
+  const isAmendment = formMode === EsupFormMode.amend || initialValues.isAmendment;
+
+  const cancelButtonText = showBackButton ? "Back" : "Close";
+  const cancelButtonFunc = showBackButton
+    ? () => setCurrentFormMode(EsupFormMode.select_type_modal)
+    : props.closeModal;
 
   const descriptionListElement = (
     <div>
@@ -218,11 +237,17 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
           <Radio.Group
             className="vertical-radio-group"
             value={radioSelection}
-            onChange={handleRadioChange}
+            onChange={(e) => setRadioSelection(e.target.value)}
           >
-            <Radio value={1}>Add an existing explosive storage and use permit</Radio>
-            <Radio value={2}>Create new explosive storage and use permit</Radio>
-            <Radio value={3}>Amend an existing explosive storage and use permit</Radio>
+            <Radio value={EsupFormMode.create_historic}>
+              Add an existing explosive storage and use permit
+            </Radio>
+            <Radio value={EsupFormMode.create_new}>
+              Create new explosive storage and use permit
+            </Radio>
+            <Radio value={EsupFormMode.amend}>
+              Amend an existing explosive storage and use permit
+            </Radio>
           </Radio.Group>
         </div>
       </div>
@@ -302,17 +327,28 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
     modalTitle: "Amend Explosives Storage and Use Permit",
   };
 
-  const renderDynamicText = () => {
-    if (isAmendment) {
-      return amendPermitText;
-    } else if (isHistoric) {
-      return newHistoricPermitText;
-    } else {
-      return newPermitText;
-    }
+  const editDocumentText = {
+    alertTitle: "You are adding documents to an Explosives Storage and Use Permit",
+    alertDescription: (
+      <ul>
+        <li>This action does not create an amendment record for this permit</li>
+        <li>
+          To <strong>amend</strong> an explosives storage and use permit, open it in Create
+          Amendment View
+        </li>
+      </ul>
+    ),
+    modalTitle: "Add Documents to Permit",
   };
 
-  const dynamicText = renderDynamicText();
+  const textOptions = {
+    [EsupFormMode.amend]: amendPermitText,
+    [EsupFormMode.create_new]: newPermitText,
+    [EsupFormMode.create_historic]: newHistoricPermitText,
+    [EsupFormMode.edit_document]: editDocumentText,
+  };
+
+  const dynamicText = textOptions[currentFormMode] ?? textOptions[EsupFormMode.create_new];
 
   const permitForm = (
     <Form layout="vertical" onSubmit={props.handleSubmit}>
@@ -404,7 +440,7 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
                   label="Mines Act Permit*"
                   component={renderConfig.SELECT}
                   data={permitDropdown}
-                  validate={[required, validateSelectOptions(permitDropdown, true)]}
+                  validate={[required]}
                   disabled={disabled || isAmendment}
                 />
               </Form.Item>
@@ -417,7 +453,6 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
               placeholder="Select a NoW"
               label="Notice of Work Number"
               component={renderConfig.SELECT}
-              validate={[validateSelectOptions(nowDropdown, true)]}
               data={nowDropdown}
               disabled={disabled}
             />
@@ -431,11 +466,7 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
                   label={isHistoric ? "Mine Manager" : "Mine Manager*"}
                   placeholder="Select Mine Manager"
                   partyLabel="Mine Manager"
-                  validate={
-                    isHistoric
-                      ? [validateSelectOptions(mineManagersDropdown, true)]
-                      : [required, validateSelectOptions(mineManagersDropdown, true)]
-                  }
+                  validate={isHistoric ? [] : [required]}
                   component={renderConfig.SELECT}
                   data={mineManagersDropdown}
                   disabled={disabled}
@@ -450,7 +481,7 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
                   label="Permittee*"
                   component={renderConfig.SELECT}
                   placeholder="Select Permittee"
-                  validate={[required, validateSelectOptions(permitteeDropdown, true)]}
+                  validate={[required]}
                   data={permitteeDropdown}
                   disabled={disabled || !mines_permit_guid}
                 />
@@ -577,17 +608,31 @@ export const ExplosivesPermitFormNew: FC<ExplosivesPermitFormProps &
         </Col>
       </Row>
       <Row className="flex-between form-button-container-row">
-        <Button onClick={() => setParentView(true)} className="full-mobile" type="ghost">
-          Back
-        </Button>
-        <Button type="primary" className="full-mobile" htmlType="submit" loading={props.submitting}>
-          {isHistoric ? "Submit" : "Finish And Generate Certificate"}
+        <Popconfirm
+          placement="topRight"
+          title={`Are you sure you want to cancel?`}
+          okText="Yes"
+          cancelText="No"
+          onConfirm={cancelButtonFunc}
+        >
+          <Button className="full-mobile" type="ghost">
+            {cancelButtonText}
+          </Button>
+        </Popconfirm>
+        <Button
+          type="primary"
+          className="full-mobile"
+          htmlType="submit"
+          style={{ marginLeft: "auto" }}
+          loading={props.submitting || isDocumentUploading}
+        >
+          {showIssueModal ? "Finish And Generate Certificate" : "Submit"}
         </Button>
       </Row>
     </Form>
   );
 
-  return parentView ? selectPermitTypeForm : permitForm;
+  return currentFormMode === EsupFormMode.select_type_modal ? selectPermitTypeForm : permitForm;
 };
 
 const selector = formValueSelector(FORM.EXPLOSIVES_PERMIT_NEW);
@@ -595,7 +640,6 @@ const mapStateToProps = (state) => ({
   permits: getPermits(state),
   mines_permit_guid: selector(state, "permit_guid"),
   formValues: getFormValues(FORM.EXPLOSIVES_PERMIT_NEW)(state),
-  partyRelationships: getPartyRelationships(state),
   allPartyRelationships: getAllPartyRelationships(state),
   noticeOfWorkApplications: getNoticeOfWorkList(state),
 });

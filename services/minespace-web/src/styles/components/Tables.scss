@@ -16,6 +16,10 @@
 }
 
 // actions menu
+.actions-column {
+  text-align: right;
+  width: 0; // effectively "fit-content"
+}
 
 .actions-dropdown-button {
   border: none;
@@ -75,6 +79,12 @@
   }
 }
 
+.break-word {
+  word-break: break-word !important;
+  overflow: initial !important;
+  white-space: initial !important;
+}
+
 // buttons within tables
 td.ant-table-cell {
   vertical-align: middle;
@@ -83,4 +93,22 @@ td.ant-table-cell {
     margin-top: 0;
     margin-bottom: 0;
   }
+}
+
+.diff-table th {
+  background-color: #F4F0F0 !important;
+}
+
+.diff-table td {
+  background-color: #fff !important;
+}
+
+.diff-table-row,
+.diff-table-row:hover,
+.ant-table-cell-row-hover {
+  background: none;
+}
+
+.diff-table-row>td {
+  vertical-align: top;
 }

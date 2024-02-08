@@ -7,7 +7,7 @@ import { useIdleTimer } from "react-idle-timer";
 import { render } from "react-dom";
 import { Provider } from "react-redux";
 import { logoutUser } from "@mds/common/redux/actions/authenticationActions";
-import keycloak, { keycloakInitConfig } from "./keycloak";
+import keycloak, { keycloakInitConfig } from "@mds/common/keycloak";
 import Loading from "@/components/common/Loading";
 
 import App, { store } from "./App";
@@ -15,6 +15,8 @@ import "antd/dist/antd.less";
 import "./styles/index.scss";
 import fetchEnv from "./fetchEnv";
 import FeatureFlagProvider from "@mds/common/providers/featureFlags/featureFlag.provider";
+import { registerLicense } from "@syncfusion/ej2-base";
+import { ENVIRONMENT } from "@mds/common";
 
 const idleTimeout = 5 * 60_000;
 const refreshTokenBufferSeconds = 60;
@@ -24,6 +26,7 @@ export const Index = () => {
 
   fetchEnv().then(() => {
     setEnvironment(true);
+    registerLicense(ENVIRONMENT.syncfusionLicense);
   });
 
   const { isIdle } = useIdleTimer({

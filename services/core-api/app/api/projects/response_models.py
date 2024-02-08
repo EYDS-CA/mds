@@ -1,13 +1,65 @@
 from app.extensions import api
-from flask_restplus import fields, marshal
+from flask_restx import fields, marshal
 
 from app.api.mines.response_models import MINE_DOCUMENT_MODEL, MINES_MODEL
-
+from app.api.parties.response_models import PARTY
 
 class Requirement(fields.Raw):
     def format(self, value):
         return marshal(value, REQUIREMENTS_MODEL)
 
+IRT_MODEL_ATTRIBUTES = api.model(
+    'InformationRequirementsTable', {
+        'irt_guid': fields.String,
+        'status_code': fields.String
+    })
+
+MAJOR_MINE_APPLICATION_MODEL_ATTRIBUTES = api.model(
+    'MajorMineApplication', {
+        'major_mine_application_guid': fields.String,
+        'status_code': fields.String
+    }
+)
+
+PROJECT_SUMMARY_MODEL_ATTRIBUTES = api.model(
+    'ProjectSummary', {
+        'project_summary_guid': fields.String,
+        'status_code': fields.String
+    }
+)
+
+PROJECT_CONTACT_MODEL_ATTRIBUTES = api.model(
+    'ProjectContact', {
+        'name': fields.String
+    }
+)
+
+PROJECT_MODEL_ATTRIBUTES = api.model(
+    'ProjectAttributes', {
+        'project_guid': fields.String,
+        'project_title': fields.String,
+        'proponent_project_id': fields.String,
+        'contacts': fields.List(fields.Nested(PROJECT_CONTACT_MODEL_ATTRIBUTES)),
+        'project_summary': fields.Nested(PROJECT_SUMMARY_MODEL_ATTRIBUTES),
+        'major_mine_application': fields.Nested(MAJOR_MINE_APPLICATION_MODEL_ATTRIBUTES),
+        'information_requirements_table': fields.Nested(IRT_MODEL_ATTRIBUTES),
+        'update_timestamp': fields.DateTime
+    }
+)
+
+PROJECT_LINK_MODEL = api.model(
+    'ProjectLink', {
+        'project_link_guid': fields.String,
+        'project_guid': fields.String,
+        'related_project_guid': fields.String,
+        'update_user': fields.String,
+        'update_timestamp': fields.DateTime,
+        'create_user': fields.String,
+        'create_timestamp': fields.DateTime,
+        'project': fields.Nested(PROJECT_MODEL_ATTRIBUTES),
+        'related_project': fields.Nested(PROJECT_MODEL_ATTRIBUTES)
+    }
+)
 
 PROJECT_SUMMARY_DOCUMENT_MODEL = api.inherit('ProjectSummaryDocument', MINE_DOCUMENT_MODEL, {
     'project_summary_id': fields.Integer,
@@ -87,7 +139,16 @@ PROJECT_SUMMARY_MODEL = api.model(
         'update_user': fields.String,
         'update_timestamp': fields.DateTime,
         'create_user': fields.String,
-        'create_timestamp': fields.DateTime
+        'create_timestamp': fields.DateTime,
+        'agent': fields.Nested(PARTY),
+        'is_agent': fields.Boolean,
+        'is_legal_land_owner': fields.Boolean,
+        'is_crown_land_federal_or_provincial': fields.Boolean,
+        'is_landowner_aware_of_discharge_application': fields.Boolean,
+        'has_landowner_received_copy_of_application': fields.Boolean,
+        'legal_land_owner_name': fields.String,
+        'legal_land_owner_contact_number': fields.String,
+        'legal_land_owner_email_address': fields.String
     })
 
 PROJECT_CONTACT_MODEL = api.model(
@@ -246,7 +307,8 @@ PROJECT_MODEL = api.model(
         'update_user': fields.String,
         'update_timestamp': fields.DateTime,
         'create_user': fields.String,
-        'create_timestamp': fields.DateTime
+        'create_timestamp': fields.DateTime,
+        'project_links': fields.List(fields.Nested(PROJECT_LINK_MODEL))
     })
 
 PROJECT_MINE_LIST_MODEL = api.model(

@@ -7,16 +7,15 @@ import { Provider } from "react-redux";
 
 import { ReactKeycloakProvider } from "@react-keycloak/web";
 import { useIdleTimer } from "react-idle-timer";
-import App from "./App";
+import App, { store } from "./App";
 import "antd/dist/antd.less";
 import "./styles/index.scss";
 import fetchEnv from "./fetchEnv";
-import configureStore from "./store/configureStore";
-import keycloak, { keycloakInitConfig } from "./keycloak";
+import keycloak, { keycloakInitConfig } from "@mds/common/keycloak";
 import { unAuthenticateUser } from "./actionCreators/authenticationActionCreator";
 import FeatureFlagProvider from "@mds/common/providers/featureFlags/featureFlag.provider";
-
-export const store = configureStore();
+import { registerLicense } from "@syncfusion/ej2-base";
+import { ENVIRONMENT } from "@mds/common";
 
 // 5 minutes before user is inactive- across tabs
 const idleTimeout = 5 * 60_000;
@@ -28,6 +27,7 @@ const Index = () => {
 
   fetchEnv().then(() => {
     setEnvironment(true);
+    registerLicense(ENVIRONMENT.syncfusionLicense);
   });
 
   const { isIdle } = useIdleTimer({

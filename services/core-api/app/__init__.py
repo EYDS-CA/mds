@@ -6,10 +6,12 @@ from logging.config import dictConfig
 
 from flask import Flask, request, current_app
 from flask_cors import CORS
-from flask_restplus import Resource, apidoc
+from flask_restx import Resource
+from flask_restx.apidoc import apidoc
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.date_time_helper import get_formatted_current_time
 from app.flask_jwt_oidc_local.exceptions import AuthError
 from werkzeug.exceptions import Forbidden
 import traceback
@@ -36,6 +38,7 @@ from app.api.notice_of_departure.namespace import api as notice_of_departure_api
 from app.api.activity.namespace import api as activity_api
 from app.api.dams.namespace import api as dams_api
 from app.api.verifiable_credentials.namespace import api as verifiable_credential_api
+from app.api.report_error.namespace import api as report_error_api
 
 from app.commands import register_commands
 from app.config import Config
@@ -46,6 +49,7 @@ from app.api.utils.feature_flag import Feature, is_feature_enabled
 from sqlalchemy.sql import text
 from app.tasks.celery import celery
 from app.tasks.celery_health_check import HealthCheckProbe
+from app.api.exception.mds_core_api_exceptions import MDSCoreAPIException
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -59,6 +63,19 @@ def create_app(test_config=None):
     trace.set_tracer_provider(TracerProvider())
 
     FlaskInstrumentor().instrument_app(app)
+
+    @app.after_request
+    def log_response_info(response):
+        # Get request information
+        method = request.method
+        path = request.path
+        ip_address = request.remote_addr
+        http_version = request.environ.get('SERVER_PROTOCOL', 'HTTP/1.1')
+        if path != '/health':
+            # Log combined request and response information
+            current_app.logger.info(f'{ip_address} - - [{get_formatted_current_time()}] "{method} {path} {http_version}" {response.status_code} -')
+
+        return response
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -116,7 +133,7 @@ def register_extensions(app, test_config=None):
     root_api_namespace.app = app
 
     # Overriding swaggerUI base path to serve content under a prefix
-    apidoc.apidoc.static_url_path = '{}/swaggerui'.format(Config.BASE_PATH)
+    apidoc.static_url_path = '{}/swaggerui'.format(Config.BASE_PATH)
 
     root_api_namespace.init_app(app)
 
@@ -174,8 +191,8 @@ def register_routes(app):
     root_api_namespace.add_namespace(notice_of_departure_api)
     root_api_namespace.add_namespace(activity_api)
     root_api_namespace.add_namespace(dams_api)
-    if is_feature_enabled(Feature.TRACTION_VERIFIABLE_CREDENTIALS):
-        root_api_namespace.add_namespace(verifiable_credential_api)
+    root_api_namespace.add_namespace(verifiable_credential_api)
+    root_api_namespace.add_namespace(report_error_api)
 
     @root_api_namespace.route('/version/')
     class VersionCheck(Resource):
@@ -260,7 +277,7 @@ def register_routes(app):
                 return {'ready': False}, 503
 
     def get_database_status():
-        return db.session.query("up").from_statement(text("SELECT 1 as up")).all()[0][0] == 1
+        return db.session.query(text("up")).from_statement(text("SELECT 1 as up")).all()[0][0] == 1
 
     def get_cache_status():
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -323,7 +340,15 @@ def register_routes(app):
     @root_api_namespace.errorhandler(Exception)
     def default_error_handler(error):
         app.logger.error(str(error))
-        return {
-            'status': getattr(error, 'code', 500),
-            'message': str(error),
-        }, getattr(error, 'code', 500)
+        if isinstance(error, MDSCoreAPIException):
+            return {
+                "status": getattr(error, "code", 500),
+                "message": str(getattr(error, "message", "")),
+                "detailed_error": str(getattr(error, "detailed_error", "")),
+            }, getattr(error, 'code', 500)
+        else:
+            return {
+                "status": getattr(error, "code", 500),
+                "message": str(error),
+                "detailed_error": str(getattr(error, "detailed_error", "Not provided")),
+            }, getattr(error, 'code', 500)

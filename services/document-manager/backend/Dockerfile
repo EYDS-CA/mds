@@ -1,12 +1,10 @@
 FROM python:3.11.4
 
+# Create working directory
+WORKDIR /app
+
 # Update installation utility
 RUN apt-get update
-
-
-# Create working directory
-RUN mkdir /app
-WORKDIR /app
 
 # Install the requirements
 COPY requirements.txt .

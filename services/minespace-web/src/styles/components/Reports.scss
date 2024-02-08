@@ -1,0 +1,30 @@
+.submit-report-button {
+  position: absolute;
+  top: 10px;
+  right: 0;
+}
+
+.report-title {
+  margin-bottom: 36px !important;
+  margin-top: 16px;
+}
+
+.report-steps {
+  margin-bottom: 36px;
+  margin-top: 36px;
+}
+
+.report-link {
+  text-decoration: none;
+  line-height: 32px;
+}
+
+.report-instructions {
+  color: rgba(49, 49, 50, 0.55);
+}
+
+.report-info-box {
+  height: 100%;
+  padding: 16px;
+  border: 1px solid $background;
+}

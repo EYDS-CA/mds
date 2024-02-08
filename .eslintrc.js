@@ -9,6 +9,7 @@ module.exports = {
     "services/minespace-web/cypress.config.ts",
     "services/minespace-web/cypress/**",
     "services/core-web/webpack.config.ts",
+    "services/core-web/webpack.parts.js",
     "services/core-web/cypress.config.ts",
     "services/core-web/cypress/**",
   ],
@@ -77,5 +78,6 @@ module.exports = {
     "@typescript-eslint/default-param-last": 0,
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-children-prop": 0,
+    "@typescript-eslint/lines-between-class-members": 0,
   },
 };

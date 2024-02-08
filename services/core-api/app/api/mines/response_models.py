@@ -1,4 +1,4 @@
-from flask_restplus import fields, marshal
+from flask_restx import fields, marshal
 
 from app.api.compliance.response_models import COMPLIANCE_ARTICLE_MODEL
 from app.api.dams.dto import DAM_MODEL
@@ -656,6 +656,14 @@ MINE_REPORT_SUBMISSION_MODEL = api.model(
         'comments': fields.List(fields.Nested(MINE_REPORT_COMMENT_MODEL))
     })
 
+MINE_REPORT_CONTACT_MODEL = api.model(
+    'MineReportContact', {
+        'mine_report_contact_id': fields.String,
+        'name': fields.String,
+        'email': fields.String
+    })
+
+
 MINE_REPORT_MODEL = api.model(
     'MineReportModel', {
         'mine_report_id':
@@ -689,7 +697,15 @@ MINE_REPORT_MODEL = api.model(
         'mine_name':
             fields.String,
         'permit_condition_category_code':
-            fields.String
+            fields.String,
+        'description_comment':
+            fields.String,
+        'submitter_name':
+            fields.String,
+        'submitter_email':
+            fields.String,
+        'mine_report_contacts':
+            fields.List(fields.Nested(MINE_REPORT_CONTACT_MODEL)),
     })
 
 MINE_REPORT_DEFINITION_CATEGORIES = api.model('MineReportDefinitionCategoriesModel', {
@@ -708,7 +724,8 @@ MINE_REPORT_DEFINITION_MODEL = api.model(
         'default_due_date': fields.Date,
         'active_ind': fields.Boolean,
         'categories': fields.List(fields.Nested(MINE_REPORT_DEFINITION_CATEGORIES)),
-        'compliance_articles': fields.List(fields.Nested(COMPLIANCE_ARTICLE_MODEL))
+        'compliance_articles': fields.List(fields.Nested(COMPLIANCE_ARTICLE_MODEL)),
+        'is_common': fields.Boolean,
     })
 
 PAGINATED_LIST = api.model(

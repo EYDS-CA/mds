@@ -14,6 +14,10 @@ html {
   height: $nav-height + $loading-bar-height;
 }
 
+.line-height-none {
+  line-height: 1;
+}
+
 .content {
   overflow: initial;
   min-height: 100vh;
@@ -120,7 +124,7 @@ html {
     height: 50%;
   }
 
-  & > div {
+  &>div {
     margin-right: 5px;
   }
 
@@ -651,6 +655,11 @@ img.lessOpacity {
 .hidden {
   visibility: hidden;
   display: none;
+}
+
+.ellipsis-text {
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 // Styling for react-sortable-hoc

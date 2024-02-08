@@ -39,9 +39,12 @@ import {
   ADD_PROJECT_SUMMARY,
   EDIT_PROJECT,
 } from "@/constants/routes";
-import ProjectSummaryForm from "@/components/Forms/projects/projectSummary/ProjectSummaryForm";
-import { IMine, IProjectSummary, IProject } from "@mds/common";
+import ProjectSummaryForm, {
+  getProjectFormTabs,
+} from "@/components/Forms/projects/projectSummary/ProjectSummaryForm";
+import { IMine, IProjectSummary, IProject, Feature } from "@mds/common";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
+import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 
 interface ProjectSummaryPageProps {
   mines: Partial<IMine>[];
@@ -74,14 +77,6 @@ interface IParams {
   tab?: any;
 }
 
-const tabs = [
-  "basic-information",
-  "project-contacts",
-  "project-dates",
-  "authorizations-involved",
-  "document-upload",
-];
-
 export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
   const {
     mines,
@@ -104,13 +99,15 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     updateProject,
   } = props;
 
+  const { isFeatureEnabled } = useFeatureFlag();
+  const amsFeatureEnabled = isFeatureEnabled(Feature.AMS_AGENT);
   const { mineGuid, projectGuid, projectSummaryGuid, tab } = useParams<IParams>();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const history = useHistory();
   const location = useLocation();
-
-  const activeTab = tab ?? tabs[0];
+  const projectFormTabs = getProjectFormTabs(amsFeatureEnabled);
+  const activeTab = tab ?? projectFormTabs[0];
 
   const handleFetchData = () => {
     if (projectGuid && projectSummaryGuid) {
@@ -177,8 +174,8 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
       payload,
       message
     )
-      .then(() => {
-        updateProject(
+      .then(async () => {
+        await updateProject(
           { projectGuid },
           { mrc_review_required: payload.mrc_review_required, contacts: payload.contacts },
           "Successfully updated project.",
@@ -230,13 +227,13 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
       if (projectGuid && projectSummaryGuid) {
         handleUpdateProjectSummary(values, message);
       }
+      handleTabChange(newActiveTab);
     }
-    handleTabChange(newActiveTab);
   };
 
   const handleSaveDraft = () => {
-    const currentTabIndex = tabs.indexOf(activeTab);
-    const newActiveTab = tabs[currentTabIndex + 1];
+    const currentTabIndex = projectFormTabs.indexOf(activeTab);
+    const newActiveTab = projectFormTabs[currentTabIndex + 1];
     const message = "Successfully saved a draft project description.";
     const values = { ...formValues, status_code: "DFT" };
     submit(FORM.ADD_EDIT_PROJECT_SUMMARY);
@@ -249,8 +246,8 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
       if (projectGuid && projectSummaryGuid) {
         handleUpdateProjectSummary(values, message);
       }
+      handleTabChange(newActiveTab);
     }
-    handleTabChange(newActiveTab);
   };
 
   const mineName = isEditMode

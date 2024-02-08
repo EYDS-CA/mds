@@ -129,12 +129,13 @@ class MineIncident(SoftDeleteMixin, AuditMixin, Base):
         lazy='selectin')
 
     # Note there is a dependency on deleted_ind in mine_documents
-    documents = db.relationship('MineIncidentDocumentXref', lazy='selectin')
+    _documents = db.relationship('MineIncidentDocumentXref', lazy='selectin')
     mine_documents = db.relationship(
         'MineDocument',
         lazy='selectin',
         secondary='mine_incident_document_xref',
-        secondaryjoin='and_(foreign(MineIncidentDocumentXref.mine_document_guid) == remote(MineDocument.mine_document_guid),MineDocument.deleted_ind == False)'
+        secondaryjoin='and_(foreign(MineIncidentDocumentXref.mine_document_guid) == remote(MineDocument.mine_document_guid),MineDocument.deleted_ind == False)',
+        overlaps='_documents'
     )
 
     categories = db.relationship(
@@ -146,10 +147,14 @@ class MineIncident(SoftDeleteMixin, AuditMixin, Base):
         primaryjoin='and_(MineIncidentNote.mine_incident_guid == MineIncident.mine_incident_guid, MineIncidentNote.deleted_ind == False)'
     )
 
-    mine_table = db.relationship('Mine', lazy='joined')
+    mine_table = db.relationship('Mine', lazy='joined', back_populates='mine_incidents', overlaps='mine,mine_incidents')
     mine_name = association_proxy('mine_table', 'mine_name')
     mine_region = association_proxy('mine_table', 'mine_region')
     major_mine_ind = association_proxy('mine_table', 'major_mine_ind')
+
+    @hybrid_property
+    def documents(self):
+        return [doc for doc in self._documents if doc.deleted_ind is False]
 
     @hybrid_property
     def reported_to_inspector_party(self):
@@ -262,7 +267,7 @@ class MineIncident(SoftDeleteMixin, AuditMixin, Base):
                 raise AssertionError('reported_timestamp must not be in the future')
         return reported_timestamp
 
-    @validates(name=['reported_to_inspector_contact_method', 'johsc_worker_rep_contact_method', 'johsc_management_rep_contact_method'])
+    @validates('reported_to_inspector_contact_method', 'johsc_worker_rep_contact_method', 'johsc_management_rep_contact_method')
     def validates_contact_method(self, key, value):
         if value:
             if value not in ['PHN', 'EML', 'MRP', 'MRE']:

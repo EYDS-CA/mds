@@ -45,7 +45,7 @@ import ExplosivesPermitApplicationDecisionModal from "./ExplosivesPermitApplicat
 import ViewMagazineModal from "./ViewMagazineModal";
 import ExplosivesPermitStatusModal from "./ExplosivesPermitStatusModal";
 import ExplosivesPermitCloseModal from "./ExplosivesPermitCloseModal";
-import ExplosivesPermitViewModal from "./ExplosivesPermitViewModal";
+import ExplosivesPermitViewModal from "@mds/common/components/explosivespermits/ExplosivesPermitViewModal";
 import MergePartyConfirmationModal from "./MergePartyConfirmationModal";
 import ViewAllConditionsModal from "./ViewAllConditionsModal";
 import UpdateNoWDateModal from "./UpdateNoWDateModal";
@@ -59,7 +59,7 @@ import AddMineAlertModal from "./AddMineAlertModal";
 import ViewPastMineAlertModal from "./ViewPastMineAlertModal";
 import ArchiveDocumentModal from "@common/components/documents/ArchiveDocumentModal";
 import DeleteDocumentModal from "@mds/common/components/documents/DeleteDocumentModal";
-import ReplaceDocumentModal from "@common/components/documents/ReplaceDocumentModal";
+import ReplaceDocumentModal from "@mds/common/components/documents/ReplaceDocumentModal";
 
 export const modalConfig = {
   MINE_RECORD: MineRecordModal,

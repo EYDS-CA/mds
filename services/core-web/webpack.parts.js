@@ -9,32 +9,33 @@ const TerserPlugin = require("terser-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-
+const { EsbuildPlugin } = require("esbuild-loader");
 const { WebpackManifestPlugin } = require("webpack-manifest-plugin");
 const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
+const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin");
 
 const postCSSLoader = {
   loader: "postcss-loader",
   options: {
     postcssOptions: {
       plugins: () => [autoprefixer],
-    }
+    },
   },
 };
 
 const threadLoader = {
-  loader: 'thread-loader',
+  loader: "thread-loader",
   options: {
     workers: 1,
     workerParallelJobs: 50,
     workerNodeArgs: ["--max-old-space-size=3072"],
-  }
-}
+  },
+};
 
 exports.devServer = ({ host, port } = {}) => ({
   cache: {
     // Persist cache to filesystem to speed up consecutive builds.
-    type: 'filesystem'
+    type: "filesystem",
   },
   stats: {
     warningsFilter: [/Serializing big strings/],
@@ -59,28 +60,27 @@ exports.devServer = ({ host, port } = {}) => ({
 exports.loadJS = ({ include, exclude } = {}) => ({
   module: {
     rules: [
-
       {
         test: /\.[[t]sx?$/,
         include,
         exclude,
 
-        loader: 'esbuild-loader',
+        loader: "esbuild-loader",
         options: {
-          target: 'es2015'
-        }
+          target: "es2015",
+        },
       },
       {
         test: /\.[[j]sx?$/,
         include,
         exclude,
 
-        loader: 'esbuild-loader',
+        loader: "esbuild-loader",
         options: {
           /// Treat .js files as `.jsx` files
-          loader: 'jsx',
-          target: 'es2015'
-        }
+          loader: "jsx",
+          target: "es2015",
+        },
       },
     ],
   },
@@ -94,11 +94,11 @@ exports.loadTS = ({ include, exclude } = {}) => ({
         include,
         exclude,
 
-        loader: 'esbuild-loader',
+        loader: "esbuild-loader",
         options: {
-          target: 'es2015'
-        }
-      }
+          target: "es2015",
+        },
+      },
     ],
   },
 });
@@ -260,13 +260,19 @@ exports.loadImages = ({
       },
       {
         test: /\.(png|jpe?g)$/,
-        include,
-        exclude,
-        loader: "image-webpack-loader",
-        options: {
-          bypassOnDebug: true,
-          ...imageLoaderOptions,
-        },
+        use: [
+          {
+            loader: ImageMinimizerPlugin.loader,
+            options: {
+              minimizer: {
+                implementation: ImageMinimizerPlugin.imageminMinify,
+                options: {
+                  plugins: ["imagemin-mozjpeg", "imagemin-pngquant"],
+                },
+              },
+            },
+          },
+        ],
       },
     ],
   },
@@ -292,7 +298,7 @@ exports.loadFonts = ({ include, exclude, options } = {}) => ({
   module: {
     rules: [
       {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
         include,
         exclude,
         use: {
@@ -310,22 +316,17 @@ exports.generateSourceMaps = ({ type } = {}) => ({
 
 exports.bundleOptimization = ({ options, cssOptions } = {}) => ({
   optimization: {
+    minimize: true,
     splitChunks: options,
     minimizer: [
-      new TerserPlugin({
-        parallel: true,
-        terserOptions: {
-          compress: false,
-        },
+      new EsbuildPlugin({
+        target: "es2016",
       }),
       new CssMinimizerPlugin({
         minimizerOptions: {
-          preset: [
-            'default',
-            cssOptions
-          ]
-        }
-      })
+          preset: ["default", cssOptions],
+        },
+      }),
     ],
   },
 });
@@ -349,9 +350,9 @@ exports.clean = () => ({
 });
 
 exports.copy = (from, to) => ({
-  plugins: [new CopyWebpackPlugin({
-    patterns: [{ from, to, globOptions: { ignore: ["*.html"] } }]
-  })],
+  plugins: [
+    new CopyWebpackPlugin({ patterns: [{ from, to, globOptions: { ignore: ["**/index.html"] } }] }),
+  ],
 });
 
 exports.extractManifest = () => ({

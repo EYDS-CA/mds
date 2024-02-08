@@ -1,3 +1,7 @@
+export enum SystemFlagEnum {
+  core = "CORE",
+  ms = "MineSpace",
+}
 export enum NoDTypeDisplayEnum {
   non_substantial = "Non Substantial",
   potentially_substantial = "Potentially Substantial",
@@ -89,6 +93,7 @@ export enum OperatingStatusEnum {
 export enum MinePartyAppointmentTypeCodeEnum {
   EOR = "EOR",
   TQP = "TQP",
+  MMG = "MMG",
 }
 
 export enum ActivityTypeEnum {
@@ -133,4 +138,37 @@ export enum VC_CRED_ISSUE_STATES {
   credential_issued = "Pending",
   credential_acked = "Active",
   deleted = "Active",
+  abandoned = "Error"
+}
+
+export enum PROJECT_SUMMARY_STATUS_CODES {
+  DFT = "Draft",
+  WDN = "Withdrawn",
+  ASG = "Assigned",
+  COM = "Complete",
+  OHD = "On Hold",
+  SUB = "Submitted",
+  UNR = "Under review",
+}
+
+export enum MAJOR_MINE_APPLICATION_AND_IRT_STATUS_CODES {
+  DFT = "Draft",
+  APV = "Approved",
+  CHR = "Change Requested",
+  SUB = "Submitted",
+  UNR = "Under review",
+}
+
+export enum MINE_REPORT_SUBMISSION_CODES {
+  NRQ = "NRQ",
+  REQ = "REQ",
+  REC = "REC",
+  ACC = "ACC",
+  INI = "INI",
+}
+
+export enum MINE_INCIDENT_DOCUMENT_TYPE_CODE {
+  INM = "INM",
+  FIN = "FIN",
+  INI = "INI",
 }

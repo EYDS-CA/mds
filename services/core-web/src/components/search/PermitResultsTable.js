@@ -4,8 +4,11 @@ import PropTypes from "prop-types";
 import Highlight from "react-highlighter";
 import { Link } from "react-router-dom";
 import * as router from "@/constants/routes";
-import CoreTable from "@/components/common/CoreTable";
-import { renderHighlightedTextColumn, renderTextColumn } from "../common/CoreTableCommonColumns";
+import CoreTable from "@mds/common/components/common/CoreTable";
+import {
+  renderHighlightedTextColumn,
+  renderTextColumn,
+} from "@mds/common/components/common/CoreTableCommonColumns";
 
 /**
  * @class  PermitResultsTable - displays a table of mine search results

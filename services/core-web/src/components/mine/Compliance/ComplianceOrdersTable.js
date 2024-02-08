@@ -5,8 +5,11 @@ import { downloadNrisDocument } from "@common/utils/actionlessNetworkCalls";
 import { RED_CLOCK } from "@/constants/assets";
 import CustomPropTypes from "@/customPropTypes";
 import DocumentLink from "@/components/common/DocumentLink";
-import CoreTable from "@/components/common/CoreTable";
-import { renderDateColumn, renderTextColumn } from "@/components/common/CoreTableCommonColumns";
+import CoreTable from "@mds/common/components/common/CoreTable";
+import {
+  renderDateColumn,
+  renderTextColumn,
+} from "@mds/common/components/common/CoreTableCommonColumns";
 
 const propTypes = {
   filteredOrders: CustomPropTypes.complianceOrders,

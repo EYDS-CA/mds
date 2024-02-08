@@ -16,6 +16,9 @@ import { getProject } from "@mds/common/redux/selectors/projectSelectors";
 import * as routes from "@/constants/routes";
 import CustomPropTypes from "@/customPropTypes";
 import ProjectStagesTable from "./ProjectStagesTable";
+import withFeatureFlag from "@mds/common/providers/featureFlags/withFeatureFlag";
+import { Feature } from "@mds/common";
+import ProjectLinks from "@mds/common/components/projects/ProjectLinks";
 
 const propTypes = {
   informationRequirementsTableStatusCodesHash: PropTypes.objectOf(PropTypes.string).isRequired,
@@ -23,6 +26,7 @@ const propTypes = {
   majorMineApplicationStatusCodeHash: PropTypes.objectOf(PropTypes.string).isRequired,
   project: CustomPropTypes.project.isRequired,
   projectLeads: CustomPropTypes.projectContact.isRequired,
+  isFeatureEnabled: PropTypes.func.isRequired,
 };
 
 export class ProjectOverviewTab extends Component {
@@ -72,6 +76,9 @@ export class ProjectOverviewTab extends Component {
   };
 
   render() {
+    const shouldDisplayLinkedProjects = this.props.isFeatureEnabled(
+      Feature.MAJOR_PROJECT_LINK_PROJECTS
+    );
     const {
       project_summary_description,
       expected_draft_irt_submission_date,
@@ -128,7 +135,10 @@ export class ProjectOverviewTab extends Component {
         payload: this.props.project.project_summary,
         statusHash: this.props.projectSummaryStatusCodesHash,
         link: (
-          <Link data-cy="project-description-view-link" to={routes.PRE_APPLICATIONS.dynamicRoute(project_guid, project_summary_guid)}>
+          <Link
+            data-cy="project-description-view-link"
+            to={routes.PRE_APPLICATIONS.dynamicRoute(project_guid, project_summary_guid)}
+          >
             <Button className="full-mobile margin-small" type="secondary">
               View
             </Button>
@@ -142,7 +152,10 @@ export class ProjectOverviewTab extends Component {
         payload: this.props.project.major_mine_application,
         statusHash: this.props.majorMineApplicationStatusCodeHash,
         link: (
-          <Link data-cy="final-application-view-link" to={routes.PROJECT_FINAL_APPLICATION.dynamicRoute(project_guid)}>
+          <Link
+            data-cy="final-application-view-link"
+            to={routes.PROJECT_FINAL_APPLICATION.dynamicRoute(project_guid)}
+          >
             <Button className="full-mobile margin-small" type="secondary">
               View
             </Button>
@@ -236,6 +249,14 @@ export class ProjectOverviewTab extends Component {
             projectStages={[...requiredProjectStages, ...optionalProjectStages]}
           />
           <br />
+          {shouldDisplayLinkedProjects && (
+            <ProjectLinks
+              tableOnly
+              viewProject={(p) =>
+                routes.PRE_APPLICATIONS.dynamicRoute(p.project_guid, p.project_summary_guid)
+              }
+            />
+          )}
         </Col>
         <Col lg={{ span: 9, offset: 1 }} xl={{ span: 7, offset: 1 }}>
           <Row>
@@ -260,4 +281,4 @@ const mapStateToProps = (state) => ({
 
 ProjectOverviewTab.propTypes = propTypes;
 
-export default connect(mapStateToProps, null)(ProjectOverviewTab);
+export default connect(mapStateToProps, null)(withFeatureFlag(ProjectOverviewTab));
