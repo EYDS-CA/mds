@@ -37,6 +37,7 @@ export const CONTACT_ADMIN = [
   <b>mds@gov.bc.ca</b>,
   " to request access",
 ];
+export const MMO_EMAIL = "permrecl@gov.bc.ca";
 export const EMPTY_FIELD = "N/A";
 export const EMPTY = "";
 export const ZERO = "0.00";
@@ -352,8 +353,8 @@ export const PARTY_APPOINTMENT_STATUS = {
 };
 
 export const ESUP_DOCUMENT_GENERATED_TYPES = {
-  LET: "Explosives Storage and Use Permit",
-  PER: "Permit Enclosed Letter",
+  PER: "Explosives Storage and Use Permit",
+  LET: "Permit Enclosed Letter",
 };
 
 export const BC_TIMEZONE_NAMES = ["Canada/Pacific", "Canada/Mountain", "Canada/Yukon"];
@@ -408,4 +409,14 @@ export const MINE_REPORT_STATUS_HASH = {
   [MINE_REPORT_SUBMISSION_CODES.REC]: "Changes Received",
   [MINE_REPORT_SUBMISSION_CODES.ACC]: "Accepted",
   [MINE_REPORT_SUBMISSION_CODES.INI]: "Received",
+  [MINE_REPORT_SUBMISSION_CODES.NON]: "Report Requested",
+  [MINE_REPORT_SUBMISSION_CODES.WTD]: "Withdrawn",
 };
+
+export const VC_ACTIVE_CONNECTION_STATES = ["credential_acked", "credential-issued", "done"];
+
+export const CONTACTS_COUNTRY_OPTIONS = [
+  { value: "CAN", label: "Canada" },
+  { value: "USA", label: "United States" },
+  { value: "INT", label: "International" },
+];

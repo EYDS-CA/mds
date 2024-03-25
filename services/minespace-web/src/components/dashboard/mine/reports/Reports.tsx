@@ -17,6 +17,7 @@ import { IMine, IMineReport, Feature } from "@mds/common";
 import { Link, useHistory } from "react-router-dom";
 import * as routes from "@/constants/routes";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
+import { Link as ScrollLink, Element } from "react-scroll";
 
 interface ReportsProps {
   mine: IMine;
@@ -31,13 +32,23 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [report, setReport] = useState(null);
+  const [permitRequiredReports, setPermitRequiredReports] = useState<IMineReport[]>([]);
+  const [codeRequiredReports, setCodeRequiredReports] = useState<IMineReport[]>([]);
+
+  useEffect(() => {
+    const pRRs = mineReports.filter((report) => !!report.permit_guid);
+    const cRRs = mineReports.filter((report) => !report.permit_guid);
+
+    setPermitRequiredReports(pRRs);
+    setCodeRequiredReports(cRRs);
+  }, [mineReports]);
 
   useEffect(() => {
     let isMounted = true;
 
     setIsLoaded(false);
 
-    dispatch(fetchMineReports(mine.mine_guid)).then(() => {
+    dispatch(fetchMineReports(mine.mine_guid, null)).then(() => {
       if (isMounted) {
         setIsLoaded(true);
       }
@@ -48,6 +59,7 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
     };
   }, []);
 
+  // TODO: remove with CODE_REQUIRED_REPORTS feature flag
   const handleAddReport = async (values) => {
     const formValues = values;
     if (values.mine_report_submissions && values.mine_report_submissions.length > 0) {
@@ -56,9 +68,10 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
 
     await dispatch(createMineReport(mine.mine_guid, formValues));
     await dispatch(closeModal());
-    return dispatch(fetchMineReports(mine.mine_guid));
+    return dispatch(fetchMineReports(mine.mine_guid, null));
   };
 
+  // TODO: remove with CODE_REQUIRED_REPORTS feature flag
   const handleEditReport = async (values) => {
     if (!values.mine_report_submissions || values.mine_report_submissions.length === 0) {
       dispatch(closeModal());
@@ -84,7 +97,7 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
     }
     await dispatch(updateMineReport(mine.mine_guid, report.mine_report_guid, payload));
     await dispatch(closeModal());
-    return dispatch(fetchMineReports(mine.mine_guid));
+    return dispatch(fetchMineReports(mine.mine_guid, null));
   };
 
   const openReport = (reportRecord: IMineReport) => {
@@ -93,6 +106,7 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
     );
   };
 
+  // TODO: remove with CODE_REQUIRED_REPORTS feature flag
   const openAddReportModal = (event) => {
     event.preventDefault();
     dispatch(
@@ -108,6 +122,7 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
     );
   };
 
+  // TODO: remove with CODE_REQUIRED_REPORTS feature flag
   const openEditReportModal = (event, report) => {
     event.preventDefault();
     setReport(report);
@@ -156,6 +171,20 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
               Reports
             </Typography.Title>
             <Typography.Paragraph>
+              View all{" "}
+              <ScrollLink to="codeRequiredReports" smooth={true}>
+                Code Required Reports
+              </ScrollLink>{" "}
+              and{" "}
+              <ScrollLink to="permitRequiredReports" smooth={true}>
+                Permit Required Reports
+              </ScrollLink>{" "}
+              for this mine.
+            </Typography.Paragraph>
+            <Element name="codeRequiredReports">
+              <Typography.Title level={4}>Code Required Reports</Typography.Title>
+            </Element>
+            <Typography.Paragraph>
               This table shows reports from the Health, Safety and Reclamation code that your mine
               has submitted to the Ministry. It also shows reports the Ministry has requested from
               your mine. If you do not see an HSRC report that your mine must submit, click Submit
@@ -172,7 +201,23 @@ export const Reports: FC<ReportsProps> = ({ mine, ...props }) => {
             <ReportsTable
               openReport={openReport}
               openEditReportModal={openEditReportModal}
-              mineReports={mineReports}
+              mineReports={codeRequiredReports}
+              isLoaded={isLoaded}
+            />
+            <Element name="permitRequiredReports">
+              <Typography.Title level={4}>Permit Required Reports</Typography.Title>
+            </Element>
+            <Typography.Paragraph>
+              This table shows documents submitted pursuant to regulatory requirements established
+              by conditions in site-specific Mines Act permits. It also shows reports the Ministry
+              has requested from your mine. If you do not see a permit required report that your
+              mine must submit, click Submit Report, choose the report you need to send and then
+              attach the file or files.
+            </Typography.Paragraph>
+            <ReportsTable
+              openReport={openReport}
+              openEditReportModal={openEditReportModal}
+              mineReports={permitRequiredReports}
               isLoaded={isLoaded}
             />
           </Col>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { getFormSubmitErrors, getFormValues, isDirty, submit } from "redux-form";
 
 import { Button, Col, Row, Typography } from "antd";
@@ -27,13 +27,16 @@ import {
 
 const ReportPage = () => {
   const dispatch = useDispatch();
+  const { state: routeState } = useLocation<{ isEditMode: boolean }>();
+  const defaultEditMode = routeState?.isEditMode ?? false;
+
   const { mineGuid, reportGuid } = useParams<{ mineGuid: string; reportGuid: string }>();
   const latestSubmission: IMineReportSubmission = useSelector((state) =>
     getLatestReportSubmission(state, reportGuid)
   );
   const mine: IMine = useSelector((state) => getMineById(state, mineGuid));
-  const [loaded, setIsLoaded] = useState(Boolean(latestSubmission && mine));
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [loaded, setLoaded] = useState(Boolean(latestSubmission && mine));
+  const [isEditMode, setIsEditMode] = useState(defaultEditMode);
 
   // get form data so we can submit it outside of the form
   const formErrors = useSelector(getFormSubmitErrors(FORM.VIEW_EDIT_REPORT));
@@ -44,7 +47,7 @@ const ReportPage = () => {
     let isMounted = true;
     const isLoaded = Boolean(mine && latestSubmission);
     if (isMounted) {
-      setIsLoaded(isLoaded);
+      setLoaded(isLoaded);
     }
     return () => (isMounted = false);
   }, [mine, latestSubmission]);
@@ -76,6 +79,21 @@ const ReportPage = () => {
 
   const status = MINE_REPORT_STATUS_HASH[latestSubmission?.mine_report_submission_status_code];
 
+  const MINE_REPORT_STATUS_DESCRIPTION_HASH = {
+    [MINE_REPORT_SUBMISSION_CODES.NON]:
+      "This ministry has requested the report below. Please finish and submit this submission.",
+    [MINE_REPORT_SUBMISSION_CODES.ACC]:
+      "This report has been submitted and has been reviewed by ministry staff.",
+    [MINE_REPORT_SUBMISSION_CODES.REC]:
+      "Your changes to this report have been submitted successfully.",
+    [MINE_REPORT_SUBMISSION_CODES.REQ]:
+      "This report requires changes, refer to the email from the ministry or contact your regional Mines Compliance Inspector for more details.",
+    [MINE_REPORT_SUBMISSION_CODES.INI]: "This report has been submitted successfully.",
+    [MINE_REPORT_SUBMISSION_CODES.WTD]:
+      "This report has been withdrawn. If you have any questions, please contact the permitting inspector or your regional office.",
+    [MINE_REPORT_SUBMISSION_CODES.NRQ]: "This report is not requested",
+  };
+
   return (
     (loaded && (
       <div>
@@ -94,27 +112,27 @@ const ReportPage = () => {
         </Row>
         <Row align="middle" justify="space-between">
           <Typography.Title level={2}>{latestSubmission.report_name}</Typography.Title>
-          {!isEditMode ? (
-            <Button onClick={() => setIsEditMode(true)} type="primary">
-              Edit Report
-            </Button>
-          ) : (
+          {isEditMode && (
             <Button type="primary" disabled={!isFormDirty} onClick={handleOtherSubmitButton}>
               Save Changes
             </Button>
           )}
+          {!isEditMode &&
+            latestSubmission.mine_report_submission_status_code ==
+              MINE_REPORT_SUBMISSION_CODES.NON && (
+              <Button onClick={() => setIsEditMode(true)} type="primary">
+                Submit Report
+              </Button>
+            )}
         </Row>
 
         {!isEditMode && status && (
           <Callout
-            title={`Submission ${status}`}
+            title={status}
             message={
-              <>
-                <p>Your report has been {status}.</p>
-                <p>
-                  {latestSubmission.submission_date} by {latestSubmission.submitter_name}
-                </p>
-              </>
+              MINE_REPORT_STATUS_DESCRIPTION_HASH[
+                latestSubmission?.mine_report_submission_status_code
+              ]
             }
             severity={reportStatusSeverity(
               latestSubmission.mine_report_submission_status_code as MINE_REPORT_SUBMISSION_CODES

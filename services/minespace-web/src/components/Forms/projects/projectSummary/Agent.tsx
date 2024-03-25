@@ -15,6 +15,7 @@ import {
   requiredRadioButton,
 } from "@mds/common/redux/utils/Validate";
 import { getDropdownProvinceOptions } from "@mds/common/redux/selectors/staticContentSelectors";
+import { CONTACTS_COUNTRY_OPTIONS } from "@mds/common";
 
 export const Agent: FC = () => {
   const dispatch = useDispatch();
@@ -23,19 +24,17 @@ export const Agent: FC = () => {
   const { party_type_code, address = {} } = agent ?? {};
   const { address_type_code, sub_division_code } = address ?? {};
   const isInternational = address_type_code === "INT";
-
-  const provinceOptions = useSelector(getDropdownProvinceOptions);
   // currently no endpoints, etc, for address_type_code
-  const countryOptions = [
-    { value: "CAN", label: "Canada" },
-    { value: "USA", label: "United States" },
-    { value: "INT", label: "International" },
-  ];
+  const provinceOptions = useSelector(getDropdownProvinceOptions);
 
-  // set a value for party type code because required validation doesn't show
-  if (!party_type_code) {
-    dispatch(change(FORM.ADD_EDIT_PROJECT_SUMMARY, "agent.party_type_code", "ORG"));
-  }
+  useEffect(() => {
+    // set a value for party type code because required validation doesn't show
+    if (!party_type_code && is_agent) {
+      dispatch(change(FORM.ADD_EDIT_PROJECT_SUMMARY, "agent.party_type_code", "ORG"));
+    } else if (!is_agent) {
+      dispatch(change(FORM.ADD_EDIT_PROJECT_SUMMARY, "agent", {}));
+    }
+  }, [is_agent]);
 
   useEffect(() => {
     if (party_type_code === "ORG") {
@@ -180,7 +179,7 @@ export const Agent: FC = () => {
                 label="Country"
                 required
                 validate={[required]}
-                data={countryOptions}
+                data={CONTACTS_COUNTRY_OPTIONS}
                 component={RenderSelect}
               />
             </Col>

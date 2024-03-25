@@ -2,7 +2,7 @@ from app.extensions import api
 from flask_restx import fields, marshal
 
 from app.api.mines.response_models import MINE_DOCUMENT_MODEL, MINES_MODEL
-from app.api.parties.response_models import PARTY
+from app.api.parties.response_models import PARTY, ADDRESS
 
 class Requirement(fields.Raw):
     def format(self, value):
@@ -30,7 +30,9 @@ PROJECT_SUMMARY_MODEL_ATTRIBUTES = api.model(
 
 PROJECT_CONTACT_MODEL_ATTRIBUTES = api.model(
     'ProjectContact', {
-        'name': fields.String
+        'first_name': fields.String,
+        'last_name': fields.String,
+        'is_primary': fields.Boolean
     }
 )
 
@@ -105,7 +107,7 @@ PROJECT_SUMMARY_CONTACT_MODEL = api.model(
         'email': fields.String,
         'phone_number': fields.String,
         'phone_extension': fields.String,
-        'is_primary': fields.Boolean
+        'is_primary': fields.Boolean,
     })
 
 PROJECT_SUMMARY_AUTHORIZATION_MODEL = api.model(
@@ -115,6 +117,21 @@ PROJECT_SUMMARY_AUTHORIZATION_MODEL = api.model(
         'project_summary_permit_type': fields.List(fields.String),
         'project_summary_authorization_type': fields.String,
         'existing_permits_authorizations': fields.List(fields.String)
+    })
+
+PROJECT_CONTACT_MODEL = api.model(
+    'ProjectContact', {
+        'project_contact_guid': fields.String,
+        'project_guid': fields.String,
+        'job_title': fields.String,
+        'company_name': fields.String,
+        'email': fields.String,
+        'phone_number': fields.String,
+        'phone_extension': fields.String,
+        'is_primary': fields.Boolean,
+        'first_name': fields.String,
+        'last_name': fields.String,
+        'address': fields.List(fields.Nested(ADDRESS)),
     })
 
 PROJECT_SUMMARY_MODEL = api.model(
@@ -134,7 +151,7 @@ PROJECT_SUMMARY_MODEL = api.model(
         'expected_permit_receipt_date': fields.DateTime,
         'expected_project_start_date': fields.DateTime,
         'documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
-        'contacts': fields.List(fields.Nested(PROJECT_SUMMARY_CONTACT_MODEL)),
+        'contacts': fields.List(fields.Nested(PROJECT_CONTACT_MODEL)),
         'authorizations': fields.List(fields.Nested(PROJECT_SUMMARY_AUTHORIZATION_MODEL)),
         'update_user': fields.String,
         'update_timestamp': fields.DateTime,
@@ -148,20 +165,26 @@ PROJECT_SUMMARY_MODEL = api.model(
         'has_landowner_received_copy_of_application': fields.Boolean,
         'legal_land_owner_name': fields.String,
         'legal_land_owner_contact_number': fields.String,
-        'legal_land_owner_email_address': fields.String
-    })
-
-PROJECT_CONTACT_MODEL = api.model(
-    'ProjectContact', {
-        'project_contact_guid': fields.String,
-        'project_guid': fields.String,
-        'name': fields.String,
-        'job_title': fields.String,
-        'company_name': fields.String,
-        'email': fields.String,
-        'phone_number': fields.String,
-        'phone_extension': fields.String,
-        'is_primary': fields.Boolean
+        'legal_land_owner_email_address': fields.String,
+        'facility_operator': fields.Nested(PARTY),
+        'facility_type': fields.String,
+        'facility_desc': fields.String,
+        'facility_latitude': fields.Fixed(decimals=7),
+        'facility_longitude': fields.Fixed(decimals=7),
+        'facility_coords_source': fields.String,
+        'facility_coords_source_desc': fields.String,
+        'facility_pid_pin_crown_file_no': fields.String,
+        'legal_land_desc': fields.String,
+        'facility_lease_no': fields.String,
+        'zoning': fields.Boolean,
+        'zoning_reason': fields.String,
+        'nearest_municipality': fields.String(attribute='nearest_municipality_guid'),
+        'company_alias': fields.String,
+        'incorporation_number': fields.String,
+        'is_legal_address_same_as_mailing_address': fields.Boolean,
+        'is_billing_address_same_as_mailing_address': fields.Boolean,
+        'is_billing_address_same_as_legal_address': fields.Boolean,
+        'applicant': fields.Nested(PARTY)
     })
 
 REQUIREMENTS_MODEL = api.model(

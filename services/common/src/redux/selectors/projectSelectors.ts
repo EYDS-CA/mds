@@ -1,7 +1,7 @@
 import { createSelector } from "reselect";
 import { isEmpty } from "lodash";
 import * as projectReducer from "../reducers/projectReducer";
-import { IParty } from "../..";
+import { IParty, IProjectContact } from "../..";
 
 export const {
   getProjectSummary,
@@ -17,18 +17,41 @@ export const {
   getProjectLinks,
 } = projectReducer;
 
-const formatProjectSummaryAgent = (agent): IParty => {
-  if (!agent || !agent.party_guid) {
-    return agent;
+const formatProjectSummaryParty = (party): IParty => {
+  if (!party?.party_guid) {
+    return party;
   }
-  return { ...agent, address: agent.address[0] };
+
+  return { ...party, address: party.address[0] };
+};
+
+const formatProjectContact = (contacts): IProjectContact[] => {
+  if (!contacts) {
+    return contacts;
+  }
+
+  const primaryContact = contacts.filter((contact) => contact.is_primary);
+  const secondaryContacts = contacts.filter((contact) => !contact.is_primary);
+  const formattedContacts = [...primaryContact, ...secondaryContacts].map((contact) => {
+    return { ...contact, address: contact?.address?.[0] || null };
+  });
+
+  return formattedContacts;
 };
 
 export const getFormattedProjectSummary = createSelector(
   [getProjectSummary, getProject],
   (summary, project) => {
-    const agent = formatProjectSummaryAgent(summary.agent);
-    let formattedSummary = { ...summary, agent, authorizationOptions: [] };
+    const contacts = formatProjectContact(project.contacts);
+    const agent = formatProjectSummaryParty(summary.agent);
+    const facility_operator = formatProjectSummaryParty(summary.facility_operator);
+    let formattedSummary = {
+      ...summary,
+      contacts,
+      agent,
+      facility_operator,
+      authorizationOptions: [],
+    };
     if (!isEmpty(summary) && summary?.authorizations.length) {
       summary.authorizations.forEach((authorization) => {
         formattedSummary = {

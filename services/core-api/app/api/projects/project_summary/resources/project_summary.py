@@ -1,3 +1,4 @@
+from flask import current_app
 from flask_restx import Resource, inputs
 from datetime import datetime, timezone
 from werkzeug.exceptions import BadRequest, NotFound
@@ -127,6 +128,39 @@ class ProjectSummaryResource(Resource, UserMixin):
         store_missing=False,
         required=False,
     )
+    parser.add_argument(
+        'facility_operator', 
+        type=dict, 
+        location='json', 
+        store_missing=False, 
+        required=False
+    )
+    parser.add_argument('facility_type', type=str, store_missing=False, required=False)
+    parser.add_argument('facility_desc', type=str, store_missing=False, required=False)
+
+    parser.add_argument('facility_latitude', type=lambda x: Decimal(x) if x else None, store_missing=False, required=False)
+    parser.add_argument('facility_longitude', type=lambda x: Decimal(x) if x else None, store_missing=False, required=False)
+    
+    parser.add_argument('facility_coords_source', type=str, store_missing=False, required=False)
+    parser.add_argument('facility_coords_source_desc', type=str, store_missing=False, required=False)
+    parser.add_argument('facility_pid_pin_crown_file_no', type=str, store_missing=False, required=False)
+    parser.add_argument('legal_land_desc', type=str, store_missing=False, required=False)
+    parser.add_argument('facility_lease_no', type=str, store_missing=False, required=False)
+    parser.add_argument('zoning', type=bool, store_missing=False, required=False)
+    parser.add_argument('zoning_reason', type=str, store_missing=False, required=False)
+    parser.add_argument('nearest_municipality', type=str, store_missing=False, required=False)
+
+    parser.add_argument(
+        'applicant',
+        type=dict,
+        location='json',
+        store_missing=False,
+        required=False
+    )
+
+    parser.add_argument('is_legal_address_same_as_mailing_address', type=bool, store_missing=False, required=False)
+    parser.add_argument('is_billing_address_same_as_mailing_address', type=bool, store_missing=False, required=False)
+    parser.add_argument('is_billing_address_same_as_legal_address', type=bool, store_missing=False, required=False)
 
 
     @api.doc(
@@ -186,7 +220,18 @@ class ProjectSummaryResource(Resource, UserMixin):
                                data.get('is_legal_land_owner'), data.get('is_crown_land_federal_or_provincial'),
                                data.get('is_landowner_aware_of_discharge_application'), data.get('has_landowner_received_copy_of_application'),
                                data.get('legal_land_owner_name'), data.get('legal_land_owner_contact_number'),
-                               data.get('legal_land_owner_email_address'))
+                               data.get('legal_land_owner_email_address'), data.get('facility_operator'),
+                               data.get('facility_type'), data.get('facility_desc'),
+                               data.get('facility_latitude'), data.get('facility_longitude'),
+                               data.get('facility_coords_source'), data.get('facility_coords_source_desc'),
+                               data.get('facility_pid_pin_crown_file_no'), data.get('legal_land_desc'),
+                               data.get('facility_lease_no'), data.get('zoning'),
+                               data.get('zoning_reason'),
+                               data.get('nearest_municipality'),
+                               data.get('applicant'),
+                               data.get('is_legal_address_same_as_mailing_address'),
+                               data.get('is_billing_address_same_as_mailing_address'),
+                               data.get('is_billing_address_same_as_legal_address'))
 
         project_summary.save()
         if prev_status == 'DFT' and project_summary.status_code == 'SUB':

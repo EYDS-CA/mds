@@ -42,7 +42,7 @@ import {
 import ProjectSummaryForm, {
   getProjectFormTabs,
 } from "@/components/Forms/projects/projectSummary/ProjectSummaryForm";
-import { IMine, IProjectSummary, IProject, Feature } from "@mds/common";
+import { IMine, IProjectSummary, IProject, Feature, removeNullValuesRecursive } from "@mds/common";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 
@@ -126,9 +126,10 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     };
   }, []);
 
-  const handleTransformPayload = (values) => {
+  const handleTransformPayload = (valuesFromForm: any) => {
     let payloadValues: any = {};
     const updatedAuthorizations = [];
+    const values = removeNullValuesRecursive(valuesFromForm);
     Object.keys(values).forEach((key) => {
       // Pull out form properties from request object that match known authorization types
       if (values[key] && projectSummaryAuthorizationTypesArray.includes(key)) {
@@ -185,12 +186,9 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
   };
 
   const verifyRequiredFields = (payload) => {
-    const requiredFields = [
-      "project_summary_title",
-      "project_summary_description",
-      "is_agent",
-      "is_legal_land_owner",
-    ];
+    const requiredFields = amsFeatureEnabled
+      ? ["project_summary_title", "project_summary_description", "is_agent", "is_legal_land_owner"]
+      : ["project_summary_title", "project_summary_description"];
 
     for (const field of requiredFields) {
       if (getFieldValue(payload, field) === null) {
@@ -199,12 +197,17 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     }
 
     // Additional check for contacts
-    if (
-      payload.contacts &&
-      payload.contacts.length > 0 &&
-      (!payload.contacts[0].name || !payload.contacts[0].email || !payload.contacts[0].phone_number)
-    ) {
-      return "contacts";
+    if (payload.contacts && payload.contacts.length > 0) {
+      for (let i = 0; i < payload.contacts.length; i++) {
+        const contact = payload?.contacts[i];
+        const address = contact?.address;
+        const verifyPersonInfo =
+          !contact.first_name || !contact.last_name || !contact.email || !contact.phone_number;
+        const verifyAddressInfoForPrimary = contact.is_primary && !address;
+        if (verifyPersonInfo || verifyAddressInfoForPrimary) {
+          return "contacts";
+        }
+      }
     }
 
     // Get agent information and party type code
@@ -212,10 +215,11 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     const partyTypeCode = agent.party_type_code;
 
     // Define required fields based on party type
+    const commonAgentRequiredFields = ["party_name", "phone_no", "email", "address"];
     const agentRequiredFields =
       partyTypeCode === "ORG"
-        ? ["party_name", "phone_no", "email", "address"]
-        : ["first_name", "last_name", "phone_no", "email", "address"];
+        ? commonAgentRequiredFields
+        : ["first_name", ...commonAgentRequiredFields];
 
     // Check if all required fields are present and non-empty
     for (const field of agentRequiredFields) {
@@ -225,7 +229,7 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     }
 
     // Additional check for legal land owner
-    if (!payload.is_legal_land_owner) {
+    if (!payload.is_legal_land_owner && amsFeatureEnabled) {
       const requiredLandOwnerFields = [
         "is_legal_land_owner",
         "is_crown_land_federal_or_provincial",
@@ -244,7 +248,7 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     return null;
   };
 
-  const handleUpdateProjectSummary = (values, message) => {
+  const handleUpdateProjectSummary = async (values, message) => {
     const payload = handleTransformPayload(values);
     setIsLoaded(false);
     return updateProjectSummary(
@@ -263,6 +267,9 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
           false
         );
       })
+      .catch((err) => {
+        throw new Error(err);
+      })
       .then(async () => {
         return handleFetchData();
       })
@@ -271,7 +278,7 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
       });
   };
 
-  const handleCreateProjectSummary = (values, message) => {
+  const handleCreateProjectSummary = async (values, message) => {
     return createProjectSummary(
       {
         mineGuid: mineGuid,
@@ -279,7 +286,9 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
       handleTransformPayload(values),
       message
     ).then(({ data: { project_guid, project_summary_guid } }) => {
-      history.replace(EDIT_PROJECT_SUMMARY.dynamicRoute(project_guid, project_summary_guid));
+      history.replace(
+        EDIT_PROJECT_SUMMARY.dynamicRoute(project_guid, project_summary_guid, projectFormTabs[1])
+      );
     });
   };
 
@@ -290,7 +299,7 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     history.push(url);
   };
 
-  const handleSaveData = (e, newActiveTab) => {
+  const handleSaveData = async (e, newActiveTab) => {
     if (e) {
       e.preventDefault();
     }
@@ -307,17 +316,22 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     touch(FORM.ADD_EDIT_PROJECT_SUMMARY);
     const errors = Object.keys(flattenObject(formErrors));
     if (errors.length === 0) {
-      if (!isEditMode) {
-        handleCreateProjectSummary(values, message);
+      try {
+        if (!isEditMode) {
+          await handleCreateProjectSummary(values, message);
+        }
+        if (projectGuid && projectSummaryGuid) {
+          await handleUpdateProjectSummary(values, message);
+          handleTabChange(newActiveTab);
+        }
+      } catch (err) {
+        console.log(err);
+        setIsLoaded(true);
       }
-      if (projectGuid && projectSummaryGuid) {
-        handleUpdateProjectSummary(values, message);
-      }
-      handleTabChange(newActiveTab);
     }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     const currentTabIndex = projectFormTabs.indexOf(activeTab);
     const newActiveTab = projectFormTabs[currentTabIndex + 1];
     const message = "Successfully saved a draft project description.";
@@ -326,13 +340,18 @@ export const ProjectSummaryPage: FC<ProjectSummaryPageProps> = (props) => {
     touch(FORM.ADD_EDIT_PROJECT_SUMMARY);
     const errors = Object.keys(flattenObject(formErrors));
     if (errors.length === 0) {
-      if (!isEditMode) {
-        handleCreateProjectSummary(values, message);
+      try {
+        if (!isEditMode) {
+          await handleCreateProjectSummary(values, message);
+        }
+        if (projectGuid && projectSummaryGuid) {
+          await handleUpdateProjectSummary(values, message);
+          handleTabChange(newActiveTab);
+        }
+      } catch (err) {
+        console.log(err);
+        setIsLoaded(true);
       }
-      if (projectGuid && projectSummaryGuid) {
-        handleUpdateProjectSummary(values, message);
-      }
-      handleTabChange(newActiveTab);
     }
   };
 

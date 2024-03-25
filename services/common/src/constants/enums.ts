@@ -137,8 +137,11 @@ export enum VC_CRED_ISSUE_STATES {
   offer_sent = "Pending",
   credential_issued = "Pending",
   credential_acked = "Active",
+  credential_revoked = "Revoked",
   deleted = "Active",
-  abandoned = "Error"
+  abandoned = "Error",
+  issued = "credential-issued",
+  done = "done",
 }
 
 export enum PROJECT_SUMMARY_STATUS_CODES {
@@ -165,10 +168,47 @@ export enum MINE_REPORT_SUBMISSION_CODES {
   REC = "REC",
   ACC = "ACC",
   INI = "INI",
+  NON = "NON",
+  WTD = "WTD",
+}
+
+export enum REPORT_TYPE_CODES {
+  CRR = "CRR",
+  PRR = "PRR",
+  TAR = "TAR",
+}
+
+export enum MINE_REPORTS_ENUM {
+  PRR = "Permit Required Report",
+  CRR = "Code Required Report",
 }
 
 export enum MINE_INCIDENT_DOCUMENT_TYPE_CODE {
   INM = "INM",
   FIN = "FIN",
   INI = "INI",
+}
+
+export enum REPORT_REGULATORY_AUTHORITY_CODES {
+  CPO = "CPO",
+  CIM = "CIM",
+  BOTH = "Both",
+  NONE = "Not specified",
+}
+
+export enum REPORT_REGULATORY_AUTHORITY_ENUM {
+  CPO = "Chief Permitting Officer",
+  CIM = "Chief Inspector of Mines",
+}
+
+export enum MineReportType {
+  "code-required-reports" = "CRR",
+  "permit-required-reports" = "PRR",
+  "tailings-reports" = "TAR",
+}
+
+export enum MineReportTypeUrlParam {
+  "CRR" = "code-required-reports",
+  "PRR" = "permit-required-reports",
+  "TAR" = "tailings-reports",
 }

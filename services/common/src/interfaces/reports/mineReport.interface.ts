@@ -13,11 +13,11 @@ export interface IMineReport {
   submission_year: number;
   created_by_idir: string;
   permit_guid: string;
-  mine_report_submissions: IMineReportSubmission[];
+  latest_submission: IMineReportSubmission;
   mine_report_contacts: IMineReportContact[];
   mine_guid: string;
   mine_name: string;
   submitter_name: string;
   submitter_email: string;
-  mine_report_submission_status?: MINE_REPORT_SUBMISSION_CODES;
+  mine_report_status_code: MINE_REPORT_SUBMISSION_CODES;
 }

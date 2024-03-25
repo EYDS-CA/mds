@@ -209,6 +209,7 @@ PERMIT_AMENDMENT_SHORT_MODEL = api.model(
         'permit_conditions_last_updated_date': fields.DateTime,
         'has_permit_conditions': fields.Boolean,
         'vc_credential_exch_state': fields.String,
+        'mines_act_permit_vc_locked': fields.Boolean,
         'is_generated_in_core': fields.Boolean,
     })
 
@@ -297,6 +298,7 @@ PERMIT_MODEL = api.model(
         'current_permittee': fields.String,
         'current_permittee_guid': fields.String,
         'current_permittee_digital_wallet_connection_state': fields.String,
+        'mines_act_permit_vc_locked': fields.Boolean,
         'project_id': fields.String,
         'permit_amendments': fields.List(fields.Nested(PERMIT_AMENDMENT_MODEL)),
         'remaining_static_liability': fields.Float,
@@ -663,12 +665,12 @@ MINE_REPORT_SUBMISSION_MODEL = api.model(
         'submission_date': fields.Date,
         'mine_report_submission_status_code': fields.String,
         'documents': fields.List(fields.Nested(MINE_DOCUMENT_MODEL)),
-        'comments': fields.List(fields.Nested(MINE_REPORT_COMMENT_MODEL)),
         'mine_report_definition_guid': fields.String,
         'mine_report_category':
             fields.List(
                 fields.String(attribute='mine_report_category'),
                 attribute='mine_report_definition.categories'),
+        'report_type': fields.String,
         'report_name': fields.String,
         'due_date': fields.Date,
         'received_date': fields.Date,
@@ -714,8 +716,11 @@ MINE_REPORT_MODEL = api.model(
             fields.String,
         'permit_number':
             fields.String,
+        # TODO: Remove with CODE_REQUIRED_REPORTS feature flag- slows down API dramatically
         'mine_report_submissions':
             fields.List(fields.Nested(MINE_REPORT_SUBMISSION_MODEL)),
+        'latest_submission':
+            fields.Nested(MINE_REPORT_SUBMISSION_MODEL),
         'mine_guid':
             fields.String,
         'mine_name':
@@ -730,6 +735,7 @@ MINE_REPORT_MODEL = api.model(
             fields.String,
         'mine_report_contacts':
             fields.List(fields.Nested(MINE_REPORT_CONTACT_MODEL)),
+        'mine_report_status_code': fields.String,
     })
 
 MINE_REPORT_DEFINITION_CATEGORIES = api.model('MineReportDefinitionCategoriesModel', {

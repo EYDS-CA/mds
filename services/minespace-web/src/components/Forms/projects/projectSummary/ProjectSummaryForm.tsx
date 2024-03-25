@@ -12,14 +12,12 @@ import {
   getFormSyncErrors,
   InjectedFormProps,
 } from "redux-form";
-import "@ant-design/compatible/assets/index.css";
 import * as FORM from "@/constants/forms";
-import BasicInformation from "@/components/Forms/projects/projectSummary/BasicInformation";
 import DocumentUpload from "@/components/Forms/projects/projectSummary/DocumentUpload";
 import ProjectContacts from "@/components/Forms/projects/projectSummary/ProjectContacts";
 import ProjectDates from "@/components/Forms/projects/projectSummary/ProjectDates";
 import AuthorizationsInvolved from "@/components/Forms/projects/projectSummary/AuthorizationsInvolved";
-import SteppedForm from "@common/components/SteppedForm";
+import SteppedForm from "@mds/common/components/forms/SteppedForm";
 import Step from "@common/components/Step";
 import ProjectLinks from "@mds/common/components/projects/ProjectLinks";
 import { EDIT_PROJECT } from "@/constants/routes";
@@ -27,6 +25,8 @@ import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFla
 import { Feature, IProjectSummary, IProjectSummaryDocument } from "@mds/common";
 import { Agent } from "./Agent";
 import { LegalLandOwnerInformation } from "@mds/common/components/projectSummary/LegalLandOwnerInformation";
+import { FacilityOperator } from "@mds/common/components/projectSummary/FacilityOperator";
+import BasicInformation from "@mds/common/components/projectSummary/BasicInformation";
 import Applicant from "@/components/Forms/projects/projectSummary/Applicant";
 
 interface ProjectSummaryFormProps {
@@ -56,6 +56,7 @@ export const getProjectFormTabs = (amsFeatureEnabled: boolean) => {
     "project-contacts",
     "applicant-information",
     "agent",
+    "facility-operator-information",
     "legal-land-owner-information",
     "project-dates",
     "authorizations-involved",
@@ -90,10 +91,11 @@ export const ProjectSummaryForm: FC<ProjectSummaryFormProps &
       "related-projects": (
         <ProjectLinks viewProject={(p) => EDIT_PROJECT.dynamicRoute(p.project_guid)} />
       ),
-      "project-contacts": <ProjectContacts initialValues={props.initialValues} />,
+      "project-contacts": <ProjectContacts />,
       "project-dates": <ProjectDates initialValues={props.initialValues} />,
       "applicant-information": <Applicant />,
       agent: <Agent />,
+      "facility-operator-information": <FacilityOperator />,
       "authorizations-involved": (
         <AuthorizationsInvolved initialValues={props.initialValues} change={props.change} />
       ),

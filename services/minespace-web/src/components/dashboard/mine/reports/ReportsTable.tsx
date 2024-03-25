@@ -39,15 +39,14 @@ const DEFAULT_PAGE_SIZE = 10;
 export const reportStatusSeverity = (status: MINE_REPORT_SUBMISSION_CODES) => {
   switch (status) {
     case MINE_REPORT_SUBMISSION_CODES.REQ:
-      return "processing";
-    case MINE_REPORT_SUBMISSION_CODES.ACC:
-      return "success";
     case MINE_REPORT_SUBMISSION_CODES.REC:
+    case MINE_REPORT_SUBMISSION_CODES.NON:
       return "warning";
+    case MINE_REPORT_SUBMISSION_CODES.ACC:
     case MINE_REPORT_SUBMISSION_CODES.NRQ:
-      return "default";
     case MINE_REPORT_SUBMISSION_CODES.INI:
-      return "default";
+      return "success";
+    case MINE_REPORT_SUBMISSION_CODES.WTD:
     default:
       return "default";
   }
@@ -84,8 +83,10 @@ export const ReportsTable: FC<ReportsTableProps> = (props) => {
     },
     renderTextColumn("submission_year", "Compliance Year", true, null, 5),
     renderTextColumn("due_date", "Due", true, null, 5),
-    renderTextColumn("received_date", "Submitted On", true),
+    renderTextColumn(["latest_submission", "received_date"], "Submitted On", true),
     renderTextColumn("created_by_idir", "Requested By", true),
+
+    // TODO: remove documents column with CODE_REQUIRED_REPORTS feature flag
     {
       title: "Documents",
       dataIndex: "mine_report_submissions",
@@ -130,8 +131,8 @@ export const ReportsTable: FC<ReportsTableProps> = (props) => {
     columns = columns.filter((column) => !["", "Documents"].includes(column.title as string));
     const statusColumn = {
       title: "Status",
-      dataIndex: "status",
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      dataIndex: "mine_report_status_code",
+      sorter: (a, b) => a.mine_report_status_code.localeCompare(b.mine_report_status_code),
       render: (text: MINE_REPORT_SUBMISSION_CODES) => {
         return <Badge status={reportStatusSeverity(text)} text={MINE_REPORT_STATUS_HASH[text]} />;
       },
@@ -141,16 +142,15 @@ export const ReportsTable: FC<ReportsTableProps> = (props) => {
     columns = [...columns, ...newColumns];
   }
 
-  const transformRowData = (reports: IMineReport[]): IMineReport[] =>
-    reports.map((report) => {
-      const { mine_report_submissions } = report;
-      const latestSubmission = mine_report_submissions?.[mine_report_submissions?.length - 1];
-
-      return {
-        ...report,
-        status: latestSubmission?.mine_report_submission_status_code ?? "",
-      };
+  if (props.mineReports.some((report) => report.permit_guid)) {
+    columns = columns.map((col) => {
+      if (col.key === "code_section") {
+        return renderTextColumn("permit_number", "Permit #", true, null, 5);
+      } else {
+        return col;
+      }
     });
+  }
 
   const pagination: TablePaginationConfig = {
     defaultPageSize: DEFAULT_PAGE_SIZE,
@@ -165,7 +165,7 @@ export const ReportsTable: FC<ReportsTableProps> = (props) => {
       columns={columns}
       rowKey={(record) => record.mine_report_guid}
       emptyText="This mine has no report data."
-      dataSource={transformRowData(props.mineReports)}
+      dataSource={props.mineReports}
       pagination={pagination}
     />
   );

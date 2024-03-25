@@ -2,23 +2,26 @@ import React, { useEffect, useState } from "react";
 import { Button, Col, Row, Steps, Typography } from "antd";
 import { Link, useHistory, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { IMine, IMineReportDefinition } from "@mds/common/interfaces";
+import { reset } from "redux-form";
+import { IMine, IMineReportSubmission } from "@mds/common/interfaces";
 import ArrowLeftOutlined from "@ant-design/icons/ArrowLeftOutlined";
 import { getMineById } from "@mds/common/redux/selectors/mineSelectors";
 import ReportGetStarted from "@mds/common/components/reports/ReportGetStarted";
 import { fetchMineRecordById } from "@mds/common/redux/actionCreators/mineActionCreator";
 import ReportDetailsForm from "@mds/common/components/reports/ReportDetailsForm";
 import { createReportSubmission } from "./reportSubmissionSlice";
+import { getSystemFlag } from "@mds/common/redux/selectors/authenticationSelectors";
+import { SystemFlagEnum } from "@mds/common/constants";
+import { FORM } from "../..";
 
 const ReportSteps = () => {
+  const system = useSelector(getSystemFlag);
   const history = useHistory();
   const dispatch = useDispatch();
 
-  const { mineGuid } = useParams<{ mineGuid: string }>();
+  const { mineGuid, reportType } = useParams<{ mineGuid: string; reportType: string }>();
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedReportDefinition, setSelectedReportDefinition] = useState<IMineReportDefinition>(
-    null
-  );
+  const [initialValues, setInitialValues] = useState<Partial<IMineReportSubmission>>({});
 
   const mine: IMine = useSelector((state) => getMineById(state, mineGuid));
 
@@ -65,15 +68,21 @@ const ReportSteps = () => {
         return (
           <div>
             <ReportGetStarted
-              setSelectedReportDefinition={setSelectedReportDefinition}
-              selectedReportDefinition={selectedReportDefinition}
+              mine={mine}
+              handleSubmit={(values) => {
+                setInitialValues(values);
+                setCurrentStep(currentStep + 1);
+              }}
+              formButtons={renderStepButtons({
+                nextButtonTitle: "Add Report Details",
+                previousButtonTitle: "Cancel",
+                previousButtonFunction: () => {
+                  // necessary because it's not being destroyed on unmount
+                  dispatch(reset(FORM.VIEW_EDIT_REPORT));
+                  history.goBack();
+                },
+              })}
             />
-            {renderStepButtons({
-              nextButtonTitle: "Add Report Details",
-              previousButtonTitle: "Cancel",
-              previousButtonFunction: () => history.goBack(),
-              nextButtonFunction: () => setCurrentStep(currentStep + 1),
-            })}
           </div>
         );
       case 1:
@@ -81,7 +90,7 @@ const ReportSteps = () => {
           <div>
             <ReportDetailsForm
               mineGuid={mineGuid}
-              currentReportDefinition={selectedReportDefinition}
+              initialValues={initialValues}
               handleSubmit={() => setCurrentStep(currentStep + 1)}
               formButtons={renderStepButtons({
                 nextButtonTitle: "Review & Submit",
@@ -129,7 +138,7 @@ const ReportSteps = () => {
   ];
 
   return (
-    <div>
+    <div className="report-steps-page">
       <Row>
         <Col span={24}>
           <Typography.Title>Report - {mine?.mine_name ?? ""}</Typography.Title>
@@ -137,7 +146,13 @@ const ReportSteps = () => {
       </Row>
       <Row>
         <Col span={24}>
-          <Link to={GLOBAL_ROUTES?.MINE_DASHBOARD.dynamicRoute(mineGuid, "reports")}>
+          <Link
+            to={
+              system === SystemFlagEnum.core
+                ? GLOBAL_ROUTES?.MINE_REPORTS.dynamicRoute(mineGuid, reportType)
+                : GLOBAL_ROUTES?.MINE_DASHBOARD.dynamicRoute(mineGuid, "reports")
+            }
+          >
             <ArrowLeftOutlined className="padding-sm--right" />
             {`Back to: ${mine?.mine_name} reports`}
           </Link>
@@ -147,7 +162,7 @@ const ReportSteps = () => {
         Submit New Report
       </Typography.Title>
       <Steps className="report-steps" current={currentStep} items={stepItems}></Steps>
-      {renderStepContent()}
+      {mine && renderStepContent()}
     </div>
   );
 };
