@@ -116,7 +116,27 @@ PROJECT_SUMMARY_AUTHORIZATION_MODEL = api.model(
         'project_summary_guid': fields.String,
         'project_summary_permit_type': fields.List(fields.String),
         'project_summary_authorization_type': fields.String,
-        'existing_permits_authorizations': fields.List(fields.String)
+        'existing_permits_authorizations': fields.List(fields.String),
+        'amendment_changes': fields.List(fields.String),
+        'amendment_severity': fields.String,
+        'is_contaminated': fields.Boolean,
+        'new_type': fields.String,
+        'authorization_description': fields.String,
+        'exemption_reason': fields.String,
+        'amendment_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'location_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'general_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'support_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'exemption_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'discharge_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'consent_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'change_ownership_name_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'clause_amendment_documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
+        'exemption_requested': fields.Boolean,
+        'ams_tracking_number': fields.String,
+        'ams_outcome': fields.String,
+        'ams_status_code': fields.String,
+        'ams_submission_timestamp': fields.DateTime,
     })
 
 PROJECT_CONTACT_MODEL = api.model(
@@ -132,6 +152,12 @@ PROJECT_CONTACT_MODEL = api.model(
         'first_name': fields.String,
         'last_name': fields.String,
         'address': fields.List(fields.Nested(ADDRESS)),
+    })
+
+MUNICIPALITY_MODEL = api.model(
+    'Municipality', {
+        'municipality_guid': fields.String,
+        'municipality_name': fields.String
     })
 
 PROJECT_SUMMARY_MODEL = api.model(
@@ -184,7 +210,10 @@ PROJECT_SUMMARY_MODEL = api.model(
         'is_legal_address_same_as_mailing_address': fields.Boolean,
         'is_billing_address_same_as_mailing_address': fields.Boolean,
         'is_billing_address_same_as_legal_address': fields.Boolean,
-        'applicant': fields.Nested(PARTY)
+        'applicant': fields.Nested(PARTY),
+        'municipality': fields.Nested(MUNICIPALITY_MODEL),
+        'regional_district_id': fields.Integer,
+        'payment_contact': fields.Nested(PARTY),
     })
 
 REQUIREMENTS_MODEL = api.model(
@@ -196,7 +225,8 @@ REQUIREMENTS_MODEL = api.model(
         'display_order': fields.Integer,
         'deleted_ind': fields.Boolean,
         'sub_requirements': fields.List(Requirement),
-        'step': fields.String
+        'step': fields.String,
+        'version': fields.Integer
     })
 
 IRT_DOCUMENT_MODEL = api.inherit('InformationRequirementsTableDocument', MINE_DOCUMENT_MODEL, {
@@ -226,7 +256,8 @@ IRT_REQUIREMENTS_MODEL = api.model(
         'deleted_ind': fields.Boolean,
         'required': fields.Boolean,
         'methods': fields.Boolean,
-        'comment': fields.String
+        'comment': fields.String,
+        'version': fields.Integer,
     })
 
 IRT_MODEL = api.model(

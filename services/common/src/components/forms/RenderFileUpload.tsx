@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useSelector, connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import "filepond-polyfill";
 import { FilePond, registerPlugin } from "react-filepond";
-import { Form, Popover, Switch, notification } from "antd";
+import { Form, notification, Popover, Switch } from "antd";
 import { invert, uniq } from "lodash";
 import { FunnelPlotOutlined } from "@ant-design/icons";
 import "filepond/dist/filepond.min.css";
 import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import * as tus from "tus-js-client";
+import { HttpRequest, HttpResponse } from "tus-js-client";
 import { APPLICATION_OCTET_STREAM, ENVIRONMENT, SystemFlagEnum } from "@mds/common/index";
 import { bindActionCreators } from "redux";
 import { pollDocumentUploadStatus } from "@mds/common/redux/actionCreators/documentActionCreator";
@@ -21,8 +22,9 @@ import {
   MultipartDocumentUpload,
   UploadResult,
 } from "@mds/common/utils/fileUploadHelper.interface";
-import { HttpRequest, HttpResponse } from "tus-js-client";
 import { BaseInputProps } from "./BaseInput";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleQuestion } from "@fortawesome/pro-light-svg-icons";
 
 registerPlugin(FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
 
@@ -66,6 +68,7 @@ interface FileUploadProps extends BaseInputProps {
   // true for "We accept most common ${listedFileTypes.join()} files" language + popover
   abbrevLabel?: boolean;
   maxFiles?: number;
+  labelHref: string;
 
   beforeAddFile?: (file?: any) => any;
   beforeDropFile?: (file?: any) => any;
@@ -95,6 +98,7 @@ const defaultProps = {
   beforeDropFile: () => {},
   file: null,
   maxFiles: undefined,
+  labelHref: undefined,
 };
 
 export const FileUpload = (props: FileUploadProps) => {
@@ -125,10 +129,17 @@ export const FileUpload = (props: FileUploadProps) => {
       return labelIdle;
     }
     const fileTypeList = listedFileTypes ?? Object.keys(acceptedFileTypesMap);
-    const fileTypeDisplayString =
+    let fileTypeDisplayString =
       fileTypeList.slice(0, -1).join(", ") + ", and " + fileTypeList.slice(-1);
+    if (fileTypeList.length === 1) {
+      fileTypeDisplayString = fileTypeList[0];
+    }
+
+    const fileSize = props.maxFileSize
+      ? ` with max individual file size of ${props.maxFileSize}`
+      : "";
     const secondLine = abbrevLabel
-      ? `<div>We accept most common ${fileTypeDisplayString} files</div>`
+      ? `<div>We accept most common ${fileTypeDisplayString} files${fileSize}.</div>`
       : `<div>Accepted filetypes: ${fileTypeDisplayString}</div>`;
     return `${labelInstruction}<br>${secondLine}`;
   };
@@ -211,7 +222,7 @@ export const FileUpload = (props: FileUploadProps) => {
               }
               props.importIsSuccessful(true);
             } catch (err) {
-              props.importIsSuccessful(false, err);
+              props.importIsSuccessful(false, err.response.data);
             }
 
             if (showWhirlpool) {
@@ -440,6 +451,50 @@ export const FileUpload = (props: FileUploadProps) => {
   const fileValidateTypeLabelExpectedTypesMap = invert(props.acceptedFileTypesMap);
   const acceptedFileTypes = uniq(Object.values(props.acceptedFileTypesMap));
 
+  const getLabel = (props) => {
+    let labelHrefElement = null;
+
+    if (props.labelHref) {
+      labelHrefElement = (
+        <a href={props.labelHref} target="_blank" rel="noopener noreferrer">
+          {props.label}
+        </a>
+      );
+    }
+
+    if (props.abbrevLabel && Object.values(props.acceptedFileTypesMap).length > 0) {
+      return (
+        <span>
+          {labelHrefElement ? labelHrefElement : props.label}{" "}
+          <span>
+            <Popover
+              content={
+                <>
+                  <strong>Accepted File Types:</strong>
+                  <p>{Object.keys(props.acceptedFileTypesMap).join(", ")}</p>
+                </>
+              }
+              placement="topLeft"
+              color="white"
+              overlayClassName="filepond-filetypes-popover"
+            >
+              <span className="form-dashed-underline">
+                Accepted file types{" "}
+                <FontAwesomeIcon icon={faCircleQuestion} style={{ width: "15px" }} />
+              </span>
+            </Popover>
+          </span>
+        </span>
+      );
+    }
+
+    if (labelHrefElement) {
+      return labelHrefElement;
+    }
+
+    return <>{props.label}</>;
+  };
+
   return (
     <div className={showWhirlpool ? "whirlpool-container whirlpool-on" : "whirlpool-container"}>
       {system === SystemFlagEnum.core && (
@@ -467,7 +522,12 @@ export const FileUpload = (props: FileUploadProps) => {
       <Form.Item
         name={props.input?.name}
         required={props.required}
-        label={props.label}
+        label={getLabel({
+          label: props.label,
+          labelHref: props.labelHref,
+          abbrevLabel: props.abbrevLabel,
+          acceptedFileTypesMap: props.acceptedFileTypesMap,
+        })}
         validateStatus={
           props.meta?.touched
             ? (props.meta?.error && "error") || (props.meta?.warning && "warning")
@@ -519,23 +579,6 @@ export const FileUpload = (props: FileUploadProps) => {
               })
             }
           />
-          {props.abbrevLabel && (
-            <div className="filepond-popover-container">
-              <Popover
-                content={
-                  <>
-                    <strong>Accepted File Types:</strong>
-                    <p>{Object.keys(props.acceptedFileTypesMap).join(", ")}</p>
-                  </>
-                }
-                placement="topRight"
-                color="white"
-                overlayClassName="filepond-filetypes-popover"
-              >
-                View accepted file types
-              </Popover>
-            </div>
-          )}
         </>
       </Form.Item>
     </div>

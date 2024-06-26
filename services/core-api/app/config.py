@@ -117,10 +117,24 @@ class Config(object):
     NRIS_USER_NAME = os.environ.get('NRIS_USER_NAME', None)
     NRIS_PASS = os.environ.get('NRIS_PASS', None)
     ENVIRONMENT_NAME = os.environ.get('ENVIRONMENT_NAME', 'dev')
-    CORE_PRODUCTION_URL = os.environ.get('CORE_PRODUCTION_URL',
+    CORE_PROD_URL = os.environ.get('CORE_PRODUCTION_URL',
                                          'https://minesdigitalservices.gov.bc.ca')
-    MINESPACE_PRODUCTION_URL = os.environ.get('MINESPACE_PRODUCTION_URL',
+    CORE_TEST_URL = os.environ.get('CORE_TEST_URL',
+                                         'https://mds-test.apps.silver.devops.gov.bc.ca')
+    CORE_DEV_URL = os.environ.get('CORE_DEV_URL',
+                                         'https://mds-dev.apps.silver.devops.gov.bc.ca')
+    CORE_LOCAL_URL = os.environ.get('CORE_LOCAL_URL',
+                                         'http://localhost:3000')
+    
+    MINESPACE_PROD_URL = os.environ.get('MINESPACE_PRODUCTION_URL',
                                               'https://minespace.gov.bc.ca')
+    MINESPACE_TEST_URL = os.environ.get('MINESPACE_TEST_URL',
+                                              'https://minespace-test.apps.silver.devops.gov.bc.ca')
+    MINESPACE_DEV_URL = os.environ.get('MINESPACE_DEV_URL',
+                                              'https://minespace-dev.apps.silver.devops.gov.bc.ca')
+    MINESPACE_LOCAL_URL = os.environ.get('MINESPACE_LOCAL_URL',
+                                              'http://localhost:3020')
+    
     MDS_NO_REPLY_EMAIL = os.environ.get('MDS_NO_REPLY_EMAIL', 'noreply-mds@gov.bc.ca')
     MDS_EMAIL = os.environ.get('MDS_EMAIL', 'mds@gov.bc.ca')
     MAJOR_MINES_OFFICE_EMAIL = os.environ.get('MAJOR_MINES_OFFICE_EMAIL', 'PermRecl@gov.bc.ca')
@@ -193,6 +207,9 @@ class Config(object):
     # Enable flag caching and evalutation. If set to True, FLAGSMITH_KEY must be set to a server side FLAGSMITH_KEY
     FLAGSMITH_ENABLE_LOCAL_EVALUTION=os.environ.get('FLAGSMITH_ENABLE_LOCAL_EVALUTION', 'false') == 'true'
 
+    # Kibana
+    KIBANA_BASE_URL = os.environ.get('KIBANA_BASE_URL', 'https://kibana-openshift-logging.apps.silver.devops.gov.bc.ca')
+
     # NROS
     NROS_CLIENT_SECRET = os.environ.get('NROS_CLIENT_SECRET', None)
     NROS_CLIENT_ID = os.environ.get('NROS_CLIENT_ID', None)
@@ -238,6 +255,10 @@ class Config(object):
     EMAIL_ENABLED = os.environ.get('EMAIL_ENABLED', False)
     EMAIL_RECIPIENT_OVERRIDE = os.environ.get('EMAIL_RECIPIENT_OVERRIDE')
 
+    # AMS API Services
+    AMS_BEARER_TOKEN = os.environ.get('AMS_BEARER_TOKEN')
+    AMS_URL = os.environ.get('AMS_URL')
+
     # CSS Keycloak SSO
     CSS_CLIENT_ID = os.environ.get('CSS_CLIENT_ID')
     CSS_CLIENT_SECRET = os.environ.get('CSS_CLIENT_SECRET')
@@ -248,7 +269,7 @@ class Config(object):
     #Templates
     TEMPLATE_FOLDER_BASE = os.environ.get('TEMPLATE_FOLDER_BASE', 'templates')
     TEMPLATE_FOLDER_IRT = os.environ.get('TEMPLATE_FOLDER_IRT', f'{TEMPLATE_FOLDER_BASE}/project/')
-    TEMPLATE_IRT = os.environ.get('TEMPLATE_IRT', 'IRT_Template.xlsx')
+    TEMPLATE_IRT = os.environ.get('TEMPLATE_IRT', 'IRT_Template 2024_April.xlsx')
 
     # Celery settings
     CELERY_RESULT_BACKEND = f'db+postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
@@ -274,6 +295,7 @@ class Config(object):
     TRACTION_WALLET_API_KEY = os.environ.get("TRACTION_WALLET_API_KEY","GET_WALLET_API_KEY_FROM_TRACTION")
     TRACTION_WEBHOOK_X_API_KEY = os.environ.get("TRACTION_WEBHOOK_X_API_KEY","NO_X_API_KEY")
     CRED_DEF_ID_MINES_ACT_PERMIT = os.environ.get("CRED_DEF_ID_MINES_ACT_PERMIT","CRED_DEF_ID_MINES_ACT_PERMIT")
+    
 
 class TestConfig(Config):
     # The following configs are for testing purposes and all variables and keys are generated using dummy data.
@@ -284,67 +306,51 @@ class TestConfig(Config):
                                                        Config.DB_HOST, Config.DB_PORT, DB_NAME_TEST)
     SQLALCHEMY_DATABASE_URI = DB_URL
     JWT_OIDC_TEST_MODE = True
-    JWT_OIDC_TEST_AUDIENCE = "test_audience"
-    JWT_OIDC_TEST_CLIENT_SECRET = "test_secret"
-    JWT_OIDC_TEST_ISSUER = "test_issuer"
-    # Dummy Private Keys for testing purposes, can replace these keys with any other generated key.
+    JWT_OIDC_TEST_AUDIENCE = os.environ.get('JWT_OIDC_TEST_AUDIENCE', None)
+    JWT_OIDC_TEST_CLIENT_SECRET = os.environ.get('JWT_OIDC_TEST_CLIENT_SECRET', None)
+    JWT_OIDC_TEST_ISSUER = os.environ.get('JWT_OIDC_TEST_ISSUER', None)
 
+    KID_KEY = os.environ.get('JWT_OIDC_KEY_KID', None)
+    KTY_KEY = os.environ.get('JWT_OIDC_KEY_KTY', None)
+    ALG_KEY = os.environ.get('JWT_OIDC_KEY_ALG', None)
+    USE_KEY = os.environ.get('JWT_OIDC_KEY_USE', None)
+    N_KEY = os.environ.get('JWT_OIDC_KEY_N', None)
+    E_KEY = os.environ.get('JWT_OIDC_KEY_E', None)
+    D_KEY = os.environ.get('JWT_OIDC_KEY_D', None)
+    P_KEY = os.environ.get('JWT_OIDC_KEY_P', None)
+    Q_KEY = os.environ.get('JWT_OIDC_KEY_Q', None)
+    DP_KEY = os.environ.get('JWT_OIDC_KEY_DP', None)
+    DQ_KEY = os.environ.get('JWT_OIDC_KEY_DQ', None)
+    QI_KEY = os.environ.get('JWT_OIDC_KEY_QI', None)
+
+    # Dummy Private Keys for testing purposes, can replace these keys with any other generated key.
     JWT_OIDC_TEST_KEYS = {
         "keys": [{
-            "kid": "flask-jwt-oidc-test-client",
-            "kty": "RSA",
-            "alg": "RS256",
-            "use": "sig",
-            "n":
-            "AN-fWcpCyE5KPzHDjigLaSUVZI0uYrcGcc40InVtl-rQRDmAh-C2W8H4_Hxhr5VLc6crsJ2LiJTV_E72S03pzpOOaaYV6-TzAjCou2GYJIXev7f6Hh512PuG5wyxda_TlBSsI-gvphRTPsKCnPutrbiukCYrnPuWxX5_cES9eStR",
-            "e": "AQAB"
+            "kid": KID_KEY,
+            "kty": KTY_KEY,
+            "alg": ALG_KEY,
+            "use": USE_KEY,
+            "n": N_KEY,
+            "e": E_KEY
         }]
     }
     # Dummy Private Keys for testing purposes.
     JWT_OIDC_TEST_PRIVATE_KEY_JWKS = {
         "keys": [{
-            "kid":
-            "flask-jwt-oidc-test-client",
-            "kty":
-            "RSA",
-            "alg":
-            "RS256",
-            "use":
-            "sig",
-            "kty":
-            "RSA",
-            "n":
-            "AN-fWcpCyE5KPzHDjigLaSUVZI0uYrcGcc40InVtl-rQRDmAh-C2W8H4_Hxhr5VLc6crsJ2LiJTV_E72S03pzpOOaaYV6-TzAjCou2GYJIXev7f6Hh512PuG5wyxda_TlBSsI-gvphRTPsKCnPutrbiukCYrnPuWxX5_cES9eStR",
-            "e":
-            "AQAB",
-            "d":
-            "C0G3QGI6OQ6tvbCNYGCqq043YI_8MiBl7C5dqbGZmx1ewdJBhMNJPStuckhskURaDwk4-8VBW9SlvcfSJJrnZhgFMjOYSSsBtPGBIMIdM5eSKbenCCjO8Tg0BUh_xa3CHST1W4RQ5rFXadZ9AeNtaGcWj2acmXNO3DVETXAX3x0",
-            "p":
-            "APXcusFMQNHjh6KVD_hOUIw87lvK13WkDEeeuqAydai9Ig9JKEAAfV94W6Aftka7tGgE7ulg1vo3eJoLWJ1zvKM",
-            "q":
-            "AOjX3OnPJnk0ZFUQBwhduCweRi37I6DAdLTnhDvcPTrrNWuKPg9uGwHjzFCJgKd8KBaDQ0X1rZTZLTqi3peT43s",
-            "dp":
-            "AN9kBoA5o6_Rl9zeqdsIdWFmv4DB5lEqlEnC7HlAP-3oo3jWFO9KQqArQL1V8w2D4aCd0uJULiC9pCP7aTHvBhc",
-            "dq":
-            "ANtbSY6njfpPploQsF9sU26U0s7MsuLljM1E8uml8bVJE1mNsiu9MgpUvg39jEu9BtM2tDD7Y51AAIEmIQex1nM",
-            "qi":
-            "XLE5O360x-MhsdFXx8Vwz4304-MJg-oGSJXCK_ZWYOB_FGXFRTfebxCsSYi0YwJo-oNu96bvZCuMplzRI1liZw"
+            "kid": KID_KEY,
+            "kty": KTY_KEY,
+            "alg": ALG_KEY,
+            "use": USE_KEY,
+            "kty": KTY_KEY,
+            "n": N_KEY,
+            "e": E_KEY,
+            "d": D_KEY,
+            "p": P_KEY,
+            "q": Q_KEY,
+            "dp": DP_KEY,
+            "dq": DQ_KEY,
+            "qi": QI_KEY
         }]
     }
     # Dummy Private Key, for testing purposes.
-    JWT_OIDC_TEST_PRIVATE_KEY_PEM = """
------BEGIN RSA PRIVATE KEY-----
-MIICXQIBAAKBgQDfn1nKQshOSj8xw44oC2klFWSNLmK3BnHONCJ1bZfq0EQ5gIfg
-tlvB+Px8Ya+VS3OnK7Cdi4iU1fxO9ktN6c6TjmmmFevk8wIwqLthmCSF3r+3+h4e
-ddj7hucMsXWv05QUrCPoL6YUUz7Cgpz7ra24rpAmK5z7lsV+f3BEvXkrUQIDAQAB
-AoGAC0G3QGI6OQ6tvbCNYGCqq043YI/8MiBl7C5dqbGZmx1ewdJBhMNJPStuckhs
-kURaDwk4+8VBW9SlvcfSJJrnZhgFMjOYSSsBtPGBIMIdM5eSKbenCCjO8Tg0BUh/
-xa3CHST1W4RQ5rFXadZ9AeNtaGcWj2acmXNO3DVETXAX3x0CQQD13LrBTEDR44ei
-lQ/4TlCMPO5bytd1pAxHnrqgMnWovSIPSShAAH1feFugH7ZGu7RoBO7pYNb6N3ia
-C1idc7yjAkEA6Nfc6c8meTRkVRAHCF24LB5GLfsjoMB0tOeEO9w9Ous1a4o+D24b
-AePMUImAp3woFoNDRfWtlNktOqLel5PjewJBAN9kBoA5o6/Rl9zeqdsIdWFmv4DB
-5lEqlEnC7HlAP+3oo3jWFO9KQqArQL1V8w2D4aCd0uJULiC9pCP7aTHvBhcCQQDb
-W0mOp436T6ZaELBfbFNulNLOzLLi5YzNRPLppfG1SRNZjbIrvTIKVL4N/YxLvQbT
-NrQw+2OdQACBJiEHsdZzAkBcsTk7frTH4yGx0VfHxXDPjfTj4wmD6gZIlcIr9lZg
-4H8UZcVFN95vEKxJiLRjAmj6g273pu9kK4ymXNEjWWJn
------END RSA PRIVATE KEY-----"""
+    JWT_OIDC_TEST_PRIVATE_KEY_PEM = os.environ.get('JWT_OIDC_TEST_PRIVATE_KEY_PEM', None)

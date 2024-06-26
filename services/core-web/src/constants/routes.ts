@@ -56,6 +56,7 @@ import DamsDetailsPage from "@/components/mine/Tailings/DamsDetailsPage";
 import ReportPage from "@/components/mine/Reports/ReportPage";
 import ReportSteps from "@mds/common/components/reports/ReportSteps";
 import ViewDigitalPermitCredential from "@/components/mine/DigitalPermitCredential/ViewDigitalPermitCredential";
+import ComplianceCodeManagement from "@/components/admin/complianceCodes/ComplianceCodeManagement";
 
 const withoutDefaultParams = (params, defaults) => {
   const newParams = JSON.parse(JSON.stringify(params));
@@ -194,21 +195,27 @@ export const MINE_PRE_APPLICATIONS = {
 };
 
 export const ADD_PROJECT_SUMMARY = {
-  route: "/mines/:mineGuid/project-description/new",
-  dynamicRoute: (mineGuid) => `/mines/${mineGuid}/project-description/new`,
+  route: "/mines/:mineGuid/project-description/new/:tab",
+  dynamicRoute: (mineGuid, tab = "basic-information") =>
+    `/mines/${mineGuid}/project-description/new/${tab}`,
   component: ProjectSummary,
 };
 
-export const PRE_APPLICATIONS = {
-  route: "/pre-applications/:projectGuid/project-description/:projectSummaryGuid",
-  dynamicRoute: (projectGuid, projectSummaryGuid) =>
-    `/pre-applications/${projectGuid}/project-description/${projectSummaryGuid}`,
-  hashRoute: (projectGuid, projectSummaryGuid, link) =>
-    `/pre-applications/${projectGuid}/project-description/${projectSummaryGuid}/${link}`,
+export const EDIT_PROJECT_SUMMARY = {
+  route: "/pre-applications/:projectGuid/project-description/:projectSummaryGuid/:mode/:tab",
+  dynamicRoute: (
+    projectGuid,
+    projectSummaryGuid,
+    activeTab = "basic-information",
+    viewMode = true
+  ) =>
+    `/pre-applications/${projectGuid}/project-description/${projectSummaryGuid}/${
+      viewMode ? "view" : "edit"
+    }/${activeTab}`,
   component: ProjectSummary,
 };
 
-export const PROJECTS = {
+export const EDIT_PROJECT = {
   route: "/pre-applications/:projectGuid/:tab",
   dynamicRoute: (projectGuid, tab = "overview") => `/pre-applications/${projectGuid}/${tab}`,
   component: Project,
@@ -447,6 +454,11 @@ export const ADMIN_CONTACT_MANAGEMENT = {
   component: MergeContactsDashboard,
 };
 
+export const ADMIN_HSRC_COMPLIANCE_CODE_MANAGEMENT = {
+  route: "/admin/hsrc-management",
+  component: ComplianceCodeManagement,
+};
+
 export const SEARCH_RESULTS = {
   route: "/search",
   dynamicRoute: ({ q, t = null }) => (t ? `/search?q=${q}&t=${t}` : `/search?q=${q}`),
@@ -514,10 +526,9 @@ export const VIEW_MINESPACE = (mineGuid) => {
 };
 
 const ORGBOOK_URL = "https://orgbook.gov.bc.ca";
-export const ORGBOOK_ENTITY_URL = (sourceId) => `${ORGBOOK_URL}/en/organization/${sourceId}`;
+export const ORGBOOK_ENTITY_URL = (sourceId) => `${ORGBOOK_URL}/entity/${sourceId}`;
 export const ORGBOOK_CREDENTIAL_URL = (sourceId, credentialId) =>
-  `${ORGBOOK_URL}/en/organization/${sourceId}/cred/${credentialId}`;
-
+  `${ORGBOOK_URL}/entity/${sourceId}/cred/${credentialId}`;
 export const ADD_DAM = {
   route:
     "/mine-dashboard/:mineGuid/tailings-storage-facility/:tailingsStorageFacilityGuid/dam/:parentTSFFormMode/:userAction",

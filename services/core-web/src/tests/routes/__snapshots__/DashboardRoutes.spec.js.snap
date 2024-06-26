@@ -261,14 +261,14 @@ exports[`DashboardRoutes  renders properly 1`] = `
   <Route
     component={[Function]}
     exact={true}
-    key="/mines/:mineGuid/project-description/new"
-    path="/mines/:mineGuid/project-description/new"
+    key="/mines/:mineGuid/project-description/new/:tab"
+    path="/mines/:mineGuid/project-description/new/:tab"
   />
   <Route
     component={[Function]}
     exact={true}
-    key="/pre-applications/:projectGuid/project-description/:projectSummaryGuid"
-    path="/pre-applications/:projectGuid/project-description/:projectSummaryGuid"
+    key="/pre-applications/:projectGuid/project-description/:projectSummaryGuid/:mode/:tab"
+    path="/pre-applications/:projectGuid/project-description/:projectSummaryGuid/:mode/:tab"
   />
   <Route
     component={
@@ -609,6 +609,20 @@ exports[`DashboardRoutes  renders properly 1`] = `
     exact={true}
     key="/admin/contact-management/:tab"
     path="/admin/contact-management/:tab"
+  />
+  <Route
+    component={
+      Object {
+        "$$typeof": Symbol(react.memo),
+        "WrappedComponent": [Function],
+        "compare": null,
+        "displayName": "Connect(authorizationGuard)",
+        "type": [Function],
+      }
+    }
+    exact={true}
+    key="/admin/hsrc-management"
+    path="/admin/hsrc-management"
   />
   <Route
     component={

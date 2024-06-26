@@ -378,6 +378,7 @@ MINE_TSF_MODEL = api.model(
         'consequence_classification_status_code': fields.String,
         'itrb_exemption_status_code': fields.String,
         'update_timestamp': fields.DateTime,
+        'update_user': fields.String,
         'tsf_operating_status_code': fields.String,
         'notes': fields.String,
         'facility_type': fields.String,
@@ -388,6 +389,23 @@ MINE_TSF_MODEL = api.model(
         'qualified_person': fields.Nested(MINE_PARTY_APPT_PARTY),
         'dams': fields.List(fields.Nested(DAM_MODEL)),
     })
+
+INDIVIDUAL_CHANGE_MODEL = api.model('IndividualChange', {
+    'field_name': fields.String,
+    'from': fields.Raw,
+    'to': fields.Raw
+})
+
+CHANGE_MODEL = api.model('Change', {
+    'updated_by': fields.String,
+    'updated_at': fields.DateTime,
+    'changeset': fields.List(fields.Nested(INDIVIDUAL_CHANGE_MODEL))
+})
+
+MINE_TSF_DETAIL_MODEL = api.clone('MineTailingsStorageFacilityDetail', MINE_TSF_MODEL, {
+    'history': fields.List(fields.Nested(CHANGE_MODEL))
+})
+
 
 MINE_WORK_INFORMATION_MODEL = api.model(
     'MineWorkInformation', {
@@ -744,8 +762,8 @@ MINE_REPORT_DEFINITION_CATEGORIES = api.model('MineReportDefinitionCategoriesMod
     'active_ind': fields.Boolean
 })
 
-MINE_REPORT_DEFINITION_MODEL = api.model(
-    'MineReportDefinition', {
+MINE_REPORT_DEFINITION_BASE_MODEL = api.model(
+    'MineReportDefinitionBase', {
         'mine_report_definition_guid': fields.String,
         'report_name': fields.String,
         'description': fields.String,
@@ -754,9 +772,13 @@ MINE_REPORT_DEFINITION_MODEL = api.model(
         'default_due_date': fields.Date,
         'active_ind': fields.Boolean,
         'categories': fields.List(fields.Nested(MINE_REPORT_DEFINITION_CATEGORIES)),
-        'compliance_articles': fields.List(fields.Nested(COMPLIANCE_ARTICLE_MODEL)),
         'is_common': fields.Boolean,
+        'is_prr_only': fields.Boolean,
     })
+
+MINE_REPORT_DEFINITION_MODEL = api.inherit('MineReportDefinition', MINE_REPORT_DEFINITION_BASE_MODEL, {
+    'compliance_articles': fields.List(fields.Nested(COMPLIANCE_ARTICLE_MODEL)),
+})
 
 PAGINATED_LIST = api.model(
     'List', {
@@ -894,4 +916,11 @@ TSF_OPERATING_STATUS_MODEL = api.model(
         'tsf_operating_status_code': fields.String,
         'description': fields.String,
         'active_ind': fields.Boolean
+    })
+
+MINE_REPORT_DEFINITION_COMPLIANCE_ARTICLE_MODEL = api.model(
+    'MineReportDefinitionComplianceArticleXref', {
+        'mine_report_definition_compliance_article_xref_guid': fields.String,
+        'compliance_article_id': fields.Integer,
+        'mine_report_definition_id': fields.Integer
     })

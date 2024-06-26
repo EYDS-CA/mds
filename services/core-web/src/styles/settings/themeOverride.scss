@@ -156,6 +156,10 @@
   }
 }
 
+label .ant-btn {
+  margin: 0px;
+}
+
 .ant-btn-icon-only {
   >svg.svg-inline--fa {
     font-size: 1rem;
@@ -510,6 +514,14 @@
 .ant-collapse {
   border: none;
   background-color: $pure-white;
+}
+
+.ant-collapse-borderless>.ant-collapse-item>.ant-collapse-content {
+  background-color: $white;
+}
+
+.page-scroll-wrapper .ant-collapse-content>.ant-collapse-content-box {
+  padding: 0;
 }
 
 .light-background {

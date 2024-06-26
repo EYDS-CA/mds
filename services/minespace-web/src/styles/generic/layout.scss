@@ -310,6 +310,16 @@
   background-color: $light-grey;
 }
 
+.grey-box {
+  border: 1px solid $background;
+  padding: 16px 24px;
+}
+
+.grey-filled-box {
+  background: $background;
+  padding: 16px 24px;
+}
+
 .content {
   overflow: initial;
   min-height: 100vh;

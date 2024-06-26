@@ -16,10 +16,11 @@ import {
   INFORMATION_REQUIREMENTS_TABLE,
   MINE_TAILINGS_DETAILS,
   NOTICE_OF_DEPARTURE,
-  PRE_APPLICATIONS,
-  PROJECTS,
+  EDIT_PROJECT_SUMMARY,
+  EDIT_PROJECT,
   VIEW_MINE_INCIDENT,
   PROJECT_DOCUMENT_MANAGEMENT,
+  REPORT_VIEW_EDIT,
 } from "@/constants/routes";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
 import { IActivity } from "@mds/common";
@@ -99,6 +100,11 @@ const NotificationDrawer: FC<INotificationDrawerProps> = (props) => {
 
   const navigationHandler = async (notification: IActivity) => {
     switch (notification.notification_document.metadata.entity) {
+      case "MineReport":
+        return REPORT_VIEW_EDIT.dynamicRoute(
+          notification.notification_document.metadata.mine.mine_guid,
+          notification.notification_document.metadata.entity_guid
+        );
       case "NoticeOfDeparture":
         return NOTICE_OF_DEPARTURE.dynamicRoute(
           notification.notification_document.metadata.mine.mine_guid,
@@ -110,7 +116,7 @@ const NotificationDrawer: FC<INotificationDrawerProps> = (props) => {
           notification.notification_document.metadata.entity_guid
         );
       case "ProjectSummary":
-        return PRE_APPLICATIONS.dynamicRoute(
+        return EDIT_PROJECT_SUMMARY.dynamicRoute(
           notification.notification_document.metadata.project.project_guid,
           notification.notification_document.metadata.entity_guid
         );
@@ -120,7 +126,7 @@ const NotificationDrawer: FC<INotificationDrawerProps> = (props) => {
           notification.notification_document.metadata.entity_guid
         );
       case "MajorMineApplication":
-        return PROJECTS.dynamicRoute(
+        return EDIT_PROJECT.dynamicRoute(
           notification.notification_document.metadata.project.project_guid,
           "final-app"
         );

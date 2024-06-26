@@ -9,7 +9,7 @@ The application requires a whole suite of npm modules for building/testing/runni
 ### Building
 
 - [webpack](https://webpack.js.org/) : Project building and asset compilation.
-- [babel](https://babeljs.io/) : Adds support for older browsers
+- [esbuild](https://esbuild.github.io/) : Web asset bundler
 - [sass](https://sass-lang.com/guide) : Clean CSS files
 
 ### Testing
@@ -41,7 +41,7 @@ _If coverage is lower than before writing a new feature, the tests **need** to b
 2. Start a local version of `keycloak`: `docker-compose up -d keycloak`. This will start a keycloak instance at http://localhost:8080, admin credentials if you ever need to log into it for debugging purposes is `admin/admin`.
 
 **Run Cypress test**
-To run your cypress tests with a browser, type the command `yarn run cypress open`.
+To run your cypress tests with a browser, type the command `yarn run cypress open` from within the minespace-web directory, or `yarn workspace @mds/minespace-web run cypress run open`.
 To run your cypress tests in headless mode, type the command `yarn cypress run`.
 
 **Keycloak Realm configuration**

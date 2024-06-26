@@ -34,6 +34,7 @@ def get_jwt_by_audience(aud):
 
     return None
 
+
 db = SQLAlchemy()
 
 # Gold SSO
@@ -75,7 +76,7 @@ def getJwtManager():
         raise AuthError({'code': 'auth_fail',
                     'description': 'Token issuer oidc.gov.bc.ca is no longer supported. Please contact the mds team.'}, 401)
 
-    if iss in test_config.JWT_OIDC_TEST_ISSUER:
+    if test_config.JWT_OIDC_TEST_ISSUER is not None and test_config.JWT_OIDC_TEST_ISSUER in iss:
         jwt_result = jwt
     else:
         jwt_result = get_jwt_by_audience(aud)
@@ -92,6 +93,7 @@ api = Api(
     doc='{}/'.format(Config.BASE_PATH),
     default='mds',
     default_label='MDS related operations')
+
 
 if Config.FLASK_LOGGING_LEVEL == 'DEBUG':
     # Have engine logs included at INFO level when pod debug set to DEBUG

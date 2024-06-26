@@ -3,7 +3,13 @@ import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { Tabs, Button, Popconfirm } from "antd";
+import { Tabs, Button, Popconfirm, Row, Col, Typography } from "antd";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowUpRightFromSquare,
+  faHashtag,
+  faFileSignature,
+} from "@fortawesome/pro-light-svg-icons";
 import {
   PhoneOutlined,
   MinusCircleOutlined,
@@ -26,7 +32,8 @@ import {
   getPartyRelationshipTypeHash,
   getPartyBusinessRoleOptionsHash,
 } from "@mds/common/redux/selectors/staticContentSelectors";
-import { formatDate, dateSorter, formatSnakeCaseToSentenceCase } from "@common/utils/helpers";
+import { deletePartyWalletConnection } from "@mds/common/redux/actionCreators/verifiableCredentialActionCreator";
+import { formatDate, dateSorter } from "@common/utils/helpers";
 import * as Strings from "@mds/common/constants/strings";
 import { EDIT } from "@/constants/assets";
 import { modalConfig } from "@/components/modalContent/config";
@@ -50,6 +57,7 @@ const propTypes = {
   history: PropTypes.shape({ push: PropTypes.func }).isRequired,
   updateParty: PropTypes.func.isRequired,
   deleteParty: PropTypes.func.isRequired,
+  deletePartyWalletConnection: PropTypes.func.isRequired,
   openModal: PropTypes.func.isRequired,
   closeModal: PropTypes.func.isRequired,
   parties: PropTypes.arrayOf(CustomPropTypes.party).isRequired,
@@ -121,6 +129,15 @@ export class PartyProfile extends Component {
           })
         );
       })
+      .finally(() => this.setState({ deletingParty: false }));
+  };
+
+  deletePartyWalletConnection = () => {
+    const { id } = this.props.match.params;
+    this.setState({ deletingParty: true });
+    this.props
+      .deletePartyWalletConnection(id)
+      .then(this.props.fetchPartyById(id))
       .finally(() => this.setState({ deletingParty: false }));
   };
 
@@ -214,9 +231,31 @@ export class PartyProfile extends Component {
       return (
         <div className="profile">
           <div className="profile__header">
-            <div className="inline-flex between">
-              <h1>{party.name}</h1>
-              <div>
+            <Typography.Title level={1}>Contact Details</Typography.Title>
+            <Row>
+              <Col md={8} xs={12}>
+                <Typography.Title level={2}>{party.name}</Typography.Title>
+              </Col>
+              <Col md={8} xs={12}></Col>
+              <Col md={8} xs={12} style={{ display: "flex", justifyContent: "flex-end" }}>
+                <AuthorizationWrapper permission={Permission.EDIT_PARTIES}>
+                  <Button
+                    type="primary"
+                    onClick={(event) =>
+                      this.openEditPartyModal(
+                        event,
+                        party.party_guid,
+                        this.editParty,
+                        ModalContent.EDIT_PARTY(party.name),
+                        this.props.provinceOptions
+                      )
+                    }
+                    disabled={this.state.deletingParty}
+                  >
+                    <img alt="pencil" className="padding-sm--right" src={EDIT} />
+                    Update Contact
+                  </Button>
+                </AuthorizationWrapper>
                 <AuthorizationWrapper permission={Permission.ADMIN}>
                   <Popconfirm
                     className="delete_contact_warning"
@@ -238,65 +277,71 @@ export class PartyProfile extends Component {
                     </Button>
                   </Popconfirm>
                 </AuthorizationWrapper>
-                <AuthorizationWrapper permission={Permission.EDIT_PARTIES}>
-                  <Button
-                    type="primary"
-                    onClick={(event) =>
-                      this.openEditPartyModal(
-                        event,
-                        party.party_guid,
-                        this.editParty,
-                        ModalContent.EDIT_PARTY(party.name),
-                        this.props.provinceOptions
-                      )
-                    }
-                    disabled={this.state.deletingParty}
-                  >
-                    <img alt="pencil" className="padding-sm--right" src={EDIT} />
-                    Update Contact
-                  </Button>
-                </AuthorizationWrapper>
-              </div>
-            </div>
-            {!isEmpty(party.party_orgbook_entity) && (
-              <div className="inline-flex">
-                <div className="padding-right">
-                  <CheckCircleOutlined className="icon-sm" />
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={8} xs={12}>
+                <strong>Contact Details</strong>
+              </Col>
+              <Col md={8} xs={12}>
+                <strong>Address</strong>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={8} xs={12}>
+                <div className="inline-flex">
+                  <div className="padding-right">
+                    <MailOutlined className="icon-sm" />
+                  </div>
+                  {party.email && party.email !== "Unknown" ? (
+                    <a href={`mailto:${party.email}`}>{party.email}</a>
+                  ) : (
+                    <p>{Strings.EMPTY_FIELD}</p>
+                  )}
                 </div>
-                <p>
-                  <a
-                    href={routes.ORGBOOK_ENTITY_URL(party.party_orgbook_entity.registration_id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Verified OrgBook Entity
-                  </a>
-                </p>
-              </div>
-            )}
-            <div className="inline-flex">
-              <div className="padding-right">
-                <MailOutlined className="icon-sm" />
-              </div>
-              {party.email && party.email !== "Unknown" ? (
-                <a href={`mailto:${party.email}`}>{party.email}</a>
-              ) : (
-                <p>{Strings.EMPTY_FIELD}</p>
-              )}
-            </div>
-            <div className="inline-flex">
-              <div className="padding-right">
-                <PhoneOutlined className="icon-sm" />
-              </div>
-              <p>
-                {party.phone_no} {party.phone_ext ? `x${party.phone_ext}` : ""}
-              </p>
-            </div>
-            <div className="inline-flex">
-              <div className="padding-right">
-                <Address address={party.address[0] || {}} />
-              </div>
-            </div>
+                <div className="inline-flex">
+                  <div className="padding-right">
+                    <PhoneOutlined className="icon-sm" />
+                  </div>
+                  <p>
+                    {party.phone_no} {party.phone_ext ? `x${party.phone_ext}` : ""}
+                  </p>
+                </div>
+              </Col>
+              <Col md={8} xs={12}>
+                <div className="inline-flex">
+                  <div className="padding-right">
+                    <Address address={party.address[0] || {}} />
+                  </div>
+                </div>
+              </Col>
+              <Col md={8} xs={12}>
+                {!isEmpty(party.party_orgbook_entity) && (
+                  <div className="light-grey-background padding-md">
+                    <Typography.Title level={4}>
+                      <CheckCircleOutlined style={{ paddingRight: 5 }} />
+                      OrgBook Registration Information{" "}
+                      <a
+                        href={routes.ORGBOOK_ENTITY_URL(party.party_orgbook_entity.registration_id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
+                      </a>
+                    </Typography.Title>
+                    <br />
+                    <FontAwesomeIcon className="fa-fw" icon={faHashtag} />
+                    <span className="padding-left">
+                      {party.party_orgbook_entity.registration_id}
+                    </span>
+                    <br />
+                    <FontAwesomeIcon className="fa-fw" icon={faFileSignature} />
+                    <span className="padding-left">{party.party_orgbook_entity.name_text}</span>
+                  </div>
+                )}
+              </Col>
+            </Row>
             <div className="inline-flex">
               <div className="padding-right">
                 <EditOutlined className="icon-sm" />
@@ -312,11 +357,35 @@ export class PartyProfile extends Component {
                 <p>No Signature Provided</p>
               )}
             </div>
-            {isFeatureEnabled(Feature.VERIFIABLE_CREDENTIALS) && (
-              <div className="padding-md--top">
-                Digital Wallet Connection Status:{" "}
-                {VC_CONNECTION_STATES[party?.digital_wallet_connection_status]}
-              </div>
+
+            {isFeatureEnabled(Feature.VERIFIABLE_CREDENTIALS) && party.party_type_code === "ORG" && (
+              <>
+                <div className="padding-md--top">
+                  Digital Wallet Connection Status:{" "}
+                  {VC_CONNECTION_STATES[party?.digital_wallet_connection_status]}
+                  {VC_CONNECTION_STATES[party?.digital_wallet_connection_status] === "Active" && (
+                    <Popconfirm
+                      title={
+                        <div>
+                          <p>
+                            Are you sure you want to delete the digitial wallet connection for
+                            &apos;
+                            {party.name}&apos;? This is irreversable and destructive.
+                          </p>
+                        </div>
+                      }
+                      onConfirm={this.deletePartyWalletConnection}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="danger">
+                        <img alt="pencil" className="padding-sm--right" src={EDIT} />
+                        Delete Wallet Connection
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </div>
+              </>
             )}
           </div>
           <div className="profile__content">
@@ -361,6 +430,7 @@ const mapDispatchToProps = (dispatch) =>
       fetchPartyById,
       fetchMineBasicInfoList,
       deleteParty,
+      deletePartyWalletConnection,
       updateParty,
       openModal,
       closeModal,

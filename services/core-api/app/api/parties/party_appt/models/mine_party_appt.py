@@ -1,3 +1,4 @@
+from typing import List
 from datetime import datetime, timedelta
 from enum import Enum
 from werkzeug.exceptions import BadRequest
@@ -191,7 +192,7 @@ class MinePartyAppointment(SoftDeleteMixin, AuditMixin, Base):
             db.session.commit()
 
     @classmethod
-    def find_by_permit_id(cls, _id):
+    def find_by_permit_id(cls, _id) -> List["MinePartyAppointment"]:
         return cls.query.filter_by(permit_id=_id).filter_by(deleted_ind=False).all()
 
     # Given a permit and an issue date of a new amendment, return the appointment start dates in descending order.
@@ -358,7 +359,7 @@ class MinePartyAppointment(SoftDeleteMixin, AuditMixin, Base):
             if recipients:
                 cache.set(EDIT_TSF_EMAILS, recipients, timeout=TIMEOUT_24_HOURS)
 
-        button_link = f'{Config.CORE_PRODUCTION_URL}/mine-dashboard/{self.mine.mine_guid}/permits-and-approvals/tailings/{self.mine_tailings_storage_facility.mine_tailings_storage_facility_guid}/{party_page}'
+        button_link = f'{Config.CORE_PROD_URL}/mine-dashboard/{self.mine.mine_guid}/permits-and-approvals/tailings/{self.mine_tailings_storage_facility.mine_tailings_storage_facility_guid}/{party_page}'
         # change from UTC to PST
         submitted_at = format_email_datetime_to_string(datetime.utcnow())
         start_date = self.start_date.strftime('%b %d %Y') if self.start_date else 'No date provided',

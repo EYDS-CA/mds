@@ -1,5 +1,5 @@
 import * as Strings from "@mds/common/constants/strings";
-import { IOption } from "@mds/common";
+import { IOption } from "@mds/common/interfaces/";
 
 import { memoize } from "lodash";
 import moment from "moment-timezone";
@@ -114,6 +114,10 @@ export const exactLength = memoize((min) => (value) =>
 
 export const number = (value) =>
   value && Number.isNaN(Number(value)) ? "Input must be a number" : undefined;
+
+export const digitCharactersOnly = (value) => {
+  return value && !/^\d+$/.test(value) ? "Input must contain only digits" : undefined;
+};
 
 export const positiveNumber = (value) =>
   value && (Number.isNaN(Number(value)) || Number(value) <= 0)

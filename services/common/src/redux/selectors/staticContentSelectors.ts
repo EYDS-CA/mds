@@ -1,4 +1,4 @@
-import { chain } from "lodash";
+import _ from "lodash";
 import { createSelector } from "reselect";
 import * as staticContentReducer from "../reducers/staticContentReducer";
 import {
@@ -109,7 +109,8 @@ export const getIncidentFollowupActionOptions = (state, isShowActiveOnly) =>
 export const getCurrentComplianceCodes = createSelector([getComplianceCodes], (codes) => {
   return codes.map((code) => {
     if (new Date(code?.expiry_date) < new Date()) {
-      code.description = `${code.description} (Repealed)`;
+      const description = `${code.description} (Repealed)`;
+      return { ...code, description };
     }
     return code;
   });
@@ -394,7 +395,7 @@ export const getVarianceStatusOptionsHash = createSelector(
 );
 
 const transformMineStatusSubReason = (reasons) =>
-  chain(reasons)
+  _(reasons)
     .groupBy((s) => s.mine_operation_status_sub_reason.mine_operation_status_sub_reason_code)
     .filter((g) => g[0].mine_operation_status_sub_reason.mine_operation_status_sub_reason_code)
     .map((subReasons) => ({
@@ -408,7 +409,7 @@ const transformMineStatusSubReason = (reasons) =>
     .sort((a, b) => (a.label < b.label ? -1 : 1));
 
 const transformMineStatusReason = (codes) =>
-  chain(codes)
+  _(codes)
     .groupBy((s) => s.mine_operation_status_reason.mine_operation_status_reason_code)
     .filter((g) => g[0].mine_operation_status_reason.mine_operation_status_reason_code)
     .map((reasons) => ({
@@ -424,7 +425,7 @@ const transformMineStatusReason = (codes) =>
     .sort((a, b) => (a.label < b.label ? -1 : 1));
 
 const transformMineStatus = (data) =>
-  chain(data)
+  _(data)
     .groupBy((s) => s.mine_operation_status.mine_operation_status_code)
     .map((codes) => ({
       value: codes[0].mine_operation_status.mine_operation_status_code,

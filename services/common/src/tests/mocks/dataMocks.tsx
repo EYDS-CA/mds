@@ -1477,6 +1477,56 @@ export const COMPLIANCE = {
   open_orders: [
     { order_no: "", report_no: "", due_date: "", inspector: "", violation: "", overdue: false },
   ],
+  orders: [
+    {
+      order_no: "1234-1",
+      report_no: "1234",
+      due_date: "",
+      inspector: "TEST",
+      violation: "2.2",
+      overdue: false,
+    },
+    {
+      order_no: "1234-2",
+      report_no: "1234",
+      due_date: "2019-12-31",
+      inspector: "TEST",
+      violation: "2.3",
+      overdue: true,
+    },
+    {
+      order_no: "1234-3",
+      report_no: "1234",
+      due_date: "",
+      inspector: "TEST",
+      violation: "1.1.1",
+      overdue: false,
+    },
+  ],
+  all_time: {
+    num_inspections: 5,
+    num_advisories: 6,
+    num_warnings: 7,
+    num_requests: 8,
+  },
+  current_fiscal: {
+    num_inspections: 3,
+    num_advisories: 4,
+    num_warnings: 5,
+    num_requests: 6,
+  },
+  last_12_months: {
+    num_inspections: 2,
+    num_advisories: 3,
+    num_warnings: 4,
+    num_requests: 5,
+  },
+  year_to_date: {
+    num_inspections: 1,
+    num_advisories: 2,
+    num_warnings: 3,
+    num_requests: 4,
+  },
 };
 
 export const MINE_TYPES = [
@@ -1807,6 +1857,9 @@ export const COMPLIANCE_CODES = {
       section: "2",
       sub_paragraph: null,
       sub_section: "3",
+      long_description: "long description",
+      help_reference_link: "https://example.com",
+      cim_or_cpo: "CIM",
     },
     {
       article_act_code: "HSRCM",
@@ -1818,6 +1871,9 @@ export const COMPLIANCE_CODES = {
       section: "2",
       sub_paragraph: null,
       sub_section: "3",
+      long_description: "long description",
+      help_reference_link: null,
+      cim_or_cpo: null,
     },
   ],
 };
@@ -3612,6 +3668,58 @@ export const BULK_STATIC_CONTENT_RESPONSE = {
     },
   ],
   mineReportDefinitionOptions: [
+    {
+      mine_report_definition_guid: "5f4f4727-4ecd-4a04-8929-2e8a5e03996d",
+      report_name: "TSF, WSF or Dam As-built Report",
+      description: "",
+      due_date_period_months: 12,
+      mine_report_due_date_type: "FIS",
+      default_due_date: "2020-03-31",
+      categories: [
+        { mine_report_category: "GTC", description: "Geotechnical" },
+        { mine_report_category: "TSF", description: "Tailings Storage Facility" },
+      ],
+      compliance_articles: [
+        {
+          compliance_article_id: 157,
+          article_act_code: "HSRCM",
+          section: "10",
+          sub_section: "5",
+          paragraph: "1",
+          sub_paragraph: "1",
+          description: "General",
+          long_description: "General",
+          effective_date: "1970-01-01",
+          expiry_date: "2016-07-19",
+        },
+      ],
+    },
+    {
+      mine_report_definition_guid: "6eda0c36-8748-4072-83c9-0fcdf270d36f",
+      report_name: "Annual DSI",
+      description: "",
+      due_date_period_months: 12,
+      mine_report_due_date_type: "FIS",
+      default_due_date: "2020-03-31",
+      categories: [
+        { mine_report_category: "GTC", description: "Geotechnical" },
+        { mine_report_category: "TSF", description: "Tailings Storage Facility" },
+      ],
+      compliance_articles: [
+        {
+          compliance_article_id: 155,
+          article_act_code: "HSRCM",
+          section: "10",
+          sub_section: "4",
+          paragraph: "4",
+          sub_paragraph: null,
+          description: "General",
+          long_description: "General",
+          effective_date: "2016-07-20",
+          expiry_date: "9999-12-31",
+        },
+      ],
+    },
     {
       mine_report_definition_guid: "a1f02190-908b-4459-9dfe-6382282dfd30",
       report_name: "OHSC Annual Report",
@@ -5510,7 +5618,7 @@ export const BULK_STATIC_CONTENT_RESPONSE = {
     },
     {
       project_summary_authorization_type: "MUNICIPAL_WASTEWATER_REGULATION",
-      description: "Municipal wastewater regulation",
+      description: "Municipal Wastewater Regulation",
       project_summary_authorization_type_group_id: "ENVIRONMENTAL_MANAGMENT_ACT",
     },
     {
@@ -5666,7 +5774,7 @@ export const MINE_REPORTS = [
   {
     mine_report_id: 123,
     mine_report_guid: "9f98a719-720a-40a5-ac5b-e91e8a526fad",
-    mine_report_definition_guid: "baa01f9f-c9b2-485d-96f3-12a9c8fe637b",
+    mine_report_definition_guid: "f5dec476-cb13-430a-a85e-81e5bbe666e4",
     mine_report_category: ["GSC", "GTC"],
     report_name: "Underground Oil and Grease Storage Area Report",
     due_date: "2020-01-02",
@@ -5766,6 +5874,58 @@ export const REPORTS_PAGE_DATA = {
 };
 
 export const MINE_REPORT_DEFINITION_HASH = {
+  "5f4f4727-4ecd-4a04-8929-2e8a5e03996d": {
+    mine_report_definition_guid: "5f4f4727-4ecd-4a04-8929-2e8a5e03996d",
+    report_name: "TSF, WSF or Dam As-built Report",
+    description: "",
+    due_date_period_months: 12,
+    mine_report_due_date_type: "FIS",
+    default_due_date: "2020-03-31",
+    categories: [
+      { mine_report_category: "GTC", description: "Geotechnical" },
+      { mine_report_category: "TSF", description: "Tailings Storage Facility" },
+    ],
+    compliance_articles: [
+      {
+        compliance_article_id: 157,
+        article_act_code: "HSRCM",
+        section: "10",
+        sub_section: "5",
+        paragraph: "1",
+        sub_paragraph: "1",
+        description: "General",
+        long_description: "General",
+        effective_date: "1970-01-01",
+        expiry_date: "2016-07-19",
+      },
+    ],
+  },
+  "6eda0c36-8748-4072-83c9-0fcdf270d36f": {
+    mine_report_definition_guid: "6eda0c36-8748-4072-83c9-0fcdf270d36f",
+    report_name: "Annual DSI",
+    description: "",
+    due_date_period_months: 12,
+    mine_report_due_date_type: "FIS",
+    default_due_date: "2020-03-31",
+    categories: [
+      { mine_report_category: "GTC", description: "Geotechnical" },
+      { mine_report_category: "TSF", description: "Tailings Storage Facility" },
+    ],
+    compliance_articles: [
+      {
+        compliance_article_id: 155,
+        article_act_code: "HSRCM",
+        section: "10",
+        sub_section: "4",
+        paragraph: "4",
+        sub_paragraph: null,
+        description: "General",
+        long_description: "General",
+        effective_date: "2016-07-20",
+        expiry_date: "9999-12-31",
+      },
+    ],
+  },
   "a1f02190-908b-4459-9dfe-6382282dfd30": {
     mine_report_definition_guid: "a1f02190-908b-4459-9dfe-6382282dfd30",
     report_name: "OHSC Annual Report",
@@ -7008,7 +7168,31 @@ export const PROJECT = {
   project_title: "Test Project Title",
   mine_name: "Sample Mine",
   mine_guid: "40fb0ca4-4dfb-4660-a184-6d031a21f3e9",
-  contacts: [],
+  contacts: [
+    {
+      project_contact_guid: "65a02cd8-3edd-491f-acdd-585f9f9742ee",
+      project_guid: "aa5bbbeb-f8ab-496f-aff2-e71d314bcc3e",
+      job_title: null,
+      company_name: null,
+      email: "test@test.com",
+      phone_number: "999-999-9999",
+      phone_extension: null,
+      is_primary: true,
+      first_name: "Test",
+      last_name: "Testerson",
+      address: [
+        {
+          suite_no: null,
+          address_line_1: "111 street",
+          address_line_2: null,
+          city: "Victoria",
+          sub_division_code: "BC",
+          post_code: "T5M0V3",
+          address_type_code: "CAN",
+        },
+      ],
+    },
+  ],
   project_summary: {
     documents: [],
   },
@@ -7098,7 +7282,8 @@ export const PROJECT_SUMMARIES = {
 
 export const PROJECT_SUMMARY = {
   mine_guid: "60300a07-376c-46f1-a984-88a813f91438",
-  project_summary_guid: "81324623978135",
+  project_guid: "74120872-74f2-4e27-82e6-878ddb472e5a",
+  project_summary_guid: "70414192-ca71-4d03-93a5-630491e9c554",
   status_code: "OPN",
   project_summary_title: "Sample title",
   project_summary_description: "Sample description",
@@ -7109,7 +7294,110 @@ export const PROJECT_SUMMARY = {
   expected_project_start_date: "2020-11-22T22:18:19+00:00",
   documents: [],
   contacts: [],
-  authorizations: [],
+  authorizationTypes: [
+    "AIR_EMISSIONS_DISCHARGE_PERMIT",
+    "MINES_ACT_PERMIT",
+    "MUNICIPAL_WASTEWATER_REGULATION",
+    "OCCUPANT_CUT_LICENCE",
+    "OTHER",
+    "WATER_LICENCE",
+  ],
+  authorizations: [
+    {
+      project_summary_authorization_guid: "92e1a34b-c181-4be8-8ad0-f96dcd3ab7cc",
+      project_summary_guid: "8b4b9781-2e59-43ef-8164-4cc3b964417a",
+      project_summary_permit_type: ["NEW"],
+      project_summary_authorization_type: "AIR_EMISSIONS_DISCHARGE_PERMIT",
+      existing_permits_authorizations: null,
+      amendment_changes: null,
+      amendment_severity: null,
+      is_contaminated: null,
+      new_type: "PER",
+      authorization_description: "sdfa",
+      exemption_reason: "zxczxczx",
+      amendment_documents: [],
+      exemption_requested: false,
+      ams_tracking_number: null,
+      ams_outcome: null,
+      ams_status_code: null,
+      ams_submission_timestamp: "2024-05-24T19:10:09.825194+00:00",
+    },
+    {
+      project_summary_authorization_guid: "624d3acc-b62b-491e-82a3-67ef3b1bbf88",
+      project_summary_guid: "8b4b9781-2e59-43ef-8164-4cc3b964417a",
+      project_summary_permit_type: ["NEW"],
+      project_summary_authorization_type: "REFUSE_DISCHARGE_PERMIT",
+      existing_permits_authorizations: null,
+      amendment_changes: null,
+      amendment_severity: null,
+      is_contaminated: null,
+      new_type: "PER",
+      authorization_description: "asdf",
+      exemption_reason: "asdasdas",
+      amendment_documents: [],
+      exemption_requested: false,
+      ams_tracking_number: null,
+      ams_outcome: null,
+      ams_status_code: null,
+      ams_submission_timestamp: "2024-05-24T19:17:09.212499+00:00",
+    },
+  ],
+};
+
+export const AUTHORIZATION_INVOLVED = {
+  initialValues: PROJECT_SUMMARY,
+  projectSummaryDocumentTypesHash: {
+    SPR: "Supporting Documents",
+    MAP: "Location Map",
+    GEN: "General",
+    DFA: "Discharge Factor Amendment",
+  },
+  formValues: {
+    authorizations: {
+      AIR_EMISSIONS_DISCHARGE_PERMIT: {
+        AMENDMENT: [
+          {
+            project_summary_authorization_guid: "82857352-de32-4c43-badc-34f62cb8e50a",
+            project_summary_guid: "d20fd1ce-51ef-4fc0-b2f1-e53857edca3e",
+            project_summary_permit_type: ["AMENDMENT"],
+            project_summary_authorization_type: "AIR_EMISSIONS_DISCHARGE_PERMIT",
+            amendment_documents: [
+              {
+                project_summary_document_type_code: "MAP",
+                mine_document_guid: "1868b4d5-7efa-4d74-bb58-fb575cc6dd2c",
+                mine_guid: "6133891d-3398-466a-a4e9-f3c5d837a0f1",
+                document_manager_guid: "359569b7-d5c5-4dc1-a6ac-9f93c4088368",
+                document_name: "041.pdf",
+                upload_date: "2024-05-05 18:06:18.436920-07:00",
+                update_timestamp: null,
+                create_user: "user@bceid",
+              },
+              {
+                project_summary_document_type_code: "DFA",
+                mine_document_guid: "74d0a1cd-8f79-45c1-a79f-56707fa6d93b",
+                mine_guid: "6133891d-3398-466a-a4e9-f3c5d837a0f1",
+                document_manager_guid: "ad300bc1-9c1a-4e49-a8ba-fa2025785fe8",
+                document_name: "doc_check.pdf",
+                upload_date: "2024-05-05 18:06:18.436934-07:00",
+                update_timestamp: null,
+                create_user: "user@bceid",
+              },
+              {
+                project_summary_document_type_code: "SPR",
+                mine_document_guid: "3ae455d8-541d-4a38-80c6-f7f9e6794e45",
+                mine_guid: "6133891d-3398-466a-a4e9-f3c5d837a0f1",
+                document_manager_guid: "b7bb4e80-f5b8-46fb-bd79-b77d1a3108aa",
+                document_name: "doc_check.pdf",
+                upload_date: "2024-05-05 18:06:18.436948-07:00",
+                update_timestamp: null,
+                create_user: "user@bceid",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
 };
 
 export const PROJECT_SUMMARY_AUTHORIZATION_TYPES_HASH = {
@@ -7122,7 +7410,7 @@ export const PROJECT_SUMMARY_AUTHORIZATION_TYPES_HASH = {
   AIR_EMISSIONS_DISCHARGE_PERMIT: "Air emissions discharge permit",
   EFFLUENT_DISCHARGE_PERMIT: "Effluent discharge permit",
   REFUSE_DISCHARGE_PERMIT: "Refuse discharge permit",
-  MUNICIPAL_WASTEWATER_REGULATION: "Municipal wastewater regulation",
+  MUNICIPAL_WASTEWATER_REGULATION: "Municipal Wastewater Regulation",
   CHANGE_APPROVAL: "Change approval",
   USE_APPROVAL: "Use approval",
   WATER_LICENCE: "Water licence",
@@ -7335,7 +7623,7 @@ export const PROJECT_SUMMARY_AUTHORIZATION_TYPES_TRANSFORMED = [
       { code: "AIR_EMISSIONS_DISCHARGE_PERMIT", description: "Air emissions discharge permit" },
       { code: "EFFLUENT_DISCHARGE_PERMIT", description: "Effluent discharge permit" },
       { code: "REFUSE_DISCHARGE_PERMIT", description: "Refuse discharge permit" },
-      { code: "MUNICIPAL_WASTEWATER_REGULATION", description: "Municipal wastewater regulation" },
+      { code: "MUNICIPAL_WASTEWATER_REGULATION", description: "Municipal Wastewater Regulation" },
     ],
   },
   {
@@ -7378,7 +7666,7 @@ export const PROJECT_SUMMARY_CHILD_AUTHORIZATION_TYPES_HASH = {
     parent: { code: "MINES_ACT", description: "Mines Act" },
   },
   MUNICIPAL_WASTEWATER_REGULATION: {
-    description: "Municipal wastewater regulation",
+    description: "Municipal Wastewater Regulation",
     parent: { code: "ENVIRONMENTAL_MANAGMENT_ACT", description: "Environmental Management Act" },
   },
   OCCUPANT_CUT_LICENCE: {
@@ -7851,5 +8139,28 @@ export const MINES_ACT_PERMITS_VC_LIST = [
     cred_exch_state: VC_CRED_ISSUE_STATES.credential_acked,
     rev_reg_id: "1234",
     cred_rev_id: "1234",
+  },
+];
+
+export const REGIONS = [
+  {
+    name: "Alberni-Clayoquot",
+    regional_district_id: 4786586,
+  },
+  {
+    name: "Bulkley-Nechako",
+    regional_district_id: 4786587,
+  },
+  {
+    name: "Capital",
+    regional_district_id: 4786588,
+  },
+  {
+    name: "Cariboo",
+    regional_district_id: 4786590,
+  },
+  {
+    name: "Central Coast",
+    regional_district_id: 4786592,
   },
 ];

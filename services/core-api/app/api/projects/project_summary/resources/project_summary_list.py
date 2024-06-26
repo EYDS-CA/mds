@@ -35,7 +35,7 @@ class ProjectSummaryListGetResource(Resource, UserMixin):
         project_summaries = []
         for project in projects:
             project_project_summaries = ProjectSummary.find_by_project_guid(
-                project.project_guid, is_minespace_user())
+                project.project_guid)
             project_summaries = [*project_summaries, *project_project_summaries]
 
         return project_summaries
@@ -120,6 +120,7 @@ class ProjectSummaryListPostResource(Resource, UserMixin):
     parser.add_argument('contacts', type=list, location='json', store_missing=False, required=False)
     parser.add_argument(
         'authorizations', type=list, location='json', store_missing=False, required=False)
+    parser.add_argument('ams_authorizations', type=dict, location='json', store_missing=False, required=False)
 
     @api.doc(description='Create a new Project Description.')
     @api.expect(parser)
@@ -131,8 +132,7 @@ class ProjectSummaryListPostResource(Resource, UserMixin):
         mine_guid = data.get('mine_guid')
         mine = Mine.find_by_mine_guid(mine_guid)
         if mine is None:
-            raise NotFound('Mine not found')
-
+            raise NotFound('Mine not found')  
         new_project = Project.create(mine, data.get('project_summary_title'),
                                      data.get('proponent_project_id'),
                                      data.get('mrc_review_required', False),
@@ -148,7 +148,8 @@ class ProjectSummaryListPostResource(Resource, UserMixin):
                                                 data.get('expected_permit_receipt_date'),
                                                 data.get('expected_project_start_date'),
                                                 data.get('status_code'), data.get('documents', []),
-                                                data.get('authorizations', []), submission_date)
+                                                data.get('authorizations', []), data.get('ams_authorizations', None),
+                                                submission_date)
 
         try:
             project_summary.save()

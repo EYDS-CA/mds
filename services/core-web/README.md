@@ -9,7 +9,7 @@ The application requires a whole suite of npm modules for building/testing/runni
 ### Building
 
 - [webpack](https://webpack.js.org/) : Project building and asset compilation.
-- [babel](https://babeljs.io/) : Adds support for older browsers
+- [esbuild](https://esbuild.github.io/) : Web asset bundler
 - [sass](https://sass-lang.com/guide) : Clean CSS files
 
 ### Testing
@@ -80,7 +80,7 @@ run the command `docker-compose up -d keycloak`
 Navigate to `http://localhost:8080` to check if keycloak was successfully installed.
 
 **Run Cypress test**
-To run your cypress tests with a browser, type the command `yarn run cypress open`.
+To run your cypress tests with a browser, type the command `yarn run cypress open` from within the core-web directory, or `yarn workspace @mds/core-web run cypress run open`.
 To run your cypress tests in headless mode, type the command `yarn cypress run`.
 
 ### Running

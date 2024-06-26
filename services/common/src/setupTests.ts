@@ -7,11 +7,19 @@ require("jest-localstorage-mock");
 Enzyme.configure({ adapter: new Adapter() });
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-(<any>global).REQUEST_HEADER = require(path.resolve(__dirname, "./redux/utils/RequestHeaders.js"));
+(<any>global).REQUEST_HEADER = require(path.resolve(__dirname, "./redux/utils/RequestHeaders.tsx"));
 
 (<any>global).requestAnimationFrame = (callback: any) => {
   setTimeout(callback, 0); // eslint-disable-line @typescript-eslint/no-implied-eval
 };
+
+jest.mock("react", () => {
+  const original = jest.requireActual("react");
+  return {
+    ...original,
+    useLayoutEffect: jest.fn(),
+  };
+});
 
 jest.mock("react-lottie", () => ({
   __esModule: true,
@@ -23,7 +31,7 @@ jest.mock("@mds/common/providers/featureFlags/useFeatureFlag", () => ({
     isFeatureEnabled: () => true,
   }),
 }));
-
+window.scrollTo = jest.fn();
 const location = JSON.stringify(window.location);
 delete window.location;
 

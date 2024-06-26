@@ -7,7 +7,6 @@ class Date(fields.Raw):
     def format(self, value):
         return value.strftime("%Y-%m-%d") if value else None
 
-
 MINE_DOCUMENT = api.model(
     'MineDocument', {
         'mine_document_guid': fields.String,
@@ -137,7 +136,8 @@ PARTY = api.model(
         'organization_guid': fields.String,
         'organization': fields.Nested(ORGANIZATION, skip_none=True),
         "digital_wallet_connection_status": fields.String,
-        'middle_name': fields.String
+        'middle_name': fields.String,
+        'credential_id': fields.Integer,
     })
 
 PAGINATED_LIST = api.model(

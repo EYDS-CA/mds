@@ -252,7 +252,7 @@ exports[`ReportPage renders view mode properly 1`] = `
     </div>
     <div>
       <form
-        class="ant-form ant-form-vertical edit"
+        class="ant-form ant-form-vertical common-form common-form-VIEW_EDIT_REPORT form-view"
         id="VIEW_EDIT_REPORT"
       >
         <div
@@ -295,7 +295,11 @@ exports[`ReportPage renders view mode properly 1`] = `
                     for="VIEW_EDIT_REPORT_report_for"
                     title=""
                   >
-                    Who is the report for?
+                    <div
+                      style="width: 100%;"
+                    >
+                      Who is the report for?
+                    </div>
                   </label>
                 </div>
                 <div
@@ -308,9 +312,7 @@ exports[`ReportPage renders view mode properly 1`] = `
                       class="ant-form-item-control-input-content"
                     >
                       <div
-                        aria-required="true"
                         class="ant-radio-group ant-radio-group-solid vertical-radio-group"
-                        id="VIEW_EDIT_REPORT_report_for"
                       >
                         <label
                           class="ant-radio-wrapper ant-radio-wrapper-disabled ant-radio-wrapper-in-form-item"
@@ -445,7 +447,11 @@ exports[`ReportPage renders view mode properly 1`] = `
                     for="VIEW_EDIT_REPORT_report_type"
                     title=""
                   >
-                    What is the type of the report?
+                    <div
+                      style="width: 100%;"
+                    >
+                      What is the type of the report?
+                    </div>
                   </label>
                 </div>
                 <div
@@ -458,9 +464,7 @@ exports[`ReportPage renders view mode properly 1`] = `
                       class="ant-form-item-control-input-content"
                     >
                       <div
-                        aria-required="true"
                         class="ant-radio-group ant-radio-group-solid vertical-radio-group"
-                        id="VIEW_EDIT_REPORT_report_type"
                       >
                         <label
                           class="ant-radio-wrapper ant-radio-wrapper-disabled ant-radio-wrapper-in-form-item"
@@ -530,7 +534,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -549,7 +553,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -568,7 +572,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -598,7 +602,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -617,7 +621,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -636,7 +640,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -655,7 +659,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -695,7 +699,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -714,7 +718,7 @@ exports[`ReportPage renders view mode properly 1`] = `
             style="padding: 4px 8px 4px 8px;"
           >
             <div
-              class="view-item"
+              class="view-item ant-form-item"
             >
               <div
                 class="ant-typography view-item-label"
@@ -760,7 +764,7 @@ exports[`ReportPage renders view mode properly 1`] = `
                     class="ant-spin-container"
                   >
                     <div
-                      class="ant-table"
+                      class="ant-table ant-table-has-fix-right"
                     >
                       <div
                         class="ant-table-container"
@@ -1025,7 +1029,8 @@ exports[`ReportPage renders view mode properly 1`] = `
                                   </div>
                                 </th>
                                 <th
-                                  class="ant-table-cell actions-column"
+                                  class="ant-table-cell actions-column ant-table-cell-fix-right ant-table-cell-fix-right-first"
+                                  style="position: sticky; right: 0px;"
                                 />
                               </tr>
                             </thead>
@@ -1086,7 +1091,8 @@ exports[`ReportPage renders view mode properly 1`] = `
                                   </div>
                                 </td>
                                 <td
-                                  class="ant-table-cell actions-column"
+                                  class="ant-table-cell actions-column ant-table-cell-fix-right ant-table-cell-fix-right-first"
+                                  style="position: sticky; right: 0px;"
                                 >
                                   <div>
                                     <button

@@ -1,0 +1,501 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AuthorizationsInvolved renders properly 1`] = `
+<div>
+  <form
+    class="ant-form ant-form-vertical common-form common-form-ADD_EDIT_PROJECT_SUMMARY form-edit"
+    id="ADD_EDIT_PROJECT_SUMMARY"
+  >
+    <div
+      id="authorizations-involved"
+    >
+      <div
+        class="ant-row"
+        style="margin-top: -8px; margin-bottom: -8px;"
+      >
+        <h3
+          class="ant-typography"
+        >
+          Purpose and Authorization
+        </h3>
+        <div
+          class="ant-alert ant-alert-warning ant-alert-with-description"
+          data-show="true"
+          role="alert"
+        >
+          <span
+            aria-label="exclamation-circle"
+            class="anticon anticon-exclamation-circle ant-alert-icon"
+            role="img"
+          >
+            <svg
+              aria-hidden="true"
+              data-icon="exclamation-circle"
+              fill="currentColor"
+              focusable="false"
+              height="1em"
+              viewBox="64 64 896 896"
+              width="1em"
+            >
+              <path
+                d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"
+              />
+              <path
+                d="M464 688a48 48 0 1096 0 48 48 0 10-96 0zm24-112h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z"
+              />
+            </svg>
+          </span>
+          <div
+            class="ant-alert-content"
+          >
+            <div
+              class="ant-alert-description"
+            >
+              Select the authorization that you anticipate needing for this project. This is to assist in planning and may not be the complete list for the final application.
+            </div>
+          </div>
+        </div>
+        <div
+          class="ant-form-item ant-form-item-with-help form-item-hidden"
+        >
+          <div
+            class="ant-row ant-form-item-row"
+          >
+            <div
+              class="ant-col ant-form-item-label"
+            >
+              <label
+                class="ant-form-item-required"
+                for="ADD_EDIT_PROJECT_SUMMARY_authorizationTypes"
+                title=""
+              >
+                <div
+                  style="width: 100%;"
+                >
+                  <h4
+                    class="ant-typography"
+                  >
+                    Regulatory Approval Type
+                  </h4>
+                </div>
+              </label>
+            </div>
+            <div
+              class="ant-col ant-form-item-control"
+            >
+              <div
+                class="ant-form-item-control-input"
+              >
+                <div
+                  class="ant-form-item-control-input-content"
+                >
+                  <div
+                    style="display: none;"
+                  >
+                    <input
+                      class="ant-input"
+                      name="authorizationTypes"
+                      type="text"
+                      value=""
+                    />
+                  </div>
+                  <div>
+                    <div>
+                      <h5
+                        class="ant-typography"
+                      >
+                        Mines Act
+                      </h5>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-MINES_ACT_PERMIT"
+                                  type="checkbox"
+                                  value="MINES_ACT_PERMIT"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Mines Act permit
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h5
+                        class="ant-typography"
+                      >
+                        Environmental Management Act
+                      </h5>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-AIR_EMISSIONS_DISCHARGE_PERMIT"
+                                  type="checkbox"
+                                  value="AIR_EMISSIONS_DISCHARGE_PERMIT"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Air emissions discharge permit
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-EFFLUENT_DISCHARGE_PERMIT"
+                                  type="checkbox"
+                                  value="EFFLUENT_DISCHARGE_PERMIT"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Effluent discharge permit
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-REFUSE_DISCHARGE_PERMIT"
+                                  type="checkbox"
+                                  value="REFUSE_DISCHARGE_PERMIT"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Refuse discharge permit
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-MUNICIPAL_WASTEWATER_REGULATION"
+                                  type="checkbox"
+                                  value="MUNICIPAL_WASTEWATER_REGULATION"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Municipal Wastewater Regulation
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h5
+                        class="ant-typography"
+                      >
+                        Water Sustainability Act
+                      </h5>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-CHANGE_APPROVAL"
+                                  type="checkbox"
+                                  value="CHANGE_APPROVAL"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Change approval
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-USE_APPROVAL"
+                                  type="checkbox"
+                                  value="USE_APPROVAL"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Use approval
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-WATER_LICENCE"
+                                  type="checkbox"
+                                  value="WATER_LICENCE"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Water licence
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h5
+                        class="ant-typography"
+                      >
+                        Forestry Act
+                      </h5>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-OCCUPANT_CUT_LICENCE"
+                                  type="checkbox"
+                                  value="OCCUPANT_CUT_LICENCE"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Occupant licence to cut
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h5
+                        class="ant-typography"
+                      >
+                        Other legislation
+                      </h5>
+                      <div>
+                        <div
+                          class="ant-row"
+                          style="margin-top: -8px; margin-bottom: -8px;"
+                        >
+                          <div
+                            class="ant-col"
+                            style="padding-top: 8px; padding-bottom: 8px;"
+                          >
+                            <label
+                              class="ant-checkbox-wrapper ant-checkbox-wrapper-in-form-item"
+                            >
+                              <span
+                                class="ant-checkbox"
+                              >
+                                <input
+                                  class="ant-checkbox-input"
+                                  data-cy="checkbox-authorization-OTHER"
+                                  type="checkbox"
+                                  value="OTHER"
+                                />
+                                <span
+                                  class="ant-checkbox-inner"
+                                />
+                              </span>
+                              <span>
+                                <b>
+                                  Other legislation
+                                </b>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                style="display: flex; flex-wrap: nowrap;"
+              >
+                <div
+                  class="ant-form-item-explain ant-form-item-explain-connected"
+                  id="ADD_EDIT_PROJECT_SUMMARY_authorizationTypes_help"
+                  role="alert"
+                >
+                  <div
+                    class=""
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+`;

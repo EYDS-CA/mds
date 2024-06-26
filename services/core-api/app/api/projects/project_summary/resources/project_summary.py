@@ -94,16 +94,17 @@ class ProjectSummaryResource(Resource, UserMixin):
         required=False,
     )
     parser.add_argument(
-        'agent', 
-        type=dict, 
-        location='json', 
-        store_missing=False, 
+        'agent',
+        type=dict,
+        location='json',
+        store_missing=False,
         required=False
         )
     parser.add_argument('is_agent', type=bool, help="True if an agent is applying on behalf of the Applicant", location='json', store_missing=False, required=False)
     parser.add_argument('contacts', type=list, location='json', store_missing=False, required=False)
     parser.add_argument(
         'authorizations', type=list, location='json', store_missing=False, required=False)
+    parser.add_argument('ams_authorizations', type=dict, location='json', store_missing=False, required=False)
     parser.add_argument('is_legal_land_owner', type=bool,location='json', store_missing=False, required=False)
     parser.add_argument('is_crown_land_federal_or_provincial', type=bool, location='json', store_missing=False, required=False)
     parser.add_argument('is_landowner_aware_of_discharge_application', type=bool, location='json', store_missing=False,
@@ -129,10 +130,10 @@ class ProjectSummaryResource(Resource, UserMixin):
         required=False,
     )
     parser.add_argument(
-        'facility_operator', 
-        type=dict, 
-        location='json', 
-        store_missing=False, 
+        'facility_operator',
+        type=dict,
+        location='json',
+        store_missing=False,
         required=False
     )
     parser.add_argument('facility_type', type=str, store_missing=False, required=False)
@@ -140,7 +141,7 @@ class ProjectSummaryResource(Resource, UserMixin):
 
     parser.add_argument('facility_latitude', type=lambda x: Decimal(x) if x else None, store_missing=False, required=False)
     parser.add_argument('facility_longitude', type=lambda x: Decimal(x) if x else None, store_missing=False, required=False)
-    
+
     parser.add_argument('facility_coords_source', type=str, store_missing=False, required=False)
     parser.add_argument('facility_coords_source_desc', type=str, store_missing=False, required=False)
     parser.add_argument('facility_pid_pin_crown_file_no', type=str, store_missing=False, required=False)
@@ -149,6 +150,7 @@ class ProjectSummaryResource(Resource, UserMixin):
     parser.add_argument('zoning', type=bool, store_missing=False, required=False)
     parser.add_argument('zoning_reason', type=str, store_missing=False, required=False)
     parser.add_argument('nearest_municipality', type=str, store_missing=False, required=False)
+    parser.add_argument('regional_district_id', type=int, store_missing=False, required=False)
 
     parser.add_argument(
         'applicant',
@@ -161,7 +163,17 @@ class ProjectSummaryResource(Resource, UserMixin):
     parser.add_argument('is_legal_address_same_as_mailing_address', type=bool, store_missing=False, required=False)
     parser.add_argument('is_billing_address_same_as_mailing_address', type=bool, store_missing=False, required=False)
     parser.add_argument('is_billing_address_same_as_legal_address', type=bool, store_missing=False, required=False)
+    parser.add_argument('ams_terms_agreed', type=bool, store_missing=False, required=False)
+    parser.add_argument('confirmation_of_submission', type=bool, store_missing=False, required=False)
+    parser.add_argument('company_alias', type=str, store_missing=False, required=False)
 
+    parser.add_argument(
+        'payment_contact',
+        type=dict,
+        location='json',
+        store_missing=False,
+        required=False
+    )
 
     @api.doc(
         description='Get a Project Description.',
@@ -172,8 +184,7 @@ class ProjectSummaryResource(Resource, UserMixin):
     @requires_any_of([VIEW_ALL, MINESPACE_PROPONENT])
     @api.marshal_with(PROJECT_SUMMARY_MODEL, code=200)
     def get(self, project_guid, project_summary_guid):
-        project_summary = ProjectSummary.find_by_project_summary_guid(project_summary_guid,
-                                                                      is_minespace_user())
+        project_summary = ProjectSummary.find_by_project_summary_guid(project_summary_guid)
         if project_summary is None:
             raise NotFound('Project Description not found')
 
@@ -188,11 +199,15 @@ class ProjectSummaryResource(Resource, UserMixin):
     @requires_any_of([MINE_ADMIN, MINESPACE_PROPONENT, EDIT_PROJECT_SUMMARIES])
     @api.marshal_with(PROJECT_SUMMARY_MODEL, code=200)
     def put(self, project_guid, project_summary_guid):
-        project_summary = ProjectSummary.find_by_project_summary_guid(project_summary_guid,
-                                                                      is_minespace_user())
+        project_summary = ProjectSummary.find_by_project_summary_guid(project_summary_guid)
         project = Project.find_by_project_guid(project_guid)
-
         data = self.parser.parse_args()
+
+        project_summary_validation = project_summary.validate_project_summary(data)
+        if any(project_summary_validation[i] != [] for i in project_summary_validation):
+            current_app.logger.error(f'Project Summary schema validation failed with errors: {project_summary_validation}')
+            raise BadRequest(project_summary_validation)
+
         mine_guid = data.get('mine_guid')
         mine = Mine.find_by_mine_guid(mine_guid)
 
@@ -201,12 +216,10 @@ class ProjectSummaryResource(Resource, UserMixin):
         if project is None:
             raise NotFound('Project is not found')
 
+        submission_date = project_summary.submission_date
         prev_status = project_summary.status_code
-        current_submission_date = project_summary.submission_date
-
-        submission_date = datetime.now(
-            tz=timezone.utc
-        ) if prev_status == 'DFT' and data.get('status_code') == 'SUB' else current_submission_date
+        if data.get('status_code') == 'SUB' and prev_status == 'DFT':
+            submission_date = datetime.now(tz=timezone.utc)
 
         # Update project summary.
         project_summary.update(project, data.get('project_summary_description'),
@@ -216,6 +229,7 @@ class ProjectSummaryResource(Resource, UserMixin):
                                data.get('expected_project_start_date'), data.get('status_code'),
                                data.get('project_lead_party_guid'),
                                data.get('documents', []), data.get('authorizations',[]),
+                               data.get('ams_authorizations', None),
                                submission_date, data.get('agent'), data.get('is_agent'),
                                data.get('is_legal_land_owner'), data.get('is_crown_land_federal_or_provincial'),
                                data.get('is_landowner_aware_of_discharge_application'), data.get('has_landowner_received_copy_of_application'),
@@ -231,7 +245,11 @@ class ProjectSummaryResource(Resource, UserMixin):
                                data.get('applicant'),
                                data.get('is_legal_address_same_as_mailing_address'),
                                data.get('is_billing_address_same_as_mailing_address'),
-                               data.get('is_billing_address_same_as_legal_address'))
+                               data.get('is_billing_address_same_as_legal_address'),
+                               data.get('contacts'),
+                               data.get('company_alias'),
+                               data.get('regional_district_id'),
+                               data.get('payment_contact'))
 
         project_summary.save()
         if prev_status == 'DFT' and project_summary.status_code == 'SUB':
@@ -263,8 +281,7 @@ class ProjectSummaryResource(Resource, UserMixin):
     @requires_any_of([MINE_ADMIN, MINESPACE_PROPONENT, EDIT_PROJECT_SUMMARIES])
     @api.response(204, 'Successfully deleted.')
     def delete(self, project_guid, project_summary_guid):
-        project_summary = ProjectSummary.find_by_project_summary_guid(project_summary_guid,
-                                                                      is_minespace_user())
+        project_summary = ProjectSummary.find_by_project_summary_guid(project_summary_guid)
         if project_summary is None:
             raise NotFound('Project Description not found')
 

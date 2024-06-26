@@ -139,6 +139,7 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
                   "normal-color": "#d9d9d9",
                   white: "#fff",
                   black: "#000",
+                  "menu-item-active-bg": "#d9eaf7",
                   "primary-1": "#00050a",
                   "primary-2": "#000a14",
                   "primary-3": "#000f1f",
@@ -163,13 +164,13 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
                   "border-color-base": "#003366",
                   "border-color-split": "#efefef",
                   "border-width-base": "2px",
-                  "background-color-light": "#f7f8fa",
+                  "background-color-light": "#f2f2f2",
                   "background-color-base": "#f5f5f5",
                   "btn-default-color": "#003366",
                   "btn-default-bg": "#fff",
                   "btn-default-border": "#003366",
                   "btn-danger-color": "#fff",
-                  "descriptions-bg": "#f7f8fa",
+                  "descriptions-bg": "#f2f2f2",
                   "radio-size": "14px",
                   "radio-dot-color": "#003366",
                   "radio-dot-disabled-color": "#bbbbbb",
@@ -178,7 +179,6 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
                   "layout-footer-background": "#003366",
                   "layout-header-height": "80px",
                   "layout-header-padding": "0 50px",
-                  "layout-footer-padding": "32px 0px",
                   "layout-sider-background": "#003366",
                   "layout-trigger-height": "48px",
                   "layout-trigger-background": "#000",
@@ -188,7 +188,7 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
                   "tooltip-bg": "#003366",
                   "progress-default-color": "#003366",
                   "progress-steps-item-bg": "#f3f3f3",
-                  "table-header-bg": "#fff",
+                  "table-header-bg": "#f7f8fa",
                   "table-body-sort-bg": "rgba(0, 0, 0, 0.01)",
                   "table-row-hover-bg": "#f5f5f5",
                   "table-selected-row-bg": "#f5f5f5",
@@ -198,7 +198,7 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
                   "rate-star-color": "#fcba19",
                   "card-head-color": "#fff",
                   "card-head-background": "#154878",
-                  "card-background": "#f7f8fa",
+                  "card-background": "#f2f2f2",
                   "card-radius": "0",
                   "back-top-hover-bg": "#999",
                   "back-top-bg": "#003366",
@@ -213,7 +213,7 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
   plugins: [],
 });
 
-exports.extractCSS = ({ include, exclude, filename } = {}) => ({
+exports.extractCSS = ({ include, exclude, filename, theme, chunkFilename } = {}) => ({
   module: {
     rules: [
       {
@@ -263,6 +263,7 @@ exports.extractCSS = ({ include, exclude, filename } = {}) => ({
                   "normal-color": "#d9d9d9",
                   white: "#fff",
                   black: "#000",
+                  "menu-item-active-bg": "#d9eaf7",
                   "primary-1": "#00050a",
                   "primary-2": "#000a14",
                   "primary-3": "#000f1f",
@@ -287,13 +288,13 @@ exports.extractCSS = ({ include, exclude, filename } = {}) => ({
                   "border-color-base": "#003366",
                   "border-color-split": "#efefef",
                   "border-width-base": "2px",
-                  "background-color-light": "#f7f8fa",
+                  "background-color-light": "#f2f2f2",
                   "background-color-base": "#f5f5f5",
                   "btn-default-color": "#003366",
                   "btn-default-bg": "#fff",
                   "btn-default-border": "#003366",
                   "btn-danger-color": "#fff",
-                  "descriptions-bg": "#f7f8fa",
+                  "descriptions-bg": "#f2f2f2",
                   "radio-size": "14px",
                   "radio-dot-color": "#003366",
                   "radio-dot-disabled-color": "#bbbbbb",
@@ -302,7 +303,6 @@ exports.extractCSS = ({ include, exclude, filename } = {}) => ({
                   "layout-footer-background": "#003366",
                   "layout-header-height": "80px",
                   "layout-header-padding": "0 50px",
-                  "layout-footer-padding": "32px 0px",
                   "layout-sider-background": "#003366",
                   "layout-trigger-height": "48px",
                   "layout-trigger-background": "#000",
@@ -312,7 +312,7 @@ exports.extractCSS = ({ include, exclude, filename } = {}) => ({
                   "tooltip-bg": "#003366",
                   "progress-default-color": "#003366",
                   "progress-steps-item-bg": "#f3f3f3",
-                  "table-header-bg": "#fff",
+                  "table-header-bg": "#f7f8fa",
                   "table-body-sort-bg": "rgba(0, 0, 0, 0.01)",
                   "table-row-hover-bg": "#f5f5f5",
                   "table-selected-row-bg": "#f5f5f5",
@@ -322,7 +322,7 @@ exports.extractCSS = ({ include, exclude, filename } = {}) => ({
                   "rate-star-color": "#fcba19",
                   "card-head-color": "#fff",
                   "card-head-background": "#154878",
-                  "card-background": "#f7f8fa",
+                  "card-background": "#f2f2f2",
                   "card-radius": "0",
                   "back-top-hover-bg": "#999",
                   "back-top-bg": "#003366",
@@ -337,6 +337,7 @@ exports.extractCSS = ({ include, exclude, filename } = {}) => ({
   plugins: [
     new MiniCssExtractPlugin({
       filename,
+      chunkFilename,
     }),
   ],
 });
@@ -365,9 +366,9 @@ exports.loadImages = ({ include, exclude, urlLoaderOptions, fileLoaderOptions } 
             loader: ImageMinimizerPlugin.loader,
             options: {
               minimizer: {
-                implementation: ImageMinimizerPlugin.imageminMinify,
+                implementation: ImageMinimizerPlugin.sharpMinify,
                 options: {
-                  plugins: ["imagemin-mozjpeg", "imagemin-pngquant"],
+                  encodeOptions: {},
                 },
               },
             },

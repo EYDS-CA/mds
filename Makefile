@@ -89,7 +89,7 @@ permits:
 
 extra:
 	@echo "+\n++ Building tertiary services ...\n+"
-	@docker compose $(DC_FILE) up -d docgen-api
+	@docker compose $(DC_FILE) up -d docgen-api filesystem_provider
 
 # Simply for legacy support, this command will be retired shortly
 fe:
@@ -140,6 +140,12 @@ clean: stop |
 	@docker compose $(DC_FILE) rm -f -v -s
 	@docker rmi -f mds_postgres mds_backend mds_frontend mds_flyway
 	@docker volume rm mds_postgres_data -f
+
+# Generates a migration file to support versioning of the specified table
+# Usage: make generate_history_table_migration TABLE=<table_name>
+generate_history_table_migration:
+	@echo "+\n++ Generating history table migration ...\n+"
+	@docker compose $(DC_FILE) exec backend bash -c "flask generate_history_table_migration $(TABLE)"
 
 # initial project setup for local/codespaces development
 init:

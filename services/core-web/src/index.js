@@ -1,6 +1,6 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
-
+import PropTypes from "prop-types";
 import React, { useState } from "react";
 import { ReactKeycloakProvider } from "@react-keycloak/web";
 import { useIdleTimer } from "react-idle-timer";
@@ -15,16 +15,25 @@ import "antd/dist/antd.less";
 import "./styles/index.scss";
 import fetchEnv from "./fetchEnv";
 import FeatureFlagProvider from "@mds/common/providers/featureFlags/featureFlag.provider";
+import { registerLicense } from "@syncfusion/ej2-base";
+import { ENVIRONMENT } from "@mds/common";
 
 const idleTimeout = 5 * 60_000;
 const refreshTokenBufferSeconds = 60;
 
-export const Index = () => {
+const propTypes = {
+  disableEnvLoading: PropTypes.bool,
+};
+
+export const Index = (props) => {
   const [environment, setEnvironment] = useState(false);
 
-  fetchEnv().then(() => {
-    setEnvironment(true);
-  });
+  if (!props.disableEnvLoading) {
+    fetchEnv().then(() => {
+      setEnvironment(true);
+      registerLicense(ENVIRONMENT.syncfusionLicense);
+    });
+  }
 
   const { isIdle } = useIdleTimer({
     timeout: idleTimeout,
@@ -104,4 +113,9 @@ export const Index = () => {
   );
 };
 
-render(<Index />, document.getElementById("root"));
+Index.propTypes = propTypes;
+
+const root = document.getElementById("root");
+if (root) {
+  render(<Index />, root);
+}

@@ -42,6 +42,7 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
     signature = db.Column(db.String)
     merged_party_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('party.party_guid'))
     organization_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('party.party_guid'))
+    credential_id = db.Column(db.Integer, nullable=True)
 
     mine_party_appt = db.relationship(
         'MinePartyAppointment',
@@ -68,7 +69,7 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
     )
 
     party_orgbook_entity = db.relationship(
-        'PartyOrgBookEntity', backref='party_orgbook_entity', uselist=False, lazy='select', overlaps='party')
+        'PartyOrgBookEntity', backref='party', uselist=False, lazy='select')
 
     organization = db.relationship(
         'Party',
@@ -76,23 +77,24 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
         uselist=False,
         remote_side=[party_guid],
         foreign_keys=[organization_guid])
-    
+
     digital_wallet_invitations = db.relationship(
         'PartyVerifiableCredentialConnection',
         lazy='select',
         uselist=True,
+        primaryjoin=
+        "and_(PartyVerifiableCredentialConnection.party_guid == Party.party_guid, PartyVerifiableCredentialConnection.deleted_ind==False)",
         order_by='desc(PartyVerifiableCredentialConnection.update_timestamp)',
         overlaps='active_digital_wallet_connection')
-        
+
     active_digital_wallet_connection = db.relationship(
         'PartyVerifiableCredentialConnection',
         lazy='select',
         uselist=False,
         remote_side=[party_guid],
         primaryjoin=
-        'and_(PartyVerifiableCredentialConnection.party_guid == Party.party_guid, PartyVerifiableCredentialConnection.connection_state==\'active\')',
+        'and_(PartyVerifiableCredentialConnection.party_guid == Party.party_guid, PartyVerifiableCredentialConnection.deleted_ind==False, PartyVerifiableCredentialConnection.connection_state==\'active\')',
         overlaps='digital_wallet_invitations')
-
 
     @hybrid_property
     def name(self):
@@ -236,6 +238,7 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
                job_title_code=None,
                organization_guid=None,
                middle_name=None,
+               credential_id=None,
                address_type_code='CAN',
                add_to_session=True):
         validate_phone_no(phone_no, address_type_code)
@@ -254,7 +257,8 @@ class Party(SoftDeleteMixin, AuditMixin, Base):
             job_title=job_title,
             job_title_code=job_title_code,
             organization_guid=organization_guid,
-            middle_name=middle_name)
+            middle_name=middle_name,
+            credential_id=credential_id)
         if add_to_session:
             party.save(commit=False)
         return party

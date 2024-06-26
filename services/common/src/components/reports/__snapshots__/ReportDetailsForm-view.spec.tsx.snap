@@ -3,7 +3,7 @@
 exports[`ReportDetailsForm renders view mode properly 1`] = `
 <div>
   <form
-    class="ant-form ant-form-vertical edit"
+    class="ant-form ant-form-vertical common-form common-form-VIEW_EDIT_REPORT form-view"
     id="VIEW_EDIT_REPORT"
   >
     <div>
@@ -44,7 +44,11 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                 for="VIEW_EDIT_REPORT_report_for"
                 title=""
               >
-                Who is the report for?
+                <div
+                  style="width: 100%;"
+                >
+                  Who is the report for?
+                </div>
               </label>
             </div>
             <div
@@ -57,9 +61,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                   class="ant-form-item-control-input-content"
                 >
                   <div
-                    aria-required="true"
                     class="ant-radio-group ant-radio-group-solid vertical-radio-group"
-                    id="VIEW_EDIT_REPORT_report_for"
                   >
                     <label
                       class="ant-radio-wrapper ant-radio-wrapper-disabled ant-radio-wrapper-in-form-item"
@@ -194,7 +196,11 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                 for="VIEW_EDIT_REPORT_report_type"
                 title=""
               >
-                What is the type of the report?
+                <div
+                  style="width: 100%;"
+                >
+                  What is the type of the report?
+                </div>
               </label>
             </div>
             <div
@@ -207,9 +213,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                   class="ant-form-item-control-input-content"
                 >
                   <div
-                    aria-required="true"
                     class="ant-radio-group ant-radio-group-solid vertical-radio-group"
-                    id="VIEW_EDIT_REPORT_report_type"
                   >
                     <label
                       class="ant-radio-wrapper ant-radio-wrapper-checked ant-radio-wrapper-disabled ant-radio-wrapper-in-form-item"
@@ -279,7 +283,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -289,7 +293,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
           <div
             class="ant-typography view-item-value"
           >
-            1.9.3 - OHSC Annual Report
+            10.5.1.1 - TSF, WSF or Dam As-built Report
           </div>
         </div>
       </div>
@@ -298,7 +302,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -328,7 +332,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -347,7 +351,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -366,7 +370,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -385,7 +389,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -425,7 +429,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -444,7 +448,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
         style="padding: 4px 8px 4px 8px;"
       >
         <div
-          class="view-item"
+          class="view-item ant-form-item"
         >
           <div
             class="ant-typography view-item-label"
@@ -490,7 +494,7 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                 class="ant-spin-container"
               >
                 <div
-                  class="ant-table"
+                  class="ant-table ant-table-has-fix-right"
                 >
                   <div
                     class="ant-table-container"
@@ -755,7 +759,8 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                               </div>
                             </th>
                             <th
-                              class="ant-table-cell actions-column"
+                              class="ant-table-cell actions-column ant-table-cell-fix-right ant-table-cell-fix-right-first"
+                              style="position: sticky; right: 0px;"
                             />
                           </tr>
                         </thead>
@@ -816,7 +821,8 @@ exports[`ReportDetailsForm renders view mode properly 1`] = `
                               </div>
                             </td>
                             <td
-                              class="ant-table-cell actions-column"
+                              class="ant-table-cell actions-column ant-table-cell-fix-right ant-table-cell-fix-right-first"
+                              style="position: sticky; right: 0px;"
                             >
                               <div>
                                 <button

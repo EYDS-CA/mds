@@ -33,6 +33,8 @@ import {
 } from "../reducers";
 import reportSubmissionReducer from "@mds/common/components/reports/reportSubmissionSlice";
 import verifiableCredentialsReducer from "@mds/common/redux/slices/verifiableCredentialsSlice";
+import regionsReducer from "@mds/common/redux/slices/regionsSlice";
+import complianceCodeReducer, { complianceCodeReducerType } from "../slices/complianceCodesSlice";
 export const sharedReducer = {
   ...activityReducer,
   ...authenticationReducer,
@@ -75,5 +77,7 @@ export const sharedReducer = {
   form: formReducer,
   loadingBar: loadingBarReducer,
   reportSubmission: reportSubmissionReducer,
-  verifiableCredentialConnections: verifiableCredentialsReducer,
+  verifiableCredentials: verifiableCredentialsReducer,
+  regions: regionsReducer,
+  [complianceCodeReducerType]: complianceCodeReducer,
 };

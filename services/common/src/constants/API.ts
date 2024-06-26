@@ -66,6 +66,8 @@ export const PERMIT_AMENDMENT_VC = (mineGuid, permitGuid, permitAmendmentGuid) =
   `/mines/${mineGuid}/permits/${permitGuid}/amendments/${permitAmendmentGuid}/verifiable-credential`;
 export const MINES_ACT_PERMITS_VC_LIST = (partyGuid: string) =>
   `/verifiable-credentials/${partyGuid}/mines-act-permits`;
+export const CREDENTIAL_EXCHANGE_DETAIL = (partyGuid: string, credExchId: string) =>
+  `/verifiable-credentials/${partyGuid}/mines-act-permits/${credExchId}/details`;
 export const REVOKE_VERIFIABLE_CREDENTIAL = (partyGuid: string) =>
   `/verifiable-credentials/${partyGuid}/mines-act-permits/revoke`;
 
@@ -179,6 +181,8 @@ export const INFORMATION_REQUIREMENTS_TABLES = (projectGuid) =>
   `/projects/${projectGuid}/information-requirements-table`;
 export const INFORMATION_REQUIREMENTS_TABLE = (projectGuid, irtGuid) =>
   `/projects/${projectGuid}/information-requirements-table/${irtGuid}`;
+export const INFORMATION_REQUIREMENTS_TABLE_STATUS = (projectGuid, irtGuid) =>
+  `/projects/${projectGuid}/information-requirements-table/${irtGuid}/status`;
 
 // Major mine application
 export const MAJOR_MINE_APPLICATIONS = (projectGuid) =>
@@ -264,6 +268,14 @@ export const MINE_REPORT_COMMENT = (mineGuid, reportGuid, commentGuid) =>
   `/mines/${mineGuid}/reports/${reportGuid}/comments/${commentGuid}`;
 export const MINE_REPORT_STATUS = "/mines/reports/status-codes";
 export const MINE_REPORT_CATEGORY = "/mines/reports/category-codes";
+
+// Compliance Codes
+export const COMPLIANCE_CODE_LIST = (params = {}) =>
+  `/compliance/codes?${queryString.stringify(params)}`;
+export const COMPLIANCE_CODE_ADD = () => `/compliance/codes/create`;
+export const COMPLIANCE_CODE_BULK_UPDATE = () => `/compliance/codes/update`;
+export const COMPLIANCE_CODE_REPORT_XREF = (guid?: string) =>
+  `/mines/reports/definitions/compliance-article/${guid}`;
 
 // Notice Of Work
 export const NOTICE_OF_WORK_APPLICATION_LIST = (params = {}) =>
@@ -353,3 +365,6 @@ export const DAM = (damGuid) => (damGuid ? `/dams/${damGuid}` : "/dams");
 
 export const DOCUMENTS_COMPRESSION = (mineGuid) => `/mines/${mineGuid}/documents/zip`;
 export const POLL_DOCUMENTS_COMPRESSION_PROGRESS = (taskId) => `/mines/documents/zip/${taskId}`;
+
+// Regions
+export const REGIONS_LIST = "/regions";

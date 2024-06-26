@@ -3,9 +3,9 @@ import { notification, Button } from "antd";
 import * as String from "@mds/common/constants/strings";
 import React from "react";
 import * as API from "@mds/common/constants/API";
-import { ENVIRONMENT } from "@mds/common";
+import { ENVIRONMENT } from "@mds/common/constants";
 import { createRequestHeader } from "./utils/RequestHeaders";
-import { Feature, isFeatureEnabled } from "@mds/common";
+import { Feature, isFeatureEnabled } from "@mds/common/utils";
 
 // https://stackoverflow.com/questions/39696007/axios-with-promise-prototype-finally-doesnt-work
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -24,11 +24,11 @@ let CustomAxios;
 
 const notifymAdmin = (error) => {
   const business_message = error?.response?.data?.message;
-  const detailed_error = error?.response?.data?.detailed_error;
+  const trace_id = error?.response?.data?.trace_id;
 
   const payload = {
     business_error: business_message,
-    detailed_error: detailed_error,
+    trace_id: trace_id,
   };
 
   CustomAxios()
@@ -46,9 +46,9 @@ const notifymAdmin = (error) => {
 };
 
 CustomAxios = ({
-  errorToastMessage = null,
+  errorToastMessage = "default",
   suppressErrorNotification = false,
-  successToastMessage = null,
+  successToastMessage = undefined,
 } = {}) => {
   const instance = axios.create();
 
@@ -66,6 +66,14 @@ CustomAxios = ({
       if (axios.isCancel(error)) {
         return Promise.resolve(error.message);
       }
+
+      if (!document) {
+        // If the DOM document is not available to render, do not try to render a notification.
+        // This happens in some of our tests where axios is not mocked and causes a "TypeError: Cannot read property 'createElement' of null"
+        // error to be thrown by antd and prevents code coverage from being generated.
+        return Promise.reject(error);
+      }
+
       const status = error.response ? error.response.status : null;
       if (status === UNAUTHORIZED || status === MAINTENANCE) {
         // @ts-ignore
@@ -74,18 +82,29 @@ CustomAxios = ({
         (errorToastMessage === "default" || errorToastMessage === undefined) &&
         !suppressErrorNotification
       ) {
-        console.error("Detailed Error: ", error?.response?.data?.detailed_error);
+        console.error("Trace Id: ", error?.response?.data?.trace_id);
         const notificationKey = "errorNotification";
+        const display_error_msg = formatErrorMessage(
+          error?.response?.data?.message ?? String.ERROR
+        );
+        const trace_id = error?.response?.data?.trace_id ?? String.EMPTY;
 
         if (isFeatureEnabled(Feature.REPORT_ERROR)) {
           notification.error({
             key: notificationKey,
-            message: formatErrorMessage(error?.response?.data?.message ?? String.ERROR),
+            message: display_error_msg,
             description: (
-              <p style={{ color: "grey" }}>
-                If you think this is a system error please help us to improve by informing the
-                system Admin
-              </p>
+              <div>
+                {error?.response?.data?.detailed_error &&
+                  error?.response?.data?.detailed_error !== "Not provided" && (
+                    <p className="margin-large--top">{error?.response?.data?.detailed_error}</p>
+                  )}
+                <p style={{ color: "grey" }}>
+                  If you think this is a system error please help us to improve by informing the
+                  system Admin
+                </p>
+                <p style={{ color: "grey", fontSize: "smaller" }}>Trace Id: {trace_id}</p>
+              </div>
             ),
             duration: 10,
             btn: (

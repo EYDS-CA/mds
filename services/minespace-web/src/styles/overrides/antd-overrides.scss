@@ -13,7 +13,7 @@
   padding-right: 0;
   color: $primary-color;
   background: $primary-color;
-  height: 80px;
+  height: $layout-header-height;
 }
 
 .ant-layout-footer {
@@ -21,8 +21,8 @@
   width: 100%;
   min-height: 80px;
   bottom: 0;
-  padding-left: 0;
-  padding-right: 0;
+  padding: 0;
+  height: $layout-footer-height;
 }
 
 .ant-layout {
@@ -30,8 +30,12 @@
   min-height: 100vh;
 }
 
+.app-container-column {
+  padding-bottom: $layout-header-height;
+}
+
 .ant-layout-content {
-  padding: $layout-header-height 0;
+  padding: $layout-header-height 0 0 0;
 
   @include screen-md {
     padding: $layout-header-height $padding-sm;
@@ -119,7 +123,7 @@ h4.ant-typography,
 
 h3.ant-typography,
 .ant-typography h3 {
-  color: $font-colour;
+  color: $primary-color;
 }
 
 h5.ant-typography,
@@ -280,11 +284,9 @@ h5.ant-typography,
 }
 
 .ant-table-thead>tr>th {
-  background: #F7F8FA;
   color: #494949;
   border-bottom: 2px solid $primary-color;
   border-radius: 0;
-  font-weight: 600;
 }
 
 .ant-table-header-column {
@@ -361,6 +363,10 @@ tr.ant-table-expanded-row {
 
 .ant-descriptions-item {
   margin-right: $padding-lg;
+
+  .ant-descriptions-item-content {
+    word-break: keep-all;
+  }
 }
 
 th.ant-descriptions-item.vertical-description {
@@ -472,6 +478,11 @@ th.ant-descriptions-item.vertical-description {
   margin-top: 14px;
 }
 
+.ant-alert-message {
+  font-weight: 600;
+  font-size: 16px !important;
+}
+
 .header-link:hover,
 .header-link.active {
   background-color: #154878;
@@ -554,4 +565,27 @@ th.ant-descriptions-item.vertical-description {
 .ant-modal-footer {
   padding-right: 24px;
   padding-bottom: 24px;
+}
+
+// Collapse Component
+.ant-collapse:not(.ant-collapse-borderless) {
+  border-color: $background;
+  border-width: 1px;
+  border-bottom-style: solid;
+  border-radius: 2px;
+}
+
+.ant-collapse-header {
+  // same as .grey-filled-box
+  padding: 16px 24px;
+}
+
+.ant-collapse>.ant-collapse-item:last-child,
+.ant-collapse>.ant-collapse-item:last-child>.ant-collapse-header {
+  border-radius: 0;
+  border-bottom: none;
+}
+
+.ant-collapse-borderless>.ant-collapse-item>.ant-collapse-content {
+  background-color: $white;
 }
