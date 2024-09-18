@@ -1,17 +1,26 @@
 import React, { FC, useEffect, useState } from "react";
 import { withRouter, Link, Prompt, useParams, useHistory, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { reset } from "redux-form";
+import { reset, getFormValues } from "redux-form";
 import * as routes from "@/constants/routes";
 import { Button, Col, Row, Tag } from "antd";
 import EnvironmentOutlined from "@ant-design/icons/EnvironmentOutlined";
 import ArrowLeftOutlined from "@ant-design/icons/ArrowLeftOutlined";
+import { getSystemFlag } from "@mds/common/redux/selectors/authenticationSelectors";
 
 import {
   getFormattedProjectSummary,
   getProject,
 } from "@mds/common/redux/selectors/projectSelectors";
-import { FORM, Feature } from "@mds/common";
+import {
+  FORM,
+  Feature,
+  PROJECT_SUMMARY_WITH_AMS_SUBMISSION_SECTION,
+  AMS_STATUS_CODES_SUCCESS,
+  AMS_STATUS_CODE_FAIL,
+  AMS_ENVIRONMENTAL_MANAGEMENT_ACT_TYPES,
+  isFieldDisabled,
+} from "@mds/common";
 import { getMineById } from "@mds/common/redux/reducers/mineReducer";
 import withFeatureFlag from "@mds/common/providers/featureFlags/withFeatureFlag";
 import {
@@ -67,6 +76,8 @@ export const ProjectSummary: FC = () => {
   const [isEditMode, setIsEditMode] = useState(isDefaultEditMode);
   const activeTab = tab ?? projectFormTabs[0];
   const mineName = mine?.mine_name ?? formattedProjectSummary?.mine_name ?? "";
+  const formValues = useSelector(getFormValues(FORM.ADD_EDIT_PROJECT_SUMMARY));
+  const systemFlag = useSelector(getSystemFlag);
 
   const handleFetchData = async () => {
     setIsLoaded(false);
@@ -80,9 +91,7 @@ export const ProjectSummary: FC = () => {
   };
 
   useEffect(() => {
-    if (!isLoaded) {
-      handleFetchData().then(() => setIsLoaded(true));
-    }
+    handleFetchData().then(() => setIsLoaded(true));
     return () => {
       dispatch(clearProjectSummary());
     };
@@ -121,7 +130,7 @@ export const ProjectSummary: FC = () => {
 
   const handleUpdateProjectSummary = async (payload, message) => {
     setIsLoaded(false);
-    return dispatch(
+    const projectSummaryResponse = await dispatch(
       updateProjectSummary(
         {
           projectGuid,
@@ -130,20 +139,43 @@ export const ProjectSummary: FC = () => {
         payload,
         message
       )
-    )
-      .then(async () => {
-        await dispatch(
-          updateProject(
-            { projectGuid },
-            { mrc_review_required: payload.mrc_review_required, contacts: payload.contacts },
-            "Successfully updated project.",
-            false
+    );
+
+    await dispatch(
+      updateProject(
+        { projectGuid },
+        {
+          mrc_review_required: payload.mrc_review_required,
+          contacts: payload.contacts,
+        },
+        "Successfully updated project.",
+        false
+      )
+    );
+
+    await handleFetchData();
+    if (
+      tab === PROJECT_SUMMARY_WITH_AMS_SUBMISSION_SECTION &&
+      amsFeatureEnabled &&
+      projectSummaryResponse
+    ) {
+      const { data } = projectSummaryResponse;
+      const authorizations = data?.authorizations ?? [];
+      const areAuthorizationsSuccessful = authorizations
+        .filter((authorization) =>
+          Object.values(AMS_ENVIRONMENTAL_MANAGEMENT_ACT_TYPES).includes(
+            authorization.project_summary_authorization_type
           )
-        );
-      })
-      .then(async () => {
-        await handleFetchData();
-      });
+        )
+        .every((auth) => auth.ams_status_code === "200");
+
+      history.push(
+        routes.VIEW_PROJECT_SUBMISSION_STATUS_PAGE.dynamicRoute(
+          projectGuid,
+          areAuthorizationsSuccessful ? AMS_STATUS_CODES_SUCCESS : AMS_STATUS_CODE_FAIL
+        )
+      );
+    }
   };
 
   const handleTabChange = (newTab: string) => {
@@ -162,15 +194,21 @@ export const ProjectSummary: FC = () => {
   };
 
   const handleSaveData = async (formValues, newActiveTab?: string) => {
-    const message = newActiveTab
+    let message = newActiveTab
       ? "Successfully updated the project description."
       : "Successfully submitted a project description to the Province of British Columbia.";
 
     let status_code = formattedProjectSummary.status_code;
+    let is_historic = formattedProjectSummary.is_historic;
+
     if (!status_code || isNewProject) {
       status_code = "DFT";
     } else if (!newActiveTab) {
       status_code = "SUB";
+      is_historic = false;
+      if (amsFeatureEnabled) {
+        message = null;
+      }
     }
     const values = { ...formValues, status_code: status_code };
 
@@ -179,7 +217,7 @@ export const ProjectSummary: FC = () => {
         await handleCreateProjectSummary(values, message);
       }
       if (projectGuid && projectSummaryGuid) {
-        await handleUpdateProjectSummary(values, message);
+        await handleUpdateProjectSummary({ ...values, is_historic }, message);
         handleTabChange(newActiveTab);
         setIsLoaded(true);
       }
@@ -248,7 +286,11 @@ export const ProjectSummary: FC = () => {
             </Link>
           </Col>
           <Col>
-            <Button type="primary" onClick={() => setIsEditMode(!isEditMode)}>
+            <Button
+              disabled={formValues?.status_code === "WDN" || formValues?.status_code === "COM"}
+              type="primary"
+              onClick={() => setIsEditMode(!isEditMode)}
+            >
               {isEditMode ? "Cancel" : "Edit Project Description"}
             </Button>
           </Col>

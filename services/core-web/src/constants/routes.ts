@@ -45,8 +45,6 @@ import MergeContactsDashboard from "@/components/admin/contacts/MergeContactsDas
 import MineSpaceEMLIContactManagement from "@/components/admin/contacts/EMLIContacts/MineSpaceEMLIContactManagement";
 import PermitConditionManagement from "@/components/mine/Permit/PermitConditionManagement";
 import Project from "@/components/mine/Projects/Project";
-import InformationRequirementsTableTab from "@/components/mine/Projects/InformationRequirementsTableTab";
-import ProjectDocumentsTab from "@/components/mine/Projects/ProjectDocumentsTab";
 import MajorMineApplicationTab from "@/components/mine/Projects/MajorMineApplicationTab";
 import DecisionPackageTab from "@/components/mine/Projects/DecisionPackageTab";
 import MineIncident from "@/components/mine/Incidents/MineIncident";
@@ -57,6 +55,8 @@ import ReportPage from "@/components/mine/Reports/ReportPage";
 import ReportSteps from "@mds/common/components/reports/ReportSteps";
 import ViewDigitalPermitCredential from "@/components/mine/DigitalPermitCredential/ViewDigitalPermitCredential";
 import ComplianceCodeManagement from "@/components/admin/complianceCodes/ComplianceCodeManagement";
+import ProjectSubmissionStatusPage from "@mds/common/components/projectSummary/ProjectSubmissionStatusPage";
+import ViewPermit from "@/components/mine/Permit/ViewPermit";
 
 const withoutDefaultParams = (params, defaults) => {
   const newParams = JSON.parse(JSON.stringify(params));
@@ -125,7 +125,7 @@ export const CONTACT_HOME_PAGE = {
 };
 
 // Mine Dashboard Routes
-export const MINE_SUMMARY = {
+export const MINE_DASHBOARD = {
   route: "/mine-dashboard/:id/",
   dynamicRoute: (id) => `/mine-dashboard/${id}/`,
   component: MineDashboard,
@@ -153,6 +153,15 @@ export const MINE_PERMITS = {
   route: "/mine-dashboard/:id/permits-and-approvals/permits",
   dynamicRoute: (id) => `/mine-dashboard/${id}/permits-and-approvals/permits`,
   component: MinePermitInfo,
+};
+
+export const VIEW_MINE_PERMIT = {
+  route: "/mine-dashboard/:id/permits-and-approvals/permits/:permitGuid/:tab",
+  dynamicRoute: (id, permitGuid, tab = "overview") =>
+    `/mine-dashboard/${id}/permits-and-approvals/permits/${permitGuid}/${tab}`,
+  hashRoute: (id, permitGuid, tab = "overview", link = "") =>
+    `/mine-dashboard/${id}/permits-and-approvals/permits/${permitGuid}/${tab}/${link}`,
+  component: ViewPermit,
 };
 
 export const MINE_PERMIT_DIGITAL_CREDENTIALS = {
@@ -215,9 +224,18 @@ export const EDIT_PROJECT_SUMMARY = {
   component: ProjectSummary,
 };
 
+export const VIEW_PROJECT_SUBMISSION_STATUS_PAGE = {
+  route: "/projects/:projectGuid/project-submission-status/:status",
+  dynamicRoute: (projectGuid, status) =>
+    `/projects/${projectGuid}/project-submission-status/${status}`,
+  component: ProjectSubmissionStatusPage,
+};
+
 export const EDIT_PROJECT = {
   route: "/pre-applications/:projectGuid/:tab",
   dynamicRoute: (projectGuid, tab = "overview") => `/pre-applications/${projectGuid}/${tab}`,
+  hashRoute: (projectGuid, tab = "overview", link) =>
+    `/pre-applications/${projectGuid}/${tab}/${link}`,
   component: Project,
 };
 
@@ -235,26 +253,12 @@ export const PROJECT_FINAL_APPLICATION = {
   component: MajorMineApplicationTab,
 };
 
-export const PROJECT_ALL_DOCUMENTS = {
-  route: "/pre-applications/:projectGuid/documents",
-  dynamicRoute: (projectGuid) => `/pre-applications/${projectGuid}/documents`,
-  hashRoute: (projectGuid, link) => `/pre-applications/${projectGuid}/documents/${link}`,
-  component: ProjectDocumentsTab,
-};
-
 export const PROJECT_DECISION_PACKAGE = {
   route: "/pre-applications/:projectGuid/project-decision-package",
   dynamicRoute: (projectGuid) => `/pre-applications/${projectGuid}/project-decision-package`,
   hashRoute: (projectGuid, link) =>
     `/pre-applications/${projectGuid}/project-decision-package/${link}`,
   component: DecisionPackageTab,
-};
-
-export const INFORMATION_REQUIREMENTS_TABLE = {
-  route: "/pre-applications/:projectGuid/information-requirements-table/:irtGuid/:tab",
-  dynamicRoute: (projectGuid, irtGuid, tab = "intro-project-overview") =>
-    `/pre-applications/${projectGuid}/information-requirements-table/${irtGuid}/${tab}`,
-  component: InformationRequirementsTableTab,
 };
 
 export const MINE_NOW_APPLICATIONS = {
@@ -317,12 +321,6 @@ export const VIEW_MINE_INCIDENT = {
   hashRoute: (mineGuid, mineIncidentGuid, link) =>
     `/mines/${mineGuid}/incidents/${mineIncidentGuid}${link}`,
   component: MineIncident,
-};
-
-export const PROJECT_DOCUMENT_MANAGEMENT = {
-  route: "/pre-applications/:projectGuid/documents",
-  dynamicRoute: (projectGuid) => `/pre-applications/${projectGuid}/documents`,
-  component: ProjectDocumentsTab,
 };
 
 export const CREATE_MINE_INCIDENT = {
@@ -407,7 +405,7 @@ export const INCIDENTS_DASHBOARD = {
 
 export const REPORTS_DASHBOARD = {
   route: "/dashboard/reporting/reports",
-  dynamicRoute: ({ page, per_page, ...params }) =>
+  dynamicRoute: ({ page = Strings.DEFAULT_PAGE, per_page = Strings.DEFAULT_PER_PAGE, ...params }) =>
     `/dashboard/reporting/reports?${queryString.stringify(
       { page, per_page, ...withoutNullParams(params) },
       { sort: false }

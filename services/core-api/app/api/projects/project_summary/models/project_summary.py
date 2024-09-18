@@ -6,6 +6,7 @@ from sqlalchemy.schema import FetchedValue
 from sqlalchemy import case
 from werkzeug.exceptions import BadRequest
 
+from app.api.mines.documents.models.mine_document_bundle import MineDocumentBundle
 from app.api.parties.party import PartyOrgBookEntity
 from app.api.regions.models.regions import Regions
 from app.api.services.ams_api_service import AMSApiService
@@ -64,7 +65,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
     facility_desc = db.Column(db.String(4000), nullable=True)
     facility_latitude = db.Column(db.Numeric(9, 7), nullable=True)
     facility_longitude = db.Column(db.Numeric(11, 7), nullable=True)
-    facility_coords_source = db.Column(db.String(3), nullable=True)
+    facility_coords_source = db.Column(db.String(60), nullable=True)
     facility_coords_source_desc = db.Column(db.String(4000), nullable=True)
     facility_pid_pin_crown_file_no = db.Column(db.String(100), nullable=True)
     legal_land_desc = db.Column(db.String(4000), nullable=True)
@@ -81,6 +82,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
 
     applicant_party_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('party.party_guid'), nullable=True)
     payment_contact_party_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('party.party_guid'), nullable=True)
+    is_historic = db.Column(db.Boolean, nullable=False)
 
     project_guid = db.Column(
         UUID(as_uuid=True), db.ForeignKey('project.project_guid'), nullable=False)
@@ -466,7 +468,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
         return True
 
     @classmethod
-    def validate_mine_component_offsite_infrastructure(self, data):
+    def validate_mine_component_offsite_infrastructure(self, data, do_full_validation):
         draft_mine_offsite_schema = {
             'facility_desc': {
                 'nullable': True,
@@ -499,10 +501,9 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
             },
         }
 
-        status_code = data.get('status_code')
         zoning = data.get('zoning')
 
-        mine_offsite_schema = submission_mine_offsite_schema if status_code == 'SUB' else draft_mine_offsite_schema
+        mine_offsite_schema = submission_mine_offsite_schema if do_full_validation else draft_mine_offsite_schema
 
         if zoning == False:
             mine_offsite_schema |= {
@@ -562,7 +563,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
         return True
 
     @classmethod
-    def validate_location_access(self, data):
+    def validate_location_access(self, data, do_full_validation):
         draft_location_access_schema = {
             'facility_latitude': {
                 'nullable': True,
@@ -579,7 +580,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
             'facility_coords_source': {
                 'nullable': True,
                 'type': 'string',
-                'allowed': ['GPS', 'SUR', 'GGE', 'OTH'],
+                'allowed': ['GPS', 'Survey', 'Google Earth, Google Maps, or other Satellite Imagery', 'Other'],
             },
             'nearest_municipality': {
                 'nullable': True,
@@ -629,7 +630,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
             'facility_coords_source': {
                 'required': True,
                 'type': 'string',
-                'allowed': ['GPS', 'SUR', 'GGE', 'OTH'],
+                'allowed': ['GPS', 'Survey', 'Google Earth, Google Maps, or other Satellite Imagery', 'Other'],
             },
             'nearest_municipality': {
                 'nullable': True,
@@ -655,7 +656,6 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
             }
         }
 
-        status_code = data.get('status_code')
         facility_latitude = data.get('facility_latitude', None)
         facility_longitude = data.get('facility_longitude', None)
         facility_coords_source = data.get('facility_coords_source', None)
@@ -668,7 +668,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                                                 'facility_longitude': float(facility_longitude)}
 
         location_access_schema = draft_location_access_schema
-        if status_code == 'SUB':
+        if do_full_validation:
             location_access_schema = submission_location_access_schema
             if facility_pid_pin_crown_file_no == None and legal_land_desc != None:
                 location_access_schema |= {
@@ -704,7 +704,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     },
                 }
 
-        if facility_coords_source == 'OTH':
+        if facility_coords_source == 'Other':
             location_access_schema |= {
                 'facility_coords_source_desc': {
                     'required': True,
@@ -763,7 +763,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
         return True
 
     @classmethod
-    def validate_project_summary(cls, data):
+    def validate_project_summary(cls, data, is_historic):
         status_code = data.get('status_code')
         ams_authorizations = data.get('ams_authorizations', None)
         authorizations = data.get('authorizations', [])
@@ -809,8 +809,10 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                 'declaration': [],
             }
 
+            do_full_validation = True if (status_code == 'SUB' and is_historic != True) else False
+
             # Validate Authorizations Involved
-            if (status_code == 'SUB'
+            if (do_full_validation
                     and len(ams_authorizations.get('amendments', [])) == 0
                     and len(ams_authorizations.get('new', [])) == 0
                     and len(authorizations) == 0):
@@ -835,7 +837,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                         errors_found['authorizations'].append(ams_authorization_new_validation)
 
             # Validate Applicant Information
-            if status_code == 'SUB' and applicant == None:
+            if do_full_validation and applicant == None:
                 errors_found['applicant_info'].append('Applicant Information not provided')
             elif applicant != None:
                 applicant_validation = ProjectSummary.validate_project_party(applicant, 'applicant')
@@ -843,7 +845,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     errors_found['applicant_info'].append(applicant_validation)
 
             # Validate Agent
-            if status_code == 'SUB' and is_agent == None:
+            if do_full_validation and is_agent == None:
                 errors_found['agent'].append("Is applicant an agent not provided")
             elif is_agent == True:
                 agent_validation = ProjectSummary.validate_project_party(agent, 'agent')
@@ -851,7 +853,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     errors_found['agent'].append(agent_validation)
 
             # Validate Mine Components and Offsite Infrastructure
-            if status_code == 'SUB' and facility_operator == None:
+            if do_full_validation and facility_operator == None:
                 errors_found['mine_component_and_offsite'].append('Facility address info not provided')
             elif facility_operator != None:
                 mine_offsite_party_validation = ProjectSummary.validate_project_party(facility_operator,
@@ -859,24 +861,24 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                 if mine_offsite_party_validation != True:
                     errors_found['mine_component_and_offsite'].append(mine_offsite_party_validation)
 
-            mine_offsite_validation = ProjectSummary.validate_mine_component_offsite_infrastructure(data)
+            mine_offsite_validation = ProjectSummary.validate_mine_component_offsite_infrastructure(data, do_full_validation)
             if mine_offsite_validation != True:
                 errors_found['mine_component_and_offsite'].append(mine_offsite_validation)
 
             # Validate Location, Access and Land Use
-            if status_code == 'SUB' and is_legal_land_owner == None:
+            if do_full_validation and is_legal_land_owner == None:
                 errors_found['location_access_land_use'].append('Is the Applicant the Legal Land Owner not provided')
             elif is_legal_land_owner == False:
                 legal_land_validation = ProjectSummary.validate_legal_land(data)
                 if legal_land_validation != True:
                     errors_found['location_access_land_use'].append(legal_land_validation)
 
-            location_access_validation = ProjectSummary.validate_location_access(data)
+            location_access_validation = ProjectSummary.validate_location_access(data, do_full_validation)
             if location_access_validation != True:
                 errors_found['location_access_land_use'].append(location_access_validation)
 
             # Validate Declaration
-            if status_code == 'SUB':
+            if do_full_validation:
                 declaration_validation = ProjectSummary.validate_declaration(data)
                 if declaration_validation != True:
                     errors_found['declaration'].append(declaration_validation)
@@ -907,6 +909,8 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                submission_date=None,
                add_to_session=True):
 
+        is_historic = not is_feature_enabled(Feature.AMS_AGENT)
+
         project_summary = cls(
             project_summary_description=project_summary_description,
             project_guid=project.project_guid,
@@ -915,7 +919,8 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
             expected_permit_receipt_date=expected_permit_receipt_date,
             expected_project_start_date=expected_project_start_date,
             status_code=status_code,
-            submission_date=submission_date)
+            submission_date=submission_date,
+            is_historic=is_historic)
 
         if add_to_session:
             project_summary.save(commit=False)
@@ -997,7 +1002,9 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                company_alias=None,
                regional_district_id=None,
                payment_contact=None,
-               add_to_session=True):
+               is_historic=False,
+               add_to_session=True
+               ):
 
         # Update simple properties.
         # If we assign a project lead update status to Assigned and vice versa Submitted.
@@ -1025,6 +1032,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
         self.is_billing_address_same_as_mailing_address = is_billing_address_same_as_mailing_address
         self.is_billing_address_same_as_legal_address = is_billing_address_same_as_legal_address
         self.company_alias = company_alias
+        self.is_historic = is_historic
 
         # TODO - Turn this on when document removal is activated on the front end.
         # Get the GUIDs of the updated documents.
@@ -1078,6 +1086,13 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
 
         self.nearest_municipality_guid = nearest_municipality
 
+        spatial_docs = [doc for doc in documents if doc['project_summary_document_type_code'] == 'SPT']
+        updated_spatial_docs = MineDocumentBundle.update_spatial_mine_document_with_bundle_id(spatial_docs)
+
+        # update the original documents array with the updated spatial documents
+        documents = [doc for doc in documents if doc['project_summary_document_type_code'] != 'SPT']
+        documents.extend(updated_spatial_docs)
+
         # Create or update existing documents.
         for doc in documents:
             mine_document_guid = doc.get('mine_document_guid')
@@ -1090,7 +1105,9 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                 mine_doc = MineDocument(
                     mine_guid=self.mine_guid,
                     document_name=doc.get('document_name'),
-                    document_manager_guid=doc.get('document_manager_guid'))
+                    document_manager_guid=doc.get('document_manager_guid'),
+                    mine_document_bundle_id=doc['mine_document_bundle_id'] if doc.get('mine_document_bundle_id') else None
+                )
                 project_summary_doc = ProjectSummaryDocumentXref(
                     mine_document_guid=mine_doc.mine_document_guid,
                     project_summary_id=self.project_summary_id,
@@ -1156,7 +1173,8 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     company_alias,
                     zoning,
                     zoning_reason,
-                    regional_district_name)
+                    regional_district_name,
+                    project.project_guid)
 
                 amendment_ams_results = AMSApiService.create_amendment_ams_authorization(
                     ams_authorizations,
@@ -1183,7 +1201,8 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     zoning_reason,
                     regional_district_name,
                     is_legal_land_owner,
-                    is_crown_land_federal_or_provincial
+                    is_crown_land_federal_or_provincial,
+                    project.project_guid
                 )
 
             for authorization in ams_authorizations.get('amendments', []):
@@ -1240,7 +1259,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                 "mine_name": mine.mine_name,
                 "mine_no": mine.mine_no,
             },
-            "core_project_summary_link": f'{Config.CORE_PROD_URL}/pre-applications/{self.project.project_guid}/overview'
+            "core_project_summary_link": f'{Config.CORE_WEB_URL}/pre-applications/{self.project.project_guid}/overview'
         }
 
         minespace_context = {

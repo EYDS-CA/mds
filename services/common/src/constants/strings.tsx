@@ -34,7 +34,7 @@ export const UNAUTHORIZED_PAGE = "You do not have permission to access this page
 // to get HTML to render in a React String you send the string as a list of its parts, a mix of HTML and strings.
 export const CONTACT_ADMIN = [
   "Contact your system administrator at ",
-  <b>mds@gov.bc.ca</b>,
+  <b key="contact-admin">mds@gov.bc.ca</b>,
   " to request access",
 ];
 export const MMO_EMAIL = "permrecl@gov.bc.ca";
@@ -189,6 +189,9 @@ export const CALLOUT_SEVERITY = {
   danger: "danger",
 };
 
+export const SPATIAL_DATA_STANDARDS_URL =
+  "https://www2.gov.bc.ca/gov/content/industry/mineral-exploration-mining/permitting/reclamation-closure/spatial-data-arr";
+
 export const MAJOR_MINES_APPLICATION_DOCUMENT_TYPE = {
   PRIMARY: "primary_documents",
   SPATIAL: "spatial_documents",
@@ -217,7 +220,7 @@ export const PROJECT_SUMMARY_DOCUMENT_TYPE = {
 export const PROJECT_SUMMARY_DOCUMENT_TYPE_CODE = {
   GENERAL: "GEN",
   LOCATION_MAP: "MAP",
-  DISCHARGE_FACTOR_AMENDMENT: "DFA",
+  DISCHARGE_FACTOR: "DFA",
   SUPPORTING: "SPR",
   SPATIAL: "SPT",
   CONSENT_LETTER: "CSL",
@@ -241,7 +244,7 @@ export const PROJECT_SUMMARY_DOCUMENT_TYPE_CODE_STATE = {
 export const PROJECT_SUMMARY_DOCUMENT_TYPE_CODE_LOCATION = {
   GEN: "General",
   MAP: "Location Map",
-  DFA: "Discharge Factor Amendment",
+  DFA: "Discharge Factor",
   SPR: "Supporting Documents",
 };
 
@@ -446,3 +449,22 @@ export const CONTACTS_COUNTRY_OPTIONS = [
   { value: "USA", label: "United States" },
   { value: "INT", label: "International" },
 ];
+
+export const PROJECT_SUMMARY_WITH_AMS_SUBMISSION_SECTION = "declaration";
+export const AMS_STATUS_CODES_SUCCESS = "success";
+export const AMS_STATUS_CODE_FAIL = "fail";
+export const AMS_STATUS_CODE_ERROR = "error";
+
+export const ENVIRONMENTAL_MANAGMENT_ACT = "ENVIRONMENTAL_MANAGMENT_ACT";
+
+export const DISCHARGE_FACTOR_FORM_NEW =
+  "https://www2.gov.bc.ca/assets/gov/environment/waste-management/waste-discharge-authorization/guides/forms/epd-ema-03_new_auth_discharge_factors_application_form.pdf";
+export const DISCHARGE_FACTOR_FORM_AMENDMENT =
+  "https://www2.gov.bc.ca/assets/gov/environment/waste-management/waste-discharge-authorization/guides/forms/epd-ema-06_amend_discharge_factor_amendment_form.pdf";
+
+export const WASTE_DISCHARGE_NEW_AUTHORIZATIONS_URL =
+  "https://www2.gov.bc.ca/gov/content/environment/waste-management/waste-discharge-authorization/apply";
+export const WASTE_DISCHARGE_AMENDMENT_AUTHORIZATIONS_URL =
+  "https://www2.gov.bc.ca/gov/content/environment/waste-management/waste-discharge-authorization/change";
+export const WASTE_DISCHARGE_AUTHORIZATION_PROCESS =
+  "https://www2.gov.bc.ca/gov/content/environment/waste-management/waste-discharge-authorization/process";

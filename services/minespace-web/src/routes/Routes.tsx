@@ -73,6 +73,13 @@ const Routes = () => (
         component={ColumnWrapper()(AuthenticationGuard()(routes.REVIEW_MINE_INCIDENT.component))}
       />
       <Route
+        exact
+        path={routes.VIEW_PROJECT_SUBMISSION_STATUS_PAGE.route}
+        component={ColumnWrapper()(
+          AuthenticationGuard()(routes.VIEW_PROJECT_SUBMISSION_STATUS_PAGE.component)
+        )}
+      />
+      <Route
         path={routes.ADD_PROJECT_SUMMARY.route}
         component={ColumnWrapper()(AuthenticationGuard()(routes.ADD_PROJECT_SUMMARY.component))}
       />
@@ -106,7 +113,7 @@ const Routes = () => (
       />
       <Route
         path={routes.EDIT_PROJECT.route}
-        component={ColumnWrapper()(AuthenticationGuard()(routes.EDIT_PROJECT.component))}
+        component={AuthenticationGuard()(routes.EDIT_PROJECT.component)}
       />
       <Route
         path={routes.ADD_TAILINGS_STORAGE_FACILITY.route}

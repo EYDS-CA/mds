@@ -5,6 +5,8 @@
 // Primary Colours
 $black: #161616;
 $darkest-grey: #313132;
+$transparent-dark-grey: #31313226;
+$dark-grey: #494949;
 $medium-grey: #606060;
 $violet: #5e46a1;
 $transparent-violet: #bdb3d826;
@@ -14,6 +16,7 @@ $hover-violet: #392B62;
 $hover-blue: #3d6de7;
 $btn-red: #bc2929;
 $disabled-text: #a39898;
+$gov-grey: #bbbbbb;
 
 // Accent Colours
 $lime-green: #adfc4a;
@@ -59,10 +62,10 @@ $danger-btn-color-hover: darken($danger-btn-color, 20%);
 
 // Nav
 $nav-color: $darkest-grey;
-$nav-border-color: $medium-grey;
+$nav-border-color: transparent;
 $nav-height: 62px;
-$loading-bar-height: 2px;
-$header-height: $nav-height + $loading-bar-height;
+$loading-bar-height: 8px;
+$header-height: $nav-height;
 
 // Ant Component Overrides
 $h-divider-color: $darkest-grey;
@@ -90,8 +93,8 @@ $default-h3: 1.5rem; //24px
 $mobile-h3: 1.25rem; //20px
 $default-h4: 1.25rem; //20px
 $mobile-h4: 1.125rem; //18px
-$default-h5: 1.25rem; //20px
-$mobile-h5: 1.125rem; //18px
+$default-h5: 1.125rem; //18px
+$mobile-h5: 1rem; //16px
 $default-h6: 0.875rem; //14px
 $mobile-h6: 0.75rem; //12px
 $default-p: 1rem; //16px
@@ -136,3 +139,7 @@ $default-padding-xxl: 50px;
 
 $default-box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
 $default-round-top-border: 60px 60px 0 0;
+
+// pages with fixed side menu/tabs
+$fixed-page-margin: 24px;
+$side-menu-width: 292px;

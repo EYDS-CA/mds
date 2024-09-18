@@ -16,7 +16,7 @@ import { closeModal, openModal } from "@mds/common/redux/actions/modalActions";
 import DocumentCompression from "@mds/common/components/documents/DocumentCompression";
 import { archiveMineDocuments } from "@mds/common/redux/actionCreators/mineActionCreator";
 import { useDispatch, useSelector } from "react-redux";
-import { Feature } from "@mds/common";
+import { Feature } from "@mds/common/utils/featureFlag";
 import { SizeType } from "antd/lib/config-provider/SizeContext";
 import { ColumnsType } from "antd/es/table";
 import { FileOperations, MineDocument } from "@mds/common/models/documents/document";
@@ -63,8 +63,8 @@ export const DocumentTable: FC<DocumentTableProps> = ({
   };
 
   const [rowSelection, setRowSelection] = useState([]);
-  const [isCompressionModal, setCompressionModal] = useState(false);
-  const [isCompressionInProgress, setCompressionInProgress] = useState(false);
+  const [isCompressionModal, setIsCompressionModal] = useState(false);
+  const [isCompressionInProgress, setIsCompressionInProgress] = useState(false);
   const [documentsCanBulkDropDown, setDocumentsCanBulkDropDown] = useState(false);
   const { isFeatureEnabled } = useFeatureFlag();
 
@@ -114,7 +114,6 @@ export const DocumentTable: FC<DocumentTableProps> = ({
       openModal({
         props: {
           title: `Archive ${docs?.length > 1 ? "Multiple Files" : "File"}`,
-          closeModal: handleCloseModal,
           handleSubmit: async () => {
             await dispatch(
               archiveMineDocuments(
@@ -123,8 +122,9 @@ export const DocumentTable: FC<DocumentTableProps> = ({
               )
             );
             if (props.onArchivedDocuments) {
-              props.onArchivedDocuments(docs);
+              await props.onArchivedDocuments(docs);
             }
+            handleCloseModal();
           },
           documents: docs,
         },
@@ -138,18 +138,13 @@ export const DocumentTable: FC<DocumentTableProps> = ({
     dispatch(
       openModal({
         props: {
-          DocumentTable,
           title: `Delete ${docs?.length > 1 ? "Multiple Files" : "File"}`,
-          closeModal: handleCloseModal,
           handleSubmit: async () => {
-            for (const doc of docs) {
-              await removeDocument(event, doc.key, documentParent);
-            }
+            await Promise.all(docs.map((doc) => removeDocument(event, doc.key, documentParent)));
             handleCloseModal();
           },
           documents: docs,
         },
-
         content: DeleteDocumentModal,
       })
     );
@@ -161,7 +156,6 @@ export const DocumentTable: FC<DocumentTableProps> = ({
       openModal({
         props: {
           title: `Replace File`,
-          closeModal: handleCloseModal,
           handleSubmit: async (document: MineDocument) => {
             const newDocuments = documents.map((d) =>
               d.mine_document_guid === document.mine_document_guid ? document : d
@@ -282,14 +276,14 @@ export const DocumentTable: FC<DocumentTableProps> = ({
 
   const bulkItems: MenuProps["items"] = [
     {
-      key: "0",
+      key: FileOperations.Download,
       icon: <DownloadOutlined />,
       label: (
         <button
           type="button"
           className="full add-permit-dropdown-button"
           onClick={() => {
-            setCompressionModal(true);
+            setIsCompressionModal(true);
           }}
         >
           <div>Download File(s)</div>
@@ -297,7 +291,7 @@ export const DocumentTable: FC<DocumentTableProps> = ({
       ),
     },
     {
-      key: "1",
+      key: FileOperations.Archive,
       icon: <InboxOutlined />,
       label: (
         <button
@@ -311,7 +305,7 @@ export const DocumentTable: FC<DocumentTableProps> = ({
         </button>
       ),
     },
-  ];
+  ].filter((a) => allowedTableActions[a.key]);
 
   const renderBulkActions = () => {
     let element = (
@@ -319,7 +313,7 @@ export const DocumentTable: FC<DocumentTableProps> = ({
         className="ant-btn ant-btn-primary"
         disabled={rowSelection.length === 0 || isCompressionInProgress}
         onClick={() => {
-          setCompressionModal(true);
+          setIsCompressionModal(true);
         }}
       >
         <div>Download</div>
@@ -374,6 +368,7 @@ export const DocumentTable: FC<DocumentTableProps> = ({
     : {};
 
   const coreTableProps = {
+    rowKey: "document_manager_guid",
     condition: isLoaded,
     dataSource: documents,
     columns: columns,
@@ -385,11 +380,10 @@ export const DocumentTable: FC<DocumentTableProps> = ({
   return (
     <div>
       <DocumentCompression
-        documentType={""}
-        rows={rowSelection}
-        setCompressionModalVisible={setCompressionModal}
+        mineDocuments={rowSelection}
+        setCompressionModalVisible={setIsCompressionModal}
         isCompressionModalVisible={isCompressionModal}
-        compressionInProgress={setCompressionInProgress}
+        setCompressionInProgress={setIsCompressionInProgress}
         showDownloadWarning={showVersionHistory || canArchiveDocuments}
       />
       {renderBulkActions()}

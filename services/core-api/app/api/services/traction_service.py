@@ -1,16 +1,19 @@
-import requests, json
-from typing import Union
+import requests
+from typing import Tuple
+
+from pydantic import BaseModel
 from flask import current_app
-from uuid import UUID
 from app.config import Config
 from app.api.parties.party.models.party import Party
 from app.api.verifiable_credentials.aries_constants import DIDExchangeRequesterState
 from app.api.verifiable_credentials.models.connection import PartyVerifiableCredentialConnection
+from app.api.utils.feature_flag import Feature, is_feature_enabled
 
 traction_token_url = Config.TRACTION_HOST + "/multitenancy/tenant/" + Config.TRACTION_TENANT_ID + "/token"
 traction_oob_create_invitation = Config.TRACTION_HOST + "/out-of-band/create-invitation"
 traction_connections = Config.TRACTION_HOST + "/connections"
-traction_offer_credential = Config.TRACTION_HOST + "/issue-credential/send-offer"
+traction_offer_credential_V1 = Config.TRACTION_HOST + "/issue-credential/send-offer"
+traction_offer_credential_V2 = Config.TRACTION_HOST + "/issue-credential-2.0/send-offer"
 revoke_credential_url = Config.TRACTION_HOST + "/revocation/revoke"
 fetch_credential_exchanges = Config.TRACTION_HOST + "/issue-credential/records"
 traction_deprecated_jsonld_sign = Config.TRACTION_HOST + "/jsonld/sign"
@@ -21,6 +24,10 @@ traction_get_did = Config.TRACTION_HOST + "/wallet/did"
 
 def traction_issue_credential_problem_report(cred_ex_id: str):
     return Config.TRACTION_HOST + f"/issue-credential/records/{cred_ex_id}/problem-report"
+
+
+def traction_reject_invitation(connection_id: str):
+    return Config.TRACTION_HOST + f"/didexchange/{connection_id}/reject"
 
 
 class VerificableCredentialWorkflowError(Exception):
@@ -86,12 +93,25 @@ class TractionService():
         return response
 
     def delete_connection(self, connection_id) -> bool:
-        revoke_resp = requests.delete(
+        delete_resp = requests.delete(
             traction_connections + "/" + str(connection_id), headers=self.get_headers())
-        assert revoke_resp.status_code == 200, f"revoke_resp={revoke_resp.json()}"
-        return True
+        current_app.logger.info(
+            f"traction_service.delete_connection returned {delete_resp.status_code}")
+        return delete_resp.ok
 
-    def offer_mines_act_permit_111(self, connection_id, attributes):
+    def reject_invitation(self, connection_id) -> bool:
+        reject_resp = requests.delete(
+            traction_reject_invitation(connection_id), headers=self.get_headers())
+        current_app.logger.info(
+            f"traction_service.delete_connection returned {reject_resp.status_code}")
+        return reject_resp.ok
+
+    def offer_mines_act_permit_111(self, connection_id, attributes) -> Tuple[dict, str]:
+        if is_feature_enabled(Feature.VC_ANONCREDS_20):
+            return self.offer_V2_mines_act_permit_111(connection_id, attributes)
+        return self.offer_V1_mines_act_permit_111(connection_id, attributes)
+
+    def offer_V1_mines_act_permit_111(self, connection_id, attributes) -> Tuple[dict, str]:
         # https://github.com/bcgov/bc-vcpedia/blob/main/credentials/bc-mines-act-permit/1.1.1/governance.md#261-schema-definition
         payload = {
             "auto_issue": True,
@@ -106,9 +126,32 @@ class TractionService():
         }
 
         cred_offer_resp = requests.post(
-            traction_offer_credential, json=payload, headers=self.get_headers())
+            traction_offer_credential_V1, json=payload, headers=self.get_headers())
         assert cred_offer_resp.status_code == 200, f"cred_offer_resp={cred_offer_resp.json()}"
-        return cred_offer_resp.json()
+        return cred_offer_resp.json(), cred_offer_resp.json()["credential_exchange_id"]
+
+    def offer_V2_mines_act_permit_111(self, connection_id, attributes) -> Tuple[dict, str]:
+        # https://github.com/bcgov/bc-vcpedia/blob/main/credentials/bc-mines-act-permit/1.1.1/governance.md#261-schema-definition
+        payload = {
+            "auto_issue": True,
+            "comment": "VC to provide proof of a permit and some basic details",
+            "connection_id": str(connection_id),
+            "filter": {
+                "indy": {
+                    "cred_def_id": Config.CRED_DEF_ID_MINES_ACT_PERMIT
+                }
+            },
+            "credential_preview": {
+                "@type": "issue-credential/1.0/credential-preview",
+                "attributes": attributes,
+            },
+            "trace": True
+        }
+
+        cred_offer_resp = requests.post(
+            traction_offer_credential_V2, json=payload, headers=self.get_headers())
+        assert cred_offer_resp.status_code == 200, f"cred_offer_resp={cred_offer_resp.json()}"
+        return cred_offer_resp.json(), cred_offer_resp.json()["cred_ex_id"]
 
     def revoke_credential(self, connection_id, rev_reg_id, cred_rev_id, comment):
         payload = {
@@ -145,24 +188,24 @@ class TractionService():
 
     def sign_jsonld_credential_deprecated(
         self,
-        did,
-        verkey,
-        credential,
-    ):
+        did: str,
+        verkey: str,
+        credential: BaseModel,
+    ) -> dict:
+        # #verkey suffix is indy's default, but could be aparameter later.
         options = {"verificationMethod": did + "#verkey", "proofPurpose": "assertionMethod"}
-        payload = {
-            "doc": {
-                "options": options,
-                "credential": credential,
-            },
-            "verkey": verkey,
-        }
-        current_app.logger.warning(json.dumps(payload))
+
+        class Payload(BaseModel):
+            doc: dict
+            verkey: str
+
+        payload = Payload(doc={"options": options, "credential": credential}, verkey=verkey)
 
         post_resp = requests.post(
-            traction_deprecated_jsonld_sign, json=payload, headers=self.get_headers())
-        current_app.logger.warning(post_resp.content)
-        assert post_resp
+            traction_deprecated_jsonld_sign,
+            json=payload.model_dump(by_alias=True, exclude_none=True, mode="json"),
+            headers=self.get_headers())
+        assert post_resp.status_code == 200, f"post_resp={post_resp.__dict__}"
         return post_resp.json()
 
     def fetch_a_random_did_key(self):
@@ -176,9 +219,7 @@ class TractionService():
             "options": options,
             "credential": credential,
         }
-        current_app.logger.warning(json.dumps(payload))
         post_resp = requests.post(
             traction_sign_jsonld_credential, json=payload, headers=self.get_headers())
-        current_app.logger.warning(post_resp.content)
         assert post_resp
         return post_resp.json()

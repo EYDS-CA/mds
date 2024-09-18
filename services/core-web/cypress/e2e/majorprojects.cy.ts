@@ -62,13 +62,11 @@ describe("Major Projects", () => {
         }
       ).as("statusRequest");
 
-      cy.get('input[type="file"]')
-        .eq(1)
-        .attachFile({
-          fileContent: fileContent,
-          fileName: fileName,
-          mimeType: "application/pdf",
-        });
+      cy.get('input[type="file"]').attachFile({
+        fileContent: fileContent,
+        fileName: fileName,
+        mimeType: "application/pdf",
+      });
 
       // Wait for the upload request to complete(simulated)
       cy.wait("@uploadRequest").then((interception) => {
@@ -102,7 +100,7 @@ describe("Major Projects", () => {
     }).as("downloadRequest");
     cy.wait(2500);
     cy.get("[data-cy=menu-actions-button]")
-      .first()
+      .last()
       .click({ force: true });
 
     // Click the Download file button in the dropdown

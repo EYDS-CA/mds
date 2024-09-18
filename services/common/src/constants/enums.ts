@@ -137,11 +137,11 @@ export enum VC_CRED_ISSUE_STATES {
   offer_sent = "Pending",
   credential_issued = "Pending",
   credential_acked = "Active",
+  done = "Active", //v2_cred_exch
   credential_revoked = "Revoked",
   deleted = "Active",
   abandoned = "Error",
   issued = "credential-issued",
-  done = "done",
 }
 
 export enum PROJECT_SUMMARY_STATUS_CODES {
@@ -152,6 +152,7 @@ export enum PROJECT_SUMMARY_STATUS_CODES {
   OHD = "On Hold",
   SUB = "Submitted",
   UNR = "Under review",
+  CHR = "Change Requested",
 }
 
 export enum MAJOR_MINE_APPLICATION_AND_IRT_STATUS_CODES {
@@ -211,4 +212,30 @@ export enum MineReportTypeUrlParam {
   "CRR" = "code-required-reports",
   "PRR" = "permit-required-reports",
   "TAR" = "tailings-reports",
+}
+
+export enum AMS_ENVIRONMENTAL_MANAGEMENT_ACT_TYPES {
+  "AIR_EMISSIONS_DISCHARGE_PERMIT" = "AIR_EMISSIONS_DISCHARGE_PERMIT",
+  "EFFLUENT_DISCHARGE_PERMIT" = "EFFLUENT_DISCHARGE_PERMIT",
+  "REFUSE_DISCHARGE_PERMIT" = "REFUSE_DISCHARGE_PERMIT",
+  "MUNICIPAL_WASTEWATER_REGULATION" = "MUNICIPAL_WASTEWATER_REGULATION",
+}
+
+export enum AMS_AUTHORIZATION_TYPES {
+  "NEW" = "NEW",
+  "AMENDMENT" = "AMENDMENT",
+}
+
+export enum AMS_MINES_ACT_TYPE {
+  "MINES_ACT_PERMIT" = "MINES_ACT_PERMIT",
+}
+
+export enum AMS_WATER_SUSTAINABILITY_ACT_TYPES {
+  "CHANGE_APPROVAL" = "CHANGE_APPROVAL",
+  "USE_APPROVAL" = "USE_APPROVAL",
+  "WATER_LICENCE" = "WATER_LICENCE",
+}
+
+export enum AMS_FORESTRY_ACT_TYPE {
+  "OCCUPANT_CUT_LICENCE" = "OCCUPANT_CUT_LICENCE",
 }

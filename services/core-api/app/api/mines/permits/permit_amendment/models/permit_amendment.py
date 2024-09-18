@@ -1,22 +1,23 @@
-from datetime import datetime, date
-
 import uuid
+from datetime import date, datetime
 
+from app.api.constants import *
+from app.api.mines.permits.permit_amendment.models.permit_amendment_document import (
+    PermitAmendmentDocument,
+)
+from app.api.mines.permits.permit_conditions.models.permit_conditions import (
+    PermitConditions,
+)
+from app.api.utils.models_mixins import AuditMixin, Base, SoftDeleteMixin
+from app.api.verifiable_credentials.aries_constants import IssueCredentialIssuerState
+from app.extensions import db
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-
+from sqlalchemy.orm import validates
 from sqlalchemy.schema import FetchedValue
-from app.extensions import db
-
-from app.api.mines.permits.permit_amendment.models.permit_amendment_document import PermitAmendmentDocument
-from app.api.mines.permits.permit_conditions.models.permit_conditions import PermitConditions
-from app.api.verifiable_credentials.aries_constants import IssueCredentialIssuerState
 
 from . import permit_amendment_status_code, permit_amendment_type_code
-from app.api.utils.models_mixins import SoftDeleteMixin, AuditMixin, Base
-from app.api.constants import *
 
 
 class PermitAmendment(SoftDeleteMixin, AuditMixin, Base):
@@ -94,6 +95,15 @@ class PermitAmendment(SoftDeleteMixin, AuditMixin, Base):
         lazy='selectin',
         order_by='desc(PartyVerifiableCredentialMinesActPermit.update_timestamp)')
     mines_act_permit_vc_locked = association_proxy("permit", 'mines_act_permit_vc_locked')
+
+    # Note: This relationship is lazy loaded on purpose to avoid being loaded unless absolutely necessary
+    # a selectin or joined query here causes performance issues due to the nested structure of NoW and Major Projects.
+    permittee_appointments = db.relationship(
+        "MinePartyAppointment",
+        lazy="select",
+        secondary='permit',
+        secondaryjoin='and_(foreign(Permit.permit_id) == remote(MinePartyAppointment.permit_id))',
+        order_by='desc(MinePartyAppointment.start_date)')
 
     @hybrid_property
     def issuing_inspector_name(self):
@@ -237,8 +247,9 @@ class PermitAmendment(SoftDeleteMixin, AuditMixin, Base):
         return cls.query.filter_by(permit_amendment_id=_id).filter_by(deleted_ind=False).first()
 
     @classmethod
-    def find_by_permit_amendment_guid(cls, _guid) -> "PermitAmendment":
-        return cls.query.filter_by(permit_amendment_guid=_guid).filter_by(deleted_ind=False).first()
+    def find_by_permit_amendment_guid(cls, _guid, *, unsafe: bool = False) -> "PermitAmendment":
+        query = cls.query.unbound_unsafe() if unsafe else cls.query
+        return query.filter_by(permit_amendment_guid=_guid).filter_by(deleted_ind=False).first()
 
     @classmethod
     def find_by_permit_id(cls, _id):

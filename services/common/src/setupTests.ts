@@ -1,6 +1,8 @@
 import Enzyme from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 import path from "path";
+import "@testing-library/jest-dom";
+import server from "@mds/common/tests/server";
 
 require("jest-localstorage-mock");
 
@@ -13,6 +15,29 @@ Enzyme.configure({ adapter: new Adapter() });
   setTimeout(callback, 0); // eslint-disable-line @typescript-eslint/no-implied-eval
 };
 
+(<any>global).GLOBAL_ROUTES = {
+  EDIT_PROJECT: {
+    route: "test",
+    dynamicRoute: () => "test",
+  },
+  MINE_DASHBOARD: {
+    route: "test",
+    dynamicRoute: () => "test",
+  },
+};
+
+beforeAll(() => {
+  server.listen();
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+
 jest.mock("react", () => {
   const original = jest.requireActual("react");
   return {
@@ -20,11 +45,6 @@ jest.mock("react", () => {
     useLayoutEffect: jest.fn(),
   };
 });
-
-jest.mock("react-lottie", () => ({
-  __esModule: true,
-  default: "lottie-mock",
-}));
 
 jest.mock("@mds/common/providers/featureFlags/useFeatureFlag", () => ({
   useFeatureFlag: () => ({
@@ -57,3 +77,16 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// for leaflet, emaulate SVG support. jest has an open PR for SVG support but it's been 3 years
+const createElementNSOrig = global.document.createElementNS;
+global.document.createElementNS = function (namespaceURI, qualifiedName) {
+  if (namespaceURI === "http://www.w3.org/2000/svg" && qualifiedName === "svg") {
+    // eslint-disable-next-line prefer-rest-params
+    const element = createElementNSOrig.apply(this, arguments);
+    element.createSVGRect = function () {};
+    return element;
+  }
+  // eslint-disable-next-line prefer-rest-params
+  return createElementNSOrig.apply(this, arguments);
+};

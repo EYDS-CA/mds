@@ -12,6 +12,7 @@ import ClockCircleOutlined from "@ant-design/icons/ClockCircleOutlined";
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined";
 import { downloadFileFromDocumentManager } from "@mds/common/redux/utils/actionlessNetworkCalls";
 import DocumentLink from "./DocumentLink";
+import { IPermitAmendmentDocument } from "@mds/common/interfaces";
 
 const documentWithTag = (
   record: MineDocument,
@@ -35,24 +36,23 @@ const documentWithTag = (
               placement="top"
               mouseEnterDelay={1}
             >
-              {/* DIFFERENCE FROM CORE: Core gives a color attribute of #5E46A1 to <Tag /> */}
               <Tag
                 icon={<ClockCircleOutlined />}
                 style={{ border: "none" }}
-                className="file-version-amount"
+                className="table-tag table-tag--primary"
               >
                 {record.number_prev_versions}
               </Tag>
             </Tooltip>
           </span>
         ) : null}
-        {record.is_archived ? <Tag>{"Archived"}</Tag> : null}
+        {record.is_archived ? <Tag className="table-tag table-tag--grey">{"Archived"}</Tag> : null}
       </span>
     </div>
   );
 };
 
-export const renderTaggedColumn = (
+export const renderVersionTaggedColumn = (
   dataIndex: string,
   title: string,
   sortable = false,
@@ -79,7 +79,7 @@ export const renderDocumentLinkColumn = (
   title = "File Name",
   sortable = true,
   docManGuidIndex = "document_manager_guid"
-): ColumnType<MineDocument> => {
+): ColumnType<MineDocument | IPermitAmendmentDocument> => {
   return {
     title,
     dataIndex,
@@ -109,7 +109,7 @@ export const documentNameColumn = (
   minimalView = false
 ) => {
   return minimalView
-    ? renderTaggedColumn(documentNameColumnIndex, title)
+    ? renderVersionTaggedColumn(documentNameColumnIndex, title)
     : renderDocumentLinkColumn(documentNameColumnIndex, title, true);
 };
 

@@ -15,6 +15,7 @@ import {
   dateNotBeforeOther,
   dateNotAfterOther,
   validateSelectOptions,
+  assessedLiabilityNegativeWarning,
 } from "@common/utils/Validate";
 import { resetForm, upperCase, currencyMask } from "@common/utils/helpers";
 import { BOND_DOCUMENTS } from "@mds/common/constants/API";
@@ -24,7 +25,7 @@ import RenderDate from "@/components/common/RenderDate";
 import PartySelectField from "@/components/common/PartySelectField";
 import * as FORM from "@/constants/forms";
 import RenderSelect from "@/components/common/RenderSelect";
-import DocumentTable from "@/components/common/DocumentTable";
+import DocumentTable from "@mds/common/components/documents/DocumentTable";
 import CustomPropTypes from "@/customPropTypes";
 import FileUpload from "@/components/common/FileUpload";
 import { DOCUMENT, EXCEL } from "@/constants/fileTypes";
@@ -166,6 +167,7 @@ export class BondForm extends Component {
                 {...currencyMask}
                 validate={[required, number, currency]}
                 disabled={this.props.editBond}
+                warn={[assessedLiabilityNegativeWarning]}
               />
             </Form.Item>
           </Col>
@@ -444,6 +446,6 @@ BondForm.defaultProps = defaultProps;
 
 export default reduxForm({
   form: FORM.ADD_BOND,
-  touchOnBlur: false,
+  touchOnBlur: true,
   onSubmitSuccess: resetForm(FORM.ADD_BOND),
 })(BondForm);

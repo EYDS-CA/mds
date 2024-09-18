@@ -63,6 +63,12 @@ export class ProjectStagesTable extends Component {
       render: (text, record) => {
         let link;
         if (record.project_stage === "Project description") {
+          let buttonLabel;
+          if (record.stage_status === "SUB") {
+            buttonLabel = "View";
+          } else {
+            buttonLabel = "Resume";
+          }
           link = (
             <Link
               to={routes.EDIT_PROJECT_SUMMARY.dynamicRoute(
@@ -71,7 +77,7 @@ export class ProjectStagesTable extends Component {
               )}
             >
               <Button className="full-mobile margin-small" type="secondary">
-                Resume
+                {buttonLabel}
               </Button>
             </Link>
           );
@@ -128,6 +134,7 @@ export class ProjectStagesTable extends Component {
         showHeader={false}
         pagination={false}
         columns={this.columns()}
+        rowKey="title"
         dataSource={this.transformRowData(this.props.projectStages)}
         locale={{ emptyText: "This project has no stage data." }}
       />

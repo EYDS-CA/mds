@@ -1,12 +1,23 @@
-import pytest
 import json
 import uuid
 
-from tests.status_code_gen import RandomIncidentDocumentType
-from tests.factories import (InformationRequirementsTableFactory, MajorMineApplicationFactory, MineIncidentFactory, MineFactory, MineDocumentFactory, ProjectDecisionPackageFactory, ProjectFactory, ProjectSummaryDocumentFactory, ProjectSummaryFactory,
-                             VarianceDocumentFactory, VarianceFactory)
-from app.api.projects.project_summary.models.project_summary import ProjectSummary
+import pytest
 from app.api.mines.documents.models.mine_document import MineDocument
+from app.api.projects.project_summary.models.project_summary import ProjectSummary
+from tests.factories import (
+    InformationRequirementsTableFactory,
+    MajorMineApplicationFactory,
+    MineDocumentFactory,
+    MineFactory,
+    MineIncidentFactory,
+    ProjectDecisionPackageFactory,
+    ProjectFactory,
+    ProjectSummaryDocumentFactory,
+    ProjectSummaryFactory,
+    VarianceDocumentFactory,
+    VarianceFactory,
+)
+from tests.status_code_gen import RandomIncidentDocumentType
 
 
 @pytest.fixture(scope="function")
@@ -84,7 +95,7 @@ class TestMineDocumentListResource:
         MineDocumentFactory(mine=mine)
         MineDocumentFactory(mine=mine)
 
-        assert len(mine.mine_documents) == 3
+        assert len(mine.mine_documents) == 4
 
         get_resp = test_client.get(
             f'/mines/{mine.mine_guid}/documents?project_summary_guid={ps.project_summary_guid}',
@@ -94,8 +105,14 @@ class TestMineDocumentListResource:
         assert get_resp.status_code == 200
         get_data = json.loads(get_resp.data.decode())
 
-        assert len(get_data['records']) == 1
-        assert str(ps.documents[0].mine_document_guid) == get_data['records'][0]['mine_document_guid']
+        assert len(get_data['records']) == 2
+
+        guids = (str(ps.documents[0].mine_document_guid), str(ps.documents[1].mine_document_guid))
+
+
+        assert get_data['records'][0]['mine_document_guid'] in guids
+        assert get_data['records'][1]['mine_document_guid'] in guids
+        
 
     def test_list_resource_filter_by_project_decision_package_guid(self, test_client, db_session, auth_headers, setup_info):
         """Should only return documents related to the project decision package"""
@@ -107,7 +124,7 @@ class TestMineDocumentListResource:
         MineDocumentFactory(mine=mine)
         MineDocumentFactory(mine=mine)
 
-        assert len(mine.mine_documents) == 4
+        assert len(mine.mine_documents) == 5
 
         get_resp = test_client.get(
             f'/mines/{mine.mine_guid}/documents?project_decision_package_guid={ps.project_decision_package_guid}',

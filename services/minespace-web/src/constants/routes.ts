@@ -34,6 +34,10 @@ const UsersPage = React.lazy(() => import("@/components/pages/UsersPage"));
 const ReportPage = React.lazy(() => import("@/components/dashboard/mine/reports/ReportPage"));
 const ReportSteps = React.lazy(() => import("@mds/common/components/reports/ReportSteps"));
 
+const ProjectSubmissionStatusPage = React.lazy(() =>
+  import("@mds/common/components/projectSummary/ProjectSubmissionStatusPage")
+);
+
 export const HOME = {
   route: "/",
   component: LandingPage,
@@ -68,9 +72,18 @@ export const EDIT_PROJECT_SUMMARY = {
   component: ProjectSummaryPage,
 };
 
+export const VIEW_PROJECT_SUBMISSION_STATUS_PAGE = {
+  route: "/projects/:projectGuid/project-submission-status/:status",
+  dynamicRoute: (projectGuid, status) =>
+    `/projects/${projectGuid}/project-submission-status/${status}`,
+  component: ProjectSubmissionStatusPage,
+};
+
 export const EDIT_PROJECT = {
   route: "/projects/:projectGuid/:tab",
   dynamicRoute: (projectGuid, activeTab = "overview") => `/projects/${projectGuid}/${activeTab}`,
+  hashRoute: (projectGuid, activeTab = "overview", link) =>
+    `/projects/${projectGuid}/${activeTab}/${link}`,
   component: ProjectPage,
 };
 

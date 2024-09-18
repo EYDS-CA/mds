@@ -33,32 +33,40 @@ app.use(
   })
 );
 
-app.use(helmet({
-  contentSecurityPolicy: CONTENT_SECURITY_POLICY ? {
-    directives: CONTENT_SECURITY_POLICY
-  } : false
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: CONTENT_SECURITY_POLICY
+      ? {
+          directives: CONTENT_SECURITY_POLICY,
+        }
+      : false,
+  })
+);
 
 const staticServe = expressStaticGzip(`${__dirname}/${BUILD_DIR}`, {
   immutable: true,
   maxAge: "1y",
   enableBrotli: true,
-  customCompressions: [{
-    encodingName: 'deflate',
-    fileExtension: 'zz'
-  }],
-  orderPreference: ['br', 'gzip']
+  customCompressions: [
+    {
+      encodingName: "deflate",
+      fileExtension: "zz",
+    },
+  ],
+  orderPreference: ["br", "gzip"],
 });
 
 const vendorServe = expressStaticGzip(`${__dirname}/${VENDOR_DIR}`, {
   immutable: true,
   maxAge: "1y",
   enableBrotli: true,
-  customCompressions: [{
-    encodingName: 'deflate',
-    fileExtension: 'zz'
-  }],
-  orderPreference: ['br', 'gzip']
+  customCompressions: [
+    {
+      encodingName: "deflate",
+      fileExtension: "zz",
+    },
+  ],
+  orderPreference: ["br", "gzip"],
 });
 
 app.get(`${BASE_PATH}/env`, (req, res) => {
@@ -76,6 +84,7 @@ app.get(`${BASE_PATH}/env`, (req, res) => {
     flagsmithKey: process.env.FLAGSMITH_KEY,
     flagsmithUrl: process.env.FLAGSMITH_URL,
     syncfusionLicense: process.env.SYNCFUSION_LICENSE_KEY,
+    geoMarkUrl: process.env.GEOMARK_URL_BASE,
   });
 });
 

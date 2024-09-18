@@ -1,7 +1,7 @@
-import React, { FC, useEffect } from "react";
+import React, { FC, useContext, useEffect } from "react";
 import { change, Field, getFormValues } from "redux-form";
 import { useSelector, useDispatch } from "react-redux";
-import { Form, Typography } from "antd";
+import { Button, Typography } from "antd";
 import { CSV, DOCUMENT, EXCEL, IMAGE, OTHER_SPATIAL, XML } from "@mds/common/constants/fileTypes";
 import DocumentTable from "../documents/DocumentTable";
 import {
@@ -10,17 +10,66 @@ import {
   uploadedByColumn,
 } from "../documents/DocumentColumns";
 import ProjectSummaryFileUpload from "./ProjectSummaryFileUpload";
-import { renderCategoryColumn } from "@mds/common/components/common/CoreTableCommonColumns";
-import { MineDocument } from "@mds/common/models/documents/document";
-import { ENVIRONMENT, FORM, PROJECT_SUMMARY_DOCUMENT_TYPE_CODE } from "@mds/common/constants";
+import {
+  ENVIRONMENT,
+  FORM,
+  isDocumentFieldDisabled,
+  PROJECT_SUMMARY_DOCUMENT_TYPE_CODE,
+} from "@mds/common/constants";
 import { postNewDocumentVersion } from "@mds/common/redux/actionCreators/documentActionCreator";
 import LinkButton from "../common/LinkButton";
 import * as API from "@mds/common/constants/API";
-import { getProjectSummaryDocumentTypesHash } from "@mds/common/redux/selectors/staticContentSelectors";
+import { openModal } from "@mds/common/redux/actions/modalActions";
+import AddSpatialDocumentsModal from "../documents/spatial/AddSpatialDocumentsModal";
+import SpatialDocumentTable from "../documents/spatial/SpatialDocumentTable";
+import { FormContext } from "../forms/FormWrapper";
+import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
+import { Feature } from "../..";
+import { getSystemFlag } from "@mds/common/redux/selectors/authenticationSelectors";
+
+const RenderOldDocuments = ({
+  documents,
+  documentColumns,
+  onFileLoad,
+  onRemoveFile,
+  fileUploadParams,
+}) => {
+  const spatialAcceptedFileTypesMap = { ...OTHER_SPATIAL, ...XML };
+  return (
+    <>
+      <Field
+        id="spatial_documents"
+        name="spatial_documents"
+        onFileLoad={(document_name, document_manager_guid, version) =>
+          onFileLoad(
+            document_name,
+            PROJECT_SUMMARY_DOCUMENT_TYPE_CODE.SPATIAL,
+            document_manager_guid,
+            version
+          )
+        }
+        onRemoveFile={onRemoveFile}
+        params={fileUploadParams}
+        acceptedFileTypesMap={spatialAcceptedFileTypesMap}
+        listedFileTypes={["spatial"]}
+        component={ProjectSummaryFileUpload}
+        props={{
+          documents: documents,
+          label: "Upload spatial documents",
+        }}
+      />
+      <DocumentTable
+        documents={documents}
+        documentParent="project summary"
+        documentColumns={documentColumns}
+      />
+    </>
+  );
+};
 
 export const DocumentUpload: FC = () => {
   const dispatch = useDispatch();
-  const projectSummaryDocumentTypesHash = useSelector(getProjectSummaryDocumentTypesHash);
+  const systemFlag = useSelector(getSystemFlag);
   const {
     spatial_documents = [],
     support_documents = [],
@@ -28,12 +77,12 @@ export const DocumentUpload: FC = () => {
     project_guid,
     project_summary_guid,
     documents,
+    status_code,
   } = useSelector(getFormValues(FORM.ADD_EDIT_PROJECT_SUMMARY));
 
-  const spatialAcceptedFileTypesMap = {
-    ...OTHER_SPATIAL,
-    ...XML,
-  };
+  const { isEditMode } = useContext(FormContext);
+  const { isFeatureEnabled } = useFeatureFlag();
+  const spatialFeatureEnabled = isFeatureEnabled(Feature.SPATIAL_BUNDLE);
 
   const supportingAcceptedFileTypesMap = {
     ...DOCUMENT,
@@ -57,7 +106,7 @@ export const DocumentUpload: FC = () => {
     document_manager_guid: string,
     version?: { document_manager_version_guid: string; document_manager_guid: string }
   ) => {
-    let newUploadedFiles = [];
+    let newUploadedFiles: any[];
     if (version.document_manager_version_guid) {
       const ConnectedVersion = dispatch(
         postNewDocumentVersion({
@@ -128,64 +177,82 @@ export const DocumentUpload: FC = () => {
     projectSummaryGuid: project_summary_guid,
   };
 
-  const tableDocuments =
-    documents?.map(
-      (doc) => new MineDocument({ ...doc, category: doc.project_summary_document_type_code })
-    ) ?? [];
-
   const documentColumns = [
     documentNameColumn(),
-    renderCategoryColumn("category", "Document Category", projectSummaryDocumentTypesHash),
     uploadDateColumn("upload_date", "Updated"),
     uploadedByColumn("create_user", "Updated By"),
   ];
+
+  const openSpatialDocumentModal = () => {
+    dispatch(
+      openModal({
+        props: {
+          title: "Upload Spatial Data",
+          formName: FORM.ADD_EDIT_PROJECT_SUMMARY,
+          fieldName: "spatial_documents",
+          uploadUrl: API.PROJECT_SUMMARY_DOCUMENTS(fileUploadParams),
+          transformFile: (fileData) => ({
+            ...fileData,
+            project_summary_document_type_code: PROJECT_SUMMARY_DOCUMENT_TYPE_CODE.SPATIAL,
+          }),
+        },
+        content: AddSpatialDocumentsModal,
+      })
+    );
+  };
   return (
     <>
       <Typography.Title level={3}>Document Upload</Typography.Title>
-      <Form.Item label="Upload supporting files that are not part of the required documents in Purpose and Authorization.">
-        <Typography.Title level={5}>Spatial Documents</Typography.Title>
-        <Typography.Paragraph>
-          Upload spatial files to support the application. You may only upload specified spatial
-          types.
-        </Typography.Paragraph>
+      <Typography.Paragraph>
+        Upload supporting files that are not part of the required documents in Purpose and
+        Authorization.
+      </Typography.Paragraph>
+      <Typography.Title level={5}>Spatial Documents</Typography.Title>
+      <Typography.Paragraph>
+        Upload spatial files to support the application. You may only upload specified spatial
+        types.
+      </Typography.Paragraph>
+      {spatialFeatureEnabled ? (
+        <>
+          {isEditMode && (
+            <Button
+              disabled={isDocumentFieldDisabled(systemFlag, status_code)}
+              onClick={openSpatialDocumentModal}
+              type="primary"
+              className="block-button"
+            >
+              Upload Spatial Data
+            </Button>
+          )}
+          <SpatialDocumentTable documents={spatial_documents} />
+        </>
+      ) : (
+        <RenderOldDocuments
+          documents={spatial_documents}
+          documentColumns={documentColumns}
+          onFileLoad={onFileLoad}
+          onRemoveFile={onRemoveFile}
+          fileUploadParams={fileUploadParams}
+        />
+      )}
 
-        <Field
-          id="spatial_documents"
-          name="spatial_documents"
-          onFileLoad={(document_name, document_manager_guid, version) =>
-            onFileLoad(
-              document_name,
-              PROJECT_SUMMARY_DOCUMENT_TYPE_CODE.SPATIAL,
-              document_manager_guid,
-              version
+      <Typography.Title level={5}>Supporting Documents</Typography.Title>
+      <Typography.Paragraph>
+        Please upload any supporting documents such as a draft of the{" "}
+        <LinkButton
+          disabled={isDocumentFieldDisabled(systemFlag, status_code)}
+          onClick={() =>
+            downloadIRTTemplate(
+              ENVIRONMENT.apiUrl + API.INFORMATION_REQUIREMENTS_TABLE_TEMPLATE_DOWNLOAD
             )
           }
-          onRemoveFile={onRemoveFile}
-          params={fileUploadParams}
-          acceptedFileTypesMap={spatialAcceptedFileTypesMap}
-          listedFileTypes={["spatial"]}
-          component={ProjectSummaryFileUpload}
-          props={{
-            documents: documents,
-            label: "Upload spatial documents",
-          }}
-        />
-
-        <Typography.Title level={5}>Supporting Documents</Typography.Title>
-        <Typography.Paragraph>
-          Upload any supporting document and draft of{" "}
-          <LinkButton
-            onClick={() =>
-              downloadIRTTemplate(
-                ENVIRONMENT.apiUrl + API.INFORMATION_REQUIREMENTS_TABLE_TEMPLATE_DOWNLOAD
-              )
-            }
-          >
-            Information Requirements Table (IRT)
-          </LinkButton>{" "}
-          following the official template here. It is required to upload your final IRT in the form
-          provided to proceed to the final application.
-        </Typography.Paragraph>
+        >
+          Information Requirements Table (IRT)
+        </LinkButton>
+        . To proceed to the final application, you must upload your final Joint Application IRT
+        using the form provided in the next phase.
+      </Typography.Paragraph>
+      {!isDocumentFieldDisabled(systemFlag, status_code) && (
         <Field
           id="support_documents"
           name="support_documents"
@@ -207,12 +274,12 @@ export const DocumentUpload: FC = () => {
             label: "Upload Files",
           }}
         />
-        <DocumentTable
-          documents={tableDocuments}
-          documentParent="project summary"
-          documentColumns={documentColumns}
-        />
-      </Form.Item>
+      )}
+      <DocumentTable
+        documents={support_documents}
+        documentParent="project summary"
+        documentColumns={documentColumns}
+      />
     </>
   );
 };

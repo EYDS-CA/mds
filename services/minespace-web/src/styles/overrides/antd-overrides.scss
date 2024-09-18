@@ -48,6 +48,14 @@
   padding-left: 10px;
 }
 
+.ant-checkbox-group-item {
+  min-width: 0;
+
+  &>span {
+    max-width: 100%;
+  }
+}
+
 // Divider
 
 .ant-divider:not(.ant-divider-plain) {
@@ -114,21 +122,34 @@ h1.ant-typography,
 .ant-typography h1 {
   color: $primary-color;
   margin-top: 0.5em;
+  font-size: $default-h1;
+  font-weight: $bold;
+}
+
+h2.ant-typography,
+.ant-typography h2 {
+  font-size: $default-h2;
+  font-weight: $bold;
 }
 
 h4.ant-typography,
-.ant-typography h1 {
+.ant-typography h4 {
   color: $primary-color;
+  font-size: $default-h4;
+  font-weight: $bold;
 }
 
 h3.ant-typography,
 .ant-typography h3 {
   color: $primary-color;
+  font-size: $default-h3;
+  font-weight: $bold;
 }
 
 h5.ant-typography,
 .ant-typography h5 {
   color: $font-colour;
+  font-size: $default-h5;
 }
 
 .ant-typography a {
@@ -186,6 +207,36 @@ h5.ant-typography,
   &:hover {
     color: $white !important;
     background-color: #999 !important;
+  }
+}
+
+// same style used on CORE: horizontal with underline highlight
+.core-tabs.ant-tabs {
+  &>.ant-tabs-nav {
+    .ant-tabs-nav-wrap {
+      border: none;
+      border-bottom: none !important;
+    }
+
+    .ant-tabs-tab {
+      color: $font-colour;
+      background-color: transparent !important;
+      font-weight: normal;
+
+      &:not(.ant-tabs-tab-active) {
+
+        &:hover,
+        .ant-tabs-tab-btn:active {
+          color: $font-colour !important;
+        }
+      }
+
+      &.ant-tabs-tab-active {
+        .ant-tabs-tab-btn {
+          color: $gov-blue !important;
+        }
+      }
+    }
   }
 }
 
@@ -266,6 +317,7 @@ h5.ant-typography,
 
   .ant-table-content {
     overflow-x: auto;
+    overflow-y: hidden;
   }
 
   tr>td {
@@ -380,6 +432,24 @@ th.ant-descriptions-item.vertical-description {
 // Modals
 
 .ant-modal {
+
+  .ant-btn.modal__close {
+    position: absolute;
+    top: 7px;
+    color: $gov-blue;
+    font-size: 24px;
+    right: 14px;
+    z-index: 999;
+    border: none;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+
+    svg {
+      margin: 10px;
+    }
+  }
+
   &-content {
     border-radius: 0;
     background-clip: border-box;
@@ -549,7 +619,6 @@ th.ant-descriptions-item.vertical-description {
       &:focus,
       &:hover {
         background-color: white;
-        ;
       }
     }
   }

@@ -74,6 +74,12 @@ class AMSApiService():
         return 'Yes' if value else 'No'
 
     @classmethod
+    def __get_ams_document_url(cls, project_guid):
+        if project_guid is None:
+            return ''
+        return f"{Config.CORE_WEB_URL}/pre-applications/{project_guid}/documents"
+
+    @classmethod
     def __set_contact_details(cls, contact):
         contact_details = {
             'em_lastname': contact.get('last_name', ''),
@@ -92,7 +98,7 @@ class AMSApiService():
 
     @classmethod
     def __set_applicant_details(cls, applicant, company_alias):
-        applicant_details =  {
+        applicant_details = {
             'applicanttype': cls.__get_mapped_party_type(applicant.get('party_type_code')),
             'em_companyname': applicant.get('party_name', ''),
             'em_firstname': applicant.get('first_name', ''),
@@ -123,7 +129,7 @@ class AMSApiService():
 
     @classmethod
     def __set_agent_details(cls, agent):
-        agent_details =  {
+        agent_details = {
             'em_lastname': agent.get('party_name', '') if agent else '',
             'em_firstname': agent.get('first_name', '') if agent else '',
             'em_email': agent.get('email', '') if agent else '',
@@ -159,6 +165,13 @@ class AMSApiService():
             facility_address['addresstype'] = address_type
         return facility_address
 
+    @classmethod
+    def __create_failed_ams_submission(cls, err, project_summary_authorization_guid, project_summary_authorization_type):
+        ams_failure = {'project_summary_authorization_guid': project_summary_authorization_guid,
+                       'errorMessage': err,
+                       'statusCode': "500",
+                       'project_summary_authorization_type': project_summary_authorization_type}
+        return ams_failure
 
     @classmethod
     def create_new_ams_authorization(cls,
@@ -186,11 +199,14 @@ class AMSApiService():
                                      company_alias,
                                      zoning,
                                      zoning_reason,
-                                     regional_district_name
+                                     regional_district_name,
+                                     project_guid
                                      ):
         """Creates a new AMS authorization application"""
 
         ams_results = []
+        current_project_summary_authorization_guid = ''
+        current_project_summary_authorization_type = ''
         headers = {
             'bearer': Config.AMS_BEARER_TOKEN,
             'Content-Type': 'application/json'
@@ -204,7 +220,12 @@ class AMSApiService():
             if authorization_list.__len__() > 0:
                 for authorization in authorization_list:
                     existing_ams_status_code = authorization.get('ams_status_code')
-                    if existing_ams_status_code != '200':
+                    current_project_summary_authorization_guid = authorization.get(
+                        'project_summary_authorization_guid')
+                    
+                    if existing_ams_status_code != '200' and current_project_summary_authorization_guid:
+                        current_project_summary_authorization_type = authorization.get(
+                            'project_summary_authorization_type')
                         ams_authorization_data = {
                             'isauthamendment': 'No',
                             'authorizationtype': {
@@ -230,7 +251,8 @@ class AMSApiService():
                             'sourceofdatadescription': facility_coords_source_desc,
                             'legallanddescription': legal_land_desc,
                             'pidpincrownfilenumber': facility_pid_pin_crown_file_no,
-                            'facilityaddress': cls.__set_facility_address_details(facility_operator, "Other / International"),
+                            'facilityaddress': cls.__set_facility_address_details(facility_operator,
+                                                                                  "Other / International"),
                             'facilityopphonenumberext': facility_operator.get('phone_ext', ''),
                             'isappropriatezoning': cls.__boolean_to_yes_no(zoning),
                             'isappropriatezoningreason': zoning_reason,
@@ -241,14 +263,17 @@ class AMSApiService():
                             'landfedorprov': cls.__boolean_to_yes_no(is_crown_land_federal_or_provincial),
                             'landownerawareofapplication': cls.__boolean_to_yes_no(
                                 is_landowner_aware_of_discharge_application),
-                            'landownerreceivedcopy': cls.__boolean_to_yes_no(has_landowner_received_copy_of_application),
+                            'landownerreceivedcopy': cls.__boolean_to_yes_no(
+                                has_landowner_received_copy_of_application),
                             'facilityoperator': facility_operator.get('name', ''),
-                            'facilityoperatorphonenumber': cls.__format_phone_number(facility_operator.get('phone_no', '')),
+                            'facilityoperatorphonenumber': cls.__format_phone_number(
+                                facility_operator.get('phone_no', '')),
                             'facilityoperatoremail': facility_operator.get('email', ''),
                             'facilityoperatortitle': facility_operator.get('job_title', ''),
                             'regionaldistrict': {
                                 'name': regional_district_name
-                            }
+                            },
+                            'documents': cls.__get_ams_document_url(project_guid)
                         }
                         payload = json.dumps(ams_authorization_data)
                         response = requests.post(Config.AMS_URL, data=payload, headers=headers)
@@ -260,13 +285,29 @@ class AMSApiService():
                             'project_summary_authorization_type')
                         ams_results.append(ams_result)
         except requests.exceptions.HTTPError as http_err:
-            current_app.logger.error(f'AMS Service HTTP error occurred for POST request: {http_err}')
+            err_message = f'AMS Service HTTP error occurred for POST request: {str(http_err)}'
+            ams_results.append(
+                cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid,
+                                                   current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
         except requests.exceptions.ConnectionError as conn_err:
-            current_app.logger.error(f'AMS Service Connection error occurred for POST request: {conn_err}')
+            err_message = f'AMS Service Connection error occurred for POST request: {str(conn_err)}'
+            ams_results.append(
+                cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid,
+                                                   current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
         except requests.exceptions.Timeout as timeout_err:
-            current_app.logger.error(f'AMS Service Timeout error occurred for POST request: {timeout_err}')
+            err_message = f'AMS Service Timeout error occurred for POST request: {str(timeout_err)}'
+            ams_results.append(
+                cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid,
+                                                   current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
         except Exception as err:
-            current_app.logger.error(f'AMS Input Exception error occurred for POST request: {err}')
+            err_message = f'AMS Input Exception error occurred for POST request: {str(err)}'
+            ams_results.append(
+                cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid,
+                                                   current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
             current_app.logger.error(traceback.format_exc())
 
         return ams_results
@@ -297,11 +338,15 @@ class AMSApiService():
                                            zoning_reason,
                                            regional_district_name,
                                            is_legal_land_owner,
-                                           is_crown_land_federal_or_provincial
+                                           is_crown_land_federal_or_provincial,
+                                           project_guid
                                            ):
         """Creates an AMS authorization application amendment"""
 
         ams_results = []
+        current_project_summary_authorization_guid = ''
+        current_project_summary_authorization_type = ''
+
         headers = {
             'bearer': Config.AMS_BEARER_TOKEN,
             'Content-Type': 'application/json'
@@ -317,7 +362,11 @@ class AMSApiService():
                 existing_ams_status_code = authorization.get('ams_status_code')
                 amendment_changes = authorization.get('amendment_changes', [])
                 existing_permits_authorizations = authorization.get('existing_permits_authorizations', [])
-                if existing_ams_status_code != '200':
+                current_project_summary_authorization_guid = authorization.get(
+                        'project_summary_authorization_guid')
+                if existing_ams_status_code != '200' and current_project_summary_authorization_guid:
+                    current_project_summary_authorization_type = authorization.get(
+                        'project_summary_authorization_type')
                     ams_authorization_data = {
                         'isauthamendment': 'Yes',
                         'receiveddate': get_date_iso8601_string(),
@@ -354,7 +403,8 @@ class AMSApiService():
                         'newsourceofdatadescription': facility_coords_source_desc,
                         'newlegallanddescription': legal_land_desc,
                         'newpidpincrownfilenumber': facility_pid_pin_crown_file_no,
-                        'newfacilityaddress': cls.__set_facility_address_details(facility_operator, "Other / International"),
+                        'newfacilityaddress': cls.__set_facility_address_details(facility_operator,
+                                                                                 "Other / International"),
                         'newisappropriatezoning': cls.__boolean_to_yes_no(zoning),
                         'newisappropriatezoningreason': zoning_reason,
                         'newfacilityoperator': facility_operator.get('name', ''),
@@ -370,7 +420,8 @@ class AMSApiService():
                         'newlandownerphonenumber': cls.__format_phone_number(legal_land_owner_contact_number),
                         'newlandowneremail': legal_land_owner_email_address,
                         'newistheapplicantthelandowner': cls.__boolean_to_yes_no(is_legal_land_owner),
-                        'newlandfedorprov': cls.__boolean_to_yes_no(is_crown_land_federal_or_provincial)
+                        'newlandfedorprov': cls.__boolean_to_yes_no(is_crown_land_federal_or_provincial),
+                        'documents': cls.__get_ams_document_url(project_guid)
                     }
                     payload = json.dumps(ams_authorization_data)
                     response = requests.post(Config.AMS_URL, data=payload, headers=headers)
@@ -385,13 +436,22 @@ class AMSApiService():
 
 
         except requests.exceptions.HTTPError as http_err:
-            current_app.logger.error(f'AMS Service HTTP error occurred for POST request: {http_err}')
+            err_message = f'AMS Service HTTP error occurred for POST request: {str(http_err)}'
+            ams_results.append(
+                cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid, current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
         except requests.exceptions.ConnectionError as conn_err:
-            current_app.logger.error(f'AMS Service Connection error occurred for POST request: {conn_err}')
+            err_message = f'AMS Service Connection error occurred for POST request: {str(conn_err)}'
+            ams_results.append(cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid, current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
         except requests.exceptions.Timeout as timeout_err:
-            current_app.logger.error(f'AMS Service Timeout error occurred for POST request: {timeout_err}')
+            err_message = f'AMS Service Timeout error occurred for POST request: {str(timeout_err)}'
+            ams_results.append(cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid, current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
         except Exception as err:
-            current_app.logger.error(f'AMS Input Exception error occurred for POST request: {err}')
+            err_message = f'AMS Input Exception error occurred for POST request: {str(err)}'
+            ams_results.append(cls.__create_failed_ams_submission(err_message, current_project_summary_authorization_guid, current_project_summary_authorization_type))
+            current_app.logger.error(err_message)
             current_app.logger.error(traceback.format_exc())
 
         return ams_results

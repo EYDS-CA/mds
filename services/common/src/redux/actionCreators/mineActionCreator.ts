@@ -164,12 +164,11 @@ export const fetchTailingsStorageFacility = (
     .finally(() => dispatch(hideLoading()));
 };
 
-export const fetchMineRecords = (params) => (dispatch) => {
-  const defaultParams = params || String.DEFAULT_DASHBOARD_PARAMS;
+export const fetchMineRecords = (params = String.DEFAULT_DASHBOARD_PARAMS) => (dispatch) => {
   dispatch(request(reducerTypes.GET_MINE_RECORDS));
   dispatch(showLoading());
   return CustomAxios()
-    .get(ENVIRONMENT.apiUrl + API.MINE_LIST_QUERY(defaultParams), createRequestHeader())
+    .get(ENVIRONMENT.apiUrl + API.MINE_LIST_QUERY(params), createRequestHeader())
     .then((response) => {
       dispatch(success(reducerTypes.GET_MINE_RECORDS));
       dispatch(mineActions.storeMineList(response.data));
@@ -238,8 +237,14 @@ export const fetchMineBasicInfoList = (mine_guids) => (dispatch) => {
 };
 
 export const fetchMineDocuments = (
-  mineGuid,
-  filters = {
+  mineGuid: string,
+  filters: {
+    is_archived?: boolean;
+    project_summary_guid?: string;
+    project_decision_package_guid?: string;
+    project_guid?: string;
+    major_mine_application_guid?: string;
+  } = {
     is_archived: false,
     project_summary_guid: undefined,
     project_decision_package_guid: undefined,

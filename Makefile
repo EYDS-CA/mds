@@ -85,7 +85,7 @@ ms:
 
 permits:
 	@echo "+\n++ Running Permit Service ...\n+"
-	@docker compose $(DC_FILE) up -d haystack-api
+	@docker compose $(DC_FILE) up -d haystack haystack_celery
 
 extra:
 	@echo "+\n++ Building tertiary services ...\n+"
@@ -146,6 +146,13 @@ clean: stop |
 generate_history_table_migration:
 	@echo "+\n++ Generating history table migration ...\n+"
 	@docker compose $(DC_FILE) exec backend bash -c "flask generate_history_table_migration $(TABLE)"
+
+
+# Generates a migration file for the specified table
+# Usage: make generate_migration TABLE=<table_name>
+generate_table_migration:
+	@echo "+\n++ Generating history table migration ...\n+"
+	@docker compose $(DC_FILE) exec backend bash -c "flask generate_table_migration $(TABLE)"
 
 # initial project setup for local/codespaces development
 init:

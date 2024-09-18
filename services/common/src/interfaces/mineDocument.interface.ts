@@ -12,4 +12,6 @@ export interface IMineDocument {
   archived_by?: string;
   active_ind?: boolean;
   versions?: IMineDocumentVersion[];
+  mine_document_bundle_id?: string;
+  update_timestamp?: string;
 }

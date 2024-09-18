@@ -91,6 +91,10 @@ export const STANDARD_PERMIT_CONDITIONS = (noticeOfWorkType) =>
 export const STANDARD_PERMIT_CONDITION = (permitConditionGuid) =>
   `/mines/permits/standard-conditions/${permitConditionGuid}`;
 
+export const PERMIT_SERVICE_EXTRACTION = `/mines/permits/condition-extraction`;
+export const POLL_PERMIT_SERVICE_EXTRACTION = (taskId: string) =>
+  `/mines/permits/condition-extraction/${taskId}`;
+
 // Permits - Notices of Departure
 export const NOTICES_OF_DEPARTURE = () => `/notices-of-departure`;
 export const NOTICE_OF_DEPARTURE = (noticeOfDepartureGuid) =>
@@ -237,6 +241,8 @@ export const INCIDENT_CATEGORY_CODES = `/incidents/category-codes`;
 // Documents
 export const COMPLETE_MULTIPART_UPLOAD = (documentGuid) =>
   `/documents/${documentGuid}/complete-upload`;
+export const COMPLETE_SPATIAL_BUNDLE = "/documents/complete-bundle";
+export const CORE_API_DOCUMENT_BUNDLE = "/mines/document-bundle/";
 
 // Work Information
 export const MINE_WORK_INFORMATIONS = (mineGuid) => `/mines/${mineGuid}/work-information`;
@@ -248,10 +254,8 @@ export const REPORTS = (params = {}) => `/mines/reports?${queryString.stringify(
 export const REPORT_SUBMISSIONS = (params?) =>
   `/mines/reports/submissions?${queryString.stringify(params)}`;
 export const MINE_REPORT_DEFINITIONS = () => `/mines/reports/definitions`;
-export const MINE_REPORTS = (mineGuid, reportsType?) =>
-  `/mines/${mineGuid}/reports?${queryString.stringify({
-    mine_reports_type: reportsType,
-  })}`;
+export const MINE_REPORTS = (mineGuid, params?) =>
+  `/mines/${mineGuid}/reports?${queryString.stringify(params)}`;
 export const MINE_REPORT = (mineGuid, mineReportGuid) =>
   `/mines/${mineGuid}/reports/${mineReportGuid}`;
 export const MINE_REPORT_SUBMISSIONS = (

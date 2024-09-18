@@ -20,6 +20,11 @@
   font-size: 24px !important;
 }
 
+.hidden {
+  visibility: hidden;
+  display: none;
+}
+
 .inline-flex {
   @include flex;
 
@@ -496,4 +501,20 @@
       color: $white !important;
     }
   }
+}
+
+.list-position-outside {
+  padding-inline-start: 15px;
+
+  li {
+    list-style-position: outside;
+  }
+}
+
+.desktop-bold {
+  font-size: $default-p;
+  font-style: normal;
+  font-weight: $bold;
+  line-height: 24px;
+  color: $font-colour;
 }

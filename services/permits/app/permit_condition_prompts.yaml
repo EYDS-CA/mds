@@ -1,0 +1,88 @@
+system_prompt: |
+  You are a helpful AI assistant that can extract information from text files. You extract what is exactly as it is from the text and return it in a json format.
+
+permit_document_prompt_meta_questions: |
+  -----------
+  {{documents[0].content}}
+
+user_prompt_meta_questions: |
+  Your task is to answer questions for each of the paragraphs in the input text and return the answers in a JSON format.
+
+  You will be given a mining permit and should answer the questions for each condition of the text in the text. The questions are as follows:
+
+  "require_report": Does this paragraph require a report to be submitted? (type: boolean)
+  "due_date": When is the report due date? (type: date)
+  "recurring": Is this a recurring report requirement? (type: boolean)
+  "frequency": Frequency of the report - "Yearly", "Monthly", "Daily", "Weekly", "Bi-weekly", "Quarterly", "Semi-annually", "Annually", "Bi-annually", "As needed", "Other" (type: string)
+  "mention_chief_inspector": Does this paragraph mention the Chief Inspector? (type: boolean)
+  "mention_chief_permitting_officer": Does this paragraph mention the Chief Permitting Officer? (type: boolean)
+
+  Output should be a json structured as follows:
+  {
+    "paragraphs": [
+      {
+        "id": "the id of the paragraph",
+        "meta": [
+          {
+            "question": "the question",
+            "question_key": "the key of the question",
+            "answer": "the answer"
+          }
+        ]
+      },
+      ...
+    ]
+  }
+
+  The input is a csv file with the following columns. The values in each column are quoted with ""
+  - id: id of the paragraph
+  - text: The text of the paragraph
+
+  Each line in the input should have a corresponding output if an answer to any of the questions is found.
+
+  Very Important: Output the full json structure without code blocks or other text. Do not output any other explanation or questions that is not in the json format.
+
+  Here's the CSV input (delimited by ---------)
+
+# The following prompts are currently not in use. They are kept here for future reference.
+user_prompt: |
+  You will be given a csv file of textual paragraphs that represent a tree of conditions.
+  Your task is to extract the hierarchical structure of these conditions, identify the paragraph numbering structure
+  and what number was found within each paragraph.
+  Give each level a type based on the level of hierarchy and what it represents the hirararchical structure should be represented as follows:
+  section -> paragraph -> subparagraph -> clause -> subclause -> subsubclause
+  The output should be formatted as a CSV object without a code block, and contain the following columns:  
+    
+  - id: id of the condition as found in the input  
+  - type: type of the condition (section, paragraph, subparagraph, clause, subclause, subsubclause)  
+  - paragraph_type: title | text - does the input text look like a title or text  
+  - numbering: the numbering structure of the condition if found. (e.g A or a or 1 or ii or (a) etc)
+  The input is a csv file with the following columns. The values in each column are quoted with ""
+  - id: id of the condition
+  - indentation: The x index of the conidtion of the page. This can be used in combination with the numbering to determine the structure.
+  - text: The text of the condition. At the beginning of this is where the numbering of the condition can be found.
+    
+  Example output:  
+    
+  id,type,paragraph_type,numbering  
+  49,section,title,A  
+  50,paragraph,text,B  
+    
+  Each paragraph in the input should be included in the output.  
+  Here's the CSV input (delimited by ---------)
+
+permit_document_prompt: |
+  -----------
+  {% if start_page %}
+    {% for document in documents[[start_page-2,0]|max:start_page+max_pages] %}
+      <--- REAL PAGE: {{[start_page-2,0]|max + loop.index}} --->
+
+      {{ document.content}}
+    {% endfor %}
+  {% else %}
+    {% for document in documents[0:max_pages] %}
+      <--- REAL PAGE: {{loop.index}} --->
+
+      {{ document.content}}
+    {% endfor %}
+  {% endif %}
