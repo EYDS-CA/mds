@@ -1,3 +1,5 @@
+@use "../base.scss" as *;
+
 div.condition-layer {
     padding: 12px 8px 0 8px;
     font-weight: normal;
@@ -10,6 +12,10 @@ div.condition-layer {
 
         p.condition-layer--0 {
             font-weight: 600;
+        }
+
+        p.condition-layer {
+            white-space: pre-wrap;
         }
 
         >.condition-collapsed {

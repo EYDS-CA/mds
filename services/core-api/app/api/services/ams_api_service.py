@@ -37,8 +37,8 @@ class AMSApiService():
         return amendment_type_mapping[data]
 
     @classmethod
-    def __create_full_address(cls, address_line1, city, sub_division_code, post_code):
-        return f"{address_line1}, {city}, {sub_division_code}, {post_code}"
+    def __create_full_address(cls, address_line1, city, sub_division_code, post_code, suite_no):
+        return f"{suite_no} {address_line1}, {city}, {sub_division_code}, {post_code}"
 
     @classmethod
     def __get_authorization_details(cls, ams_authorizations, detail_type):
@@ -91,13 +91,32 @@ class AMSApiService():
                 contact['address'].get('address_line_1', ''),
                 contact['address'].get('city', ''),
                 contact['address'].get('sub_division_code', ''),
-                contact['address'].get('post_code', '')
+                contact['address'].get('post_code', ''),
+                contact['address'].get('suite_no', '')
             ) if contact.get('address') else ''
         }
         return contact_details
 
     @classmethod
-    def __set_applicant_details(cls, applicant, company_alias):
+    def __set_additional_contact_details(cls, contact):
+        contact_details = {
+            'lastname': contact.get('last_name', ''),
+            'firstname': contact.get('first_name', ''),
+            'title': contact.get('job_title', ''),
+            'phonenumber': cls.__format_phone_number(contact.get('phone_number')),
+            'email': contact.get('email', ''),
+            'mailingaddress': cls.__create_full_address(
+                contact['address'].get('address_line_1', ''),
+                contact['address'].get('city', ''),
+                contact['address'].get('sub_division_code', ''),
+                contact['address'].get('post_code', ''),
+                contact['address'].get('suite_no', '')
+            ) if contact.get('address') else ''
+        }
+        return contact_details
+
+    @classmethod
+    def __set_applicant_details(cls, applicant, company_alias, incorporation_number):
         applicant_details = {
             'applicanttype': cls.__get_mapped_party_type(applicant.get('party_type_code')),
             'em_companyname': applicant.get('party_name', ''),
@@ -105,24 +124,27 @@ class AMSApiService():
             'em_middlename': applicant.get('middle_name', ''),
             'em_lastname': applicant.get('party_name', ''),
             'em_doingbusinessas': company_alias,
-            'bccompanyregistrationnumber': applicant.get('party_orgbook_entity', {}).get('registration_id', ''),
+            'bccompanyregistrationnumber': incorporation_number,
             'em_businessphone': cls.__format_phone_number(applicant.get('phone_no', '')),
             'em_email': applicant.get('email', ''),
             'legaladdress': cls.__create_full_address(
                 applicant.get('address')[1].get('address_line_1', ''),
                 applicant.get('address')[1].get('city', ''),
                 applicant.get('address')[1].get('sub_division_code', ''),
-                applicant.get('address')[1].get('post_code')),
+                applicant.get('address')[1].get('post_code'),
+                applicant.get('address')[1].get('suite_no', '')),
             'mailingaddress': cls.__create_full_address(
                 applicant.get('address')[0].get('address_line_1', ''),
                 applicant.get('address')[0].get('city', ''),
                 applicant.get('address')[0].get('sub_division_code', ''),
-                applicant.get('address')[0].get('post_code')),
+                applicant.get('address')[0].get('post_code'),
+                applicant.get('address')[0].get('suite_no', '')),
             'billingaddress': cls.__create_full_address(
                 applicant.get('address')[2].get('address_line_1', ''),
                 applicant.get('address')[2].get('city', ''),
                 applicant.get('address')[2].get('sub_division_code', ''),
-                applicant.get('address')[2].get('post_code')),
+                applicant.get('address')[2].get('post_code'),
+                applicant.get('address')[2].get('suite_no', '')),
             'billingemailaddress': ''
         }
         return applicant_details
@@ -138,7 +160,8 @@ class AMSApiService():
                 agent.get('address').get('address_line_1', ''),
                 agent.get('address').get('city', ''),
                 agent.get('address').get('sub_division_code', ''),
-                agent.get('address').get('post_code')) if agent else '',
+                agent.get('address').get('post_code'),
+                agent.get('address').get('suit_no', '')) if agent else '',
             'em_businessphone': cls.__format_phone_number(agent.get('phone_no')) if agent else '',
             'em_title': agent.get('job_title', '') if agent else '',
         }
@@ -159,7 +182,8 @@ class AMSApiService():
                 facility_operator.get('address').get('address_line_1'),
                 facility_operator.get('address').get('city'),
                 facility_operator.get('address').get('sub_division_code'),
-                facility_operator.get('address').get('post_code'))
+                facility_operator.get('address').get('post_code'),
+                facility_operator.get('address').get('suite_no', ''))
         }
         if address_type is not None:
             facility_address['addresstype'] = address_type
@@ -172,6 +196,19 @@ class AMSApiService():
                        'statusCode': "500",
                        'project_summary_authorization_type': project_summary_authorization_type}
         return ams_failure
+
+    @classmethod
+    def __format_mailing_address(cls, payment_contact):
+        address = payment_contact['address'][0]
+        if address is None:
+            return ''
+        address_components = [
+            address.get('suite_no', ''),
+            address.get('address_line_1', ''),
+            address.get('city', ''),
+            address.get('sub_division_code', '')
+        ]
+        return ', '.join(filter(bool, address_components)).strip(', ')
 
     @classmethod
     def create_new_ams_authorization(cls,
@@ -200,7 +237,9 @@ class AMSApiService():
                                      zoning,
                                      zoning_reason,
                                      regional_district_name,
-                                     project_guid
+                                     project_guid,
+                                     payment_contact,
+                                     incorporation_number
                                      ):
         """Creates a new AMS authorization application"""
 
@@ -235,14 +274,13 @@ class AMSApiService():
                             'majorcentre': {
                                 'name': nearest_municipality_name
                             },
-                            'applicant': cls.__set_applicant_details(applicant, company_alias),
+                            'applicant': cls.__set_applicant_details(applicant, company_alias, incorporation_number),
+                            'contact': cls.__set_contact_details(contacts[0]),
                             'agent': cls.__set_agent_details(agent),
                             'purposeofapplication': authorization.get('authorization_description', ''),
                             'preappexemptionrequest': cls.__boolean_to_yes_no(authorization.get('exemption_requested')),
-                            'preappexemptionrequestreason': authorization.get('authorization_description',
-                                                                              'Not Applicable'),
+                            'preappexemptionrequestreason': authorization.get('exemption_reason', ''),
                             'iscontaminatedsite': cls.__boolean_to_yes_no(authorization.get('is_contaminated')),
-                            'contact': cls.__set_contact_details(contacts[0]),
                             'facilitytype': facility_type,
                             'facilitydescription': facility_desc,
                             'latitude': str(facility_latitude),
@@ -273,8 +311,21 @@ class AMSApiService():
                             'regionaldistrict': {
                                 'name': regional_district_name
                             },
-                            'documents': cls.__get_ams_document_url(project_guid)
+                            'documents': cls.__get_ams_document_url(project_guid),
+                            'contactforpayment': {
+                                'firstname': payment_contact.get('first_name', ''),
+                                'lastname': payment_contact.get('party_name', ''),
+                                'phonenumber': payment_contact.get('phone_no', ''),
+                                'email': payment_contact.get('email', ''),
+                                'mailingaddress': cls.__format_mailing_address(payment_contact)
+                            }
                         }
+                        # Dynamically add additional contacts as contact1, contact2, etc.
+                        if(len(contacts)) > 1:
+                            for i, contact in enumerate(contacts[1:], start=1):
+                                contact_key = f'contact{i}'
+                                ams_authorization_data[contact_key] = cls.__set_additional_contact_details(contact)
+
                         payload = json.dumps(ams_authorization_data)
                         response = requests.post(Config.AMS_URL, data=payload, headers=headers)
                         ams_result = response.json()
@@ -339,7 +390,9 @@ class AMSApiService():
                                            regional_district_name,
                                            is_legal_land_owner,
                                            is_crown_land_federal_or_provincial,
-                                           project_guid
+                                           project_guid,
+                                           payment_contact,
+                                           incorporation_number
                                            ):
         """Creates an AMS authorization application amendment"""
 
@@ -387,13 +440,13 @@ class AMSApiService():
                             'name': nearest_municipality_name
                         },
                         'preappexemptionrequest': cls.__boolean_to_yes_no(authorization.get('exemption_requested')),
-                        'preappexemptionrequestreason': authorization.get('authorization_description',
-                                                                          'Not Applicable'),
-                        'newapplicant': cls.__set_applicant_details(applicant, company_alias),
+                        'preappexemptionrequestreason': authorization.get('exemption_reason', ''),
+                        'newiscontaminatedsite': cls.__boolean_to_yes_no(authorization.get('is_contaminated')),
+                        'newapplicant': cls.__set_applicant_details(applicant, company_alias, incorporation_number),
                         'newcontact': cls.__set_contact_details(contacts[0]),
                         'newagent': cls.__set_agent_details(agent),
                         'newfacilitytype': facility_type,
-                        'newfacilitydescrption': facility_desc,
+                        'newfacilitydescription': facility_desc,
                         'newregionaldistrict': {
                             'name': regional_district_name
                         },
@@ -421,8 +474,22 @@ class AMSApiService():
                         'newlandowneremail': legal_land_owner_email_address,
                         'newistheapplicantthelandowner': cls.__boolean_to_yes_no(is_legal_land_owner),
                         'newlandfedorprov': cls.__boolean_to_yes_no(is_crown_land_federal_or_provincial),
-                        'documents': cls.__get_ams_document_url(project_guid)
+                        'documents': cls.__get_ams_document_url(project_guid),
+                        'contactforpayment': {
+                            'firstname': payment_contact.get('first_name', ''),
+                            'lastname': payment_contact.get('party_name', ''),
+                            'phonenumber': payment_contact.get('phone_no', ''),
+                            'email': payment_contact.get('email', ''),
+                            'mailingaddress': cls.__format_mailing_address(payment_contact)
+                        }
                     }
+
+                    # Dynamically add additional contacts as contact1, contact2, etc.
+                    if (len(contacts)) > 1:
+                        for i, contact in enumerate(contacts[1:], start=1):
+                            contact_key = f'contact{i}'
+                            ams_authorization_data[contact_key] = cls.__set_additional_contact_details(contact)
+
                     payload = json.dumps(ams_authorization_data)
                     response = requests.post(Config.AMS_URL, data=payload, headers=headers)
                     ams_result = response.json()

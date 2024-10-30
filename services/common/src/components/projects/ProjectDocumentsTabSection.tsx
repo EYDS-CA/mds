@@ -12,6 +12,8 @@ interface ProjectDocumentsTabSectionProps {
   documents: MineDocument[];
   onArchivedDocuments: () => Promise<void>;
   canArchive?: boolean;
+  canReplace?: boolean;
+  infoText?: string;
 }
 const ProjectDocumentsTabSection: FC<ProjectDocumentsTabSectionProps> = ({
   documents,
@@ -20,6 +22,8 @@ const ProjectDocumentsTabSection: FC<ProjectDocumentsTabSectionProps> = ({
   title,
   titleLevel = 4,
   canArchive = true,
+  canReplace = true,
+  infoText = null,
 }) => {
   const sectionTitle = title ?? formatUrlToUpperCaseString(id);
 
@@ -27,6 +31,7 @@ const ProjectDocumentsTabSection: FC<ProjectDocumentsTabSectionProps> = ({
     <Row id={id}>
       <Col span={24}>
         <Typography.Title level={titleLevel}>{sectionTitle}</Typography.Title>
+        {infoText && <Typography.Paragraph>{infoText}</Typography.Paragraph>}
       </Col>
       <Col span={24}>
         <DocumentTable
@@ -34,6 +39,7 @@ const ProjectDocumentsTabSection: FC<ProjectDocumentsTabSectionProps> = ({
           documentParent={title}
           additionalColumns={[renderTextColumn("category", "Category")]}
           canArchiveDocuments={canArchive}
+          canReplaceDocuments={canReplace}
           onArchivedDocuments={onArchivedDocuments}
           showVersionHistory={true}
           enableBulkActions={true}

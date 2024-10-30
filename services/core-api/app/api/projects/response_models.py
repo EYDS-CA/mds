@@ -28,6 +28,17 @@ PROJECT_SUMMARY_MODEL_ATTRIBUTES = api.model(
     }
 )
 
+PROJECT_SUMMARY_MINISTRY_COMMENT = api.model(
+    'Internal Ministry Comment', {
+        'project_summary_guid': fields.String,
+        'project_summary_ministry_comment_guid': fields.String,
+        'content': fields.String,
+        'update_user': fields.String,
+        'update_timestamp': fields.DateTime,
+        'create_user': fields.String,
+        'create_timestamp': fields.DateTime
+    })
+
 PROJECT_CONTACT_MODEL_ATTRIBUTES = api.model(
     'ProjectContact', {
         'first_name': fields.String,
@@ -160,6 +171,12 @@ MUNICIPALITY_MODEL = api.model(
         'municipality_name': fields.String
     })
 
+REGION_MODEL = api.model(
+    'Regions', {
+        'name': fields.String,
+        'regional_district_id': fields.Integer
+    })
+
 PROJECT_SUMMARY_MODEL = api.model(
     'ProjectSummary', {
         'project_guid': fields.String,
@@ -171,11 +188,11 @@ PROJECT_SUMMARY_MODEL = api.model(
         'mine_name': fields.String,
         'status_code': fields.String,
         'proponent_project_id': fields.String,
-        'expected_draft_irt_submission_date': fields.DateTime,
+        'expected_draft_irt_submission_date': fields.Date,
         'submission_date': fields.DateTime,
-        'expected_permit_application_date': fields.DateTime,
-        'expected_permit_receipt_date': fields.DateTime,
-        'expected_project_start_date': fields.DateTime,
+        'expected_permit_application_date': fields.Date,
+        'expected_permit_receipt_date': fields.Date,
+        'expected_project_start_date': fields.Date,
         'documents': fields.List(fields.Nested(PROJECT_SUMMARY_DOCUMENT_MODEL)),
         'contacts': fields.List(fields.Nested(PROJECT_CONTACT_MODEL)),
         'authorizations': fields.List(fields.Nested(PROJECT_SUMMARY_AUTHORIZATION_MODEL)),
@@ -215,6 +232,7 @@ PROJECT_SUMMARY_MODEL = api.model(
         'regional_district_id': fields.Integer,
         'payment_contact': fields.Nested(PARTY),
         'is_historic': fields.Boolean,
+        'regions': fields.Nested(REGION_MODEL)
     })
 
 REQUIREMENTS_MODEL = api.model(

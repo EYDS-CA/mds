@@ -1,3 +1,4 @@
+import { EMPTY_FIELD } from "@mds/common/constants";
 import { Typography } from "antd";
 import React, { FC, ReactNode } from "react";
 import { WrappedFieldProps, WrappedFieldMetaProps, WrappedFieldInputProps } from "redux-form";
@@ -72,6 +73,7 @@ export interface BaseInputProps extends WrappedFieldProps {
   loading?: boolean;
   allowClear?: boolean;
   help?: string;
+  showOptional?: boolean;
 }
 
 interface BaseViewInputProps {
@@ -79,12 +81,13 @@ interface BaseViewInputProps {
   value: string | number;
 }
 export const BaseViewInput: FC<BaseViewInputProps> = ({ label = "", value = "" }) => {
+  const displayValue = value ? value.toString() : EMPTY_FIELD;
   return (
     <div className="view-item ant-form-item">
       {label && label !== "" && (
         <Typography.Paragraph className="view-item-label">{label}</Typography.Paragraph>
       )}
-      <Typography.Paragraph className="view-item-value">{value.toString()}</Typography.Paragraph>
+      <Typography.Paragraph className="view-item-value">{displayValue}</Typography.Paragraph>
     </div>
   );
 };
@@ -93,7 +96,8 @@ export const BaseViewInput: FC<BaseViewInputProps> = ({ label = "", value = "" }
 export const getFormItemLabel = (
   label: string | ReactNode,
   isRequired: boolean,
-  labelSubtitle?: string | ReactNode
+  labelSubtitle?: string | ReactNode,
+  showOptional = true
 ) => {
   if (!label) {
     return "";
@@ -113,7 +117,7 @@ export const getFormItemLabel = (
   }
   return (
     <div>
-      {label} <span className="form-item-optional">&nbsp;(optional)</span>
+      {label} {showOptional && <span className="form-item-optional">&nbsp;(optional)</span>}
       {labelSubtitle && (
         <>
           <br />

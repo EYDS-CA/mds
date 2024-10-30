@@ -123,6 +123,9 @@ const Applicant = () => {
       dispatch(
         change(FORM.ADD_EDIT_PROJECT_SUMMARY, "applicant.party_orgbook_entity", orgBookEntity)
       );
+      dispatch(
+        change(FORM.ADD_EDIT_PROJECT_SUMMARY, "incorporation_number", credential.topic.source_id)
+      );
     }
   }, [credential]);
 
@@ -323,17 +326,18 @@ const Applicant = () => {
                 name="company_alias"
                 label="Doing Business As"
                 component={RenderField}
+                validate={[maxLength(100)]}
                 disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
               />
             </Col>
 
             <Col md={12} sm={24}>
               <Field
-                id="applicant.party_orgbook_entity.registration_id"
-                name="applicant.party_orgbook_entity.registration_id"
+                id="incorporation_number"
+                name="incorporation_number"
                 label="Incorporation Number"
                 required
-                validate={[required]}
+                validate={[required, maxLength(25)]}
                 component={RenderField}
                 disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
               />
@@ -348,20 +352,25 @@ const Applicant = () => {
               name="applicant.first_name"
               label="First Name"
               required
-              validate={[required]}
+              validate={[required, maxLength(60)]}
               component={RenderField}
               disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
             />
           </Col>
           <Col md={8} sm={24}>
-            <Field name="applicant.middle_name" label="Middle Name" component={RenderField} />
+            <Field
+              name="applicant.middle_name"
+              validate={[maxLength(60)]}
+              label="Middle Name"
+              component={RenderField}
+            />
           </Col>
           <Col md={8} sm={24}>
             <Field
               name="applicant.party_name"
               label="Last Name"
               required
-              validate={[required]}
+              validate={[required, maxLength(60)]}
               component={RenderField}
               disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
             />
@@ -385,6 +394,7 @@ const Applicant = () => {
             name="applicant.phone_ext"
             label="Ext."
             component={RenderField}
+            validate={[maxLength(4)]}
             disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
           />
         </Col>
@@ -393,7 +403,7 @@ const Applicant = () => {
             name="applicant.email"
             label="Email Address"
             required
-            validate={[required, email]}
+            validate={[required, email, maxLength(60)]}
             component={RenderField}
             disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
           />
@@ -406,13 +416,14 @@ const Applicant = () => {
             name="applicant.address[0].address_line_1"
             label="Street"
             required
-            validate={[required]}
+            validate={[required, maxLength(100)]}
             component={RenderField}
             disabled={isFieldDisabled(systemFlag, formValues?.status_code)}
           />
         </Col>
         <Col md={5} sm={24}>
           <Field
+            validate={[maxLength(5)]}
             name="applicant.address[0].suite_no"
             label="Unit #"
             component={RenderField}

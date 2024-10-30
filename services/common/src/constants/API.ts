@@ -157,6 +157,9 @@ export const PROJECT_SUMMARY_DOCUMENTS = ({ projectGuid, projectSummaryGuid, min
 export const PROJECT_LINKS = (projectGuid, projectLinkGuid = "") =>
   `/projects/${projectGuid}/project-link${projectLinkGuid ? "/" + projectLinkGuid : ""}`;
 
+export const PROJECT_SUMMARY_MINISTRY_COMMENTS = (project_summary_guid) =>
+  `/projects/${project_summary_guid}/ministry-comments`;
+
 //New file version upload
 export const NEW_VERSION_DOCUMENTS = ({ mineGuid, mineDocumentGuid }) =>
   `/mines/${mineGuid}/documents/${mineDocumentGuid}/versions/upload`;
@@ -372,3 +375,7 @@ export const POLL_DOCUMENTS_COMPRESSION_PROGRESS = (taskId) => `/mines/documents
 
 // Regions
 export const REGIONS_LIST = "/regions";
+
+// App Help
+export const APP_HELP = (helpKey: string, params?: { system?: string; help_guid?: string }) =>
+  `/help/${helpKey}?${queryString.stringify(params)}`;

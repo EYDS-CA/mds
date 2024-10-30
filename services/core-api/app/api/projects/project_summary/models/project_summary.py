@@ -47,10 +47,10 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
         db.Integer, server_default=FetchedValue(), nullable=False, unique=True)
     project_summary_description = db.Column(db.String(4000), nullable=True)
     submission_date = db.Column(db.DateTime, nullable=True)
-    expected_draft_irt_submission_date = db.Column(db.DateTime, nullable=True)
-    expected_permit_application_date = db.Column(db.DateTime, nullable=True)
-    expected_permit_receipt_date = db.Column(db.DateTime, nullable=True)
-    expected_project_start_date = db.Column(db.DateTime, nullable=True)
+    expected_draft_irt_submission_date = db.Column(db.Date, nullable=True)
+    expected_permit_application_date = db.Column(db.Date, nullable=True)
+    expected_permit_receipt_date = db.Column(db.Date, nullable=True)
+    expected_project_start_date = db.Column(db.Date, nullable=True)
     agent_party_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('party.party_guid'), nullable=True)
     is_agent = db.Column(db.Boolean, nullable=True)
     facility_operator_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('party.party_guid'), nullable=True)
@@ -75,6 +75,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
     nearest_municipality_guid = db.Column(UUID(as_uuid=True), db.ForeignKey('municipality.municipality_guid'))
     regional_district_id = db.Column(db.Integer(), db.ForeignKey('regions.regional_district_id'), nullable=True)
     company_alias = db.Column(db.String(200), nullable=True)
+    incorporation_number = db.Column(db.String(25), nullable=True)
 
     is_legal_address_same_as_mailing_address = db.Column(db.Boolean, nullable=True)
     is_billing_address_same_as_mailing_address = db.Column(db.Boolean, nullable=True)
@@ -138,6 +139,10 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
 
     payment_contact = db.relationship(
         'Party', lazy='joined', foreign_keys=payment_contact_party_guid
+    )
+
+    regions = db.relationship(
+        'Regions', lazy='joined', foreign_keys=regional_district_id
     )
 
     @classmethod
@@ -1002,6 +1007,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                company_alias=None,
                regional_district_id=None,
                payment_contact=None,
+               incorporation_number=None,
                is_historic=False,
                add_to_session=True
                ):
@@ -1033,6 +1039,7 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
         self.is_billing_address_same_as_legal_address = is_billing_address_same_as_legal_address
         self.company_alias = company_alias
         self.is_historic = is_historic
+        self.incorporation_number=incorporation_number
 
         # TODO - Turn this on when document removal is activated on the front end.
         # Get the GUIDs of the updated documents.
@@ -1174,7 +1181,9 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     zoning,
                     zoning_reason,
                     regional_district_name,
-                    project.project_guid)
+                    project.project_guid,
+                    payment_contact,
+                    incorporation_number)
 
                 amendment_ams_results = AMSApiService.create_amendment_ams_authorization(
                     ams_authorizations,
@@ -1202,7 +1211,9 @@ class ProjectSummary(SoftDeleteMixin, AuditMixin, Base):
                     regional_district_name,
                     is_legal_land_owner,
                     is_crown_land_federal_or_provincial,
-                    project.project_guid
+                    project.project_guid,
+                    payment_contact,
+                    incorporation_number
                 )
 
             for authorization in ams_authorizations.get('amendments', []):

@@ -35,6 +35,10 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
   const systemFlag = useSelector(getSystemFlag);
   const isCore = systemFlag === SystemFlagEnum.core;
   const [isLoaded, setIsLoaded] = useState(true);
+  const statusesToDisableReplaceFor = ["UNR", "WDN", "OHD"];
+  const canReplace = isCore
+    ? true
+    : !statusesToDisableReplaceFor.includes(project?.project_summary?.status_code);
 
   const refreshData = async () => {
     setIsLoaded(false);
@@ -138,7 +142,8 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
           <Typography.Title level={3}>Project Description</Typography.Title>
           <Alert
             className={isCore ? "ant-alert-grey" : ""}
-            description="Refer back to Project Description Purpose and Authorization to see required document list."
+            description="Below are the required and supporting documents for each authorization submitted in the Project Description. 
+            Refer to the Project Description Purpose and Authorization sections for the complete list of required documents."
             showIcon
           />
         </>
@@ -158,6 +163,7 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
             title={titleText}
             key={auth.project_summary_authorization_guid}
             canArchive={false}
+            canReplace={canReplace}
             onArchivedDocuments={refreshData}
             documents={auth.amendment_documents.map(
               (d) =>
@@ -189,6 +195,7 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
           title="Supporting Documents"
           documents={pdSupportingDocuments}
           onArchivedDocuments={refreshData}
+          canReplace={canReplace}
         />
       ),
     },
@@ -201,10 +208,22 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
           titleLevel={3}
           onArchivedDocuments={refreshData}
           documents={irtDocuments}
+          canReplace={false}
+          canArchive={false}
+          infoText="Here is the IRT file you submitted under the Information Requirements Table.
+          To make changes to the submission, return to the IRT tab."
         />
       ),
     },
-    { href: "major-mine-application" },
+    {
+      href: "major-mine-application",
+      content: (
+        <>
+          <Typography.Title level={3}>Major Mine Application</Typography.Title>
+          <Typography.Paragraph>Below are the documents submitted as part of the Major Mine Application.</Typography.Paragraph>
+        </>
+      )
+    },
     {
       href: "mma-primary-document",
       title: <div className="sub-tab-1">Primary Document</div>,
@@ -214,6 +233,7 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
           key="primary-document"
           onArchivedDocuments={refreshData}
           documents={primaryDocuments}
+          canReplace={canReplace}
         />
       ),
     },
@@ -239,6 +259,7 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
           key="supporting-documents"
           onArchivedDocuments={refreshData}
           documents={mmaSupportingDocuments}
+          canReplace={canReplace}
         />
       ),
     },
@@ -250,12 +271,19 @@ const ProjectDocumentsTab: FC<ProjectDocumentsTabProps> = ({ project }) => {
           key="ministry-decision-documentation"
           onArchivedDocuments={refreshData}
           documents={ministryDecisionDocuments}
+          canReplace={canReplace}
         />
       ),
     },
     isFeatureEnabled(Feature.MAJOR_PROJECT_ARCHIVE_FILE) && {
       href: "archived-documents",
-      content: <ArchivedDocumentsSection documents={mineDocuments} showCategory={false} />,
+      content: (
+        <ArchivedDocumentsSection
+          documents={mineDocuments}
+          showCategory={false}
+          canReplace={canReplace}
+        />
+      ),
     },
   ].filter(Boolean);
 

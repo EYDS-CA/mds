@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Typography, Button, Alert, Badge } from "antd";
+import { Row, Col, Typography, Button, Alert, Badge, Empty } from "antd";
 import Callout from "@mds/common/components/common/Callout";
 import {
   CALLOUT_SEVERITY,
@@ -267,8 +267,8 @@ const ProjectDescriptionTab = () => {
     const url = GLOBAL_ROUTES?.EDIT_PROJECT_SUMMARY.dynamicRoute(
       project.project_summary.project_guid,
       project.project_summary.project_summary_guid,
-      "purpose-and-authorization",
-      false
+      "basic-information",
+      true
     );
     history.push(url);
   };
@@ -372,6 +372,18 @@ const ProjectDescriptionTab = () => {
     }
   };
 
+  const emptyGraphic = (
+    <Empty
+      description={
+        <div className="center">
+          <Typography.Paragraph className="light light--sm">
+            Tracking number and status will be available once the Project Description is submitted.
+          </Typography.Paragraph>
+        </div>
+      }
+    />
+  );
+
   return (
     <>
       {isLoaded ? (
@@ -413,6 +425,11 @@ const ProjectDescriptionTab = () => {
             <Typography.Title level={3} className="font-colour">
               Submission Progress
             </Typography.Title>
+            {minesActData.length === 0 &&
+              waterSustainabilityActData.length === 0 &&
+              forestryActData.length === 0 &&
+              environmentalManagementActData.length === 0 &&
+              emptyGraphic}
             {minesActData.length > 0 && (
               <>
                 <Typography.Title level={5} className="primary-colour">

@@ -1,8 +1,9 @@
 # for midware/business level actions between requests and data access
 import json
 
+from uuid import uuid4, UUID
 from sqlalchemy.exc import IntegrityError
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Optional
 from pydantic import BaseModel, Field, ConfigDict
 from openlocationcode.openlocationcode import encode as plus_code_encode
 from hashlib import md5
@@ -31,17 +32,31 @@ from untp_models import codes, base, conformity_credential as cc
 task_logger = get_task_logger(__name__)
 
 
+class UNTPCCMinesActPermit(cc.ConformityAttestation):
+    type: List[str] = ["ConformityAttestation", "MinesActPermit"]
+    permitNumber: str
+
+
 #this should probably be imported from somewhere.
 class W3CCred(BaseModel):
+    #based on VCDM 2.0. https://www.w3.org/TR/vc-data-model-2.0/
     model_config = ConfigDict(
         populate_by_name=True, json_encoders={datetime: lambda v: v.isoformat()})
 
-    context: List[Union[str, dict]] = Field(alias="@context")
+    context: List[Union[str, dict]] = Field(
+        alias="@context",
+        default=[
+            "https://www.w3.org/ns/credentials/v2",
+            Config.UNTP_DIGITAL_CONFORMITY_CREDENTIAL_CONTEXT,
+            Config.UNTP_BC_MINES_ACT_PERMIT_CONTEXT,
+        ])
+    id: str
     type: List[str]
     issuer: Union[str, dict[str, str]]
     # TODO: update to `validFrom` for vcdm 2.0 once available in aca-py/traction, which is an optional property
-    issuanceDate: str
-    credentialSubject: cc.ConformityAttestation
+    validFrom: str
+    credentialSubject: UNTPCCMinesActPermit
+    credentialSchema: List[dict]
 
 
 @celery.task()
@@ -156,7 +171,7 @@ def process_all_untp_map_for_orgbook():
             task_logger.warning(f"Permit Amendment not found for permit_amendment_guid={row[0]}")
             continue
 
-        pa_cred = VerifiableCredentialManager.produce_untp_cc_map_payload(public_did, pa)
+        pa_cred, new_id = VerifiableCredentialManager.produce_untp_cc_map_payload(public_did, pa)
         if not pa_cred:
             task_logger.warning(f"pa_cred could not be created")
             continue
@@ -174,24 +189,24 @@ def process_all_untp_map_for_orgbook():
             permit_amendment_guid=row[0],
             party_guid=row[1],
             unsigned_payload_hash=payload_hash,
+            orgbook_credential_id=new_id,
         )
         records.append((pa_cred, paob))
 
     task_logger.info(f"public_verkey={public_verkey}")
     # send to traction to be signed
     for cred_payload, record in records:
-        signed_cred = traction_service.sign_jsonld_credential_deprecated(
-            public_did, public_verkey, cred_payload)
+        signed_cred = traction_service.sign_add_data_integrity_proof(
+            Config.CHIEF_PERMITTING_OFFICER_DID_WEB_VERIFICATION_METHOD, cred_payload)
         if signed_cred:
-            record.signed_credential = json.dumps(signed_cred["signed_doc"])
+            record.signed_credential = json.dumps(signed_cred["securedDocument"])
             record.sign_date = datetime.now()
         try:
             record.save()
         except IntegrityError:
             task_logger.warning(f"ignoring duplicate={str(record.unsigned_payload_hash)}")
             continue
-        task_logger.info("bcreg_uri=" +
-                         str(cred_payload.credentialSubject.issuedTo.identifiers[0].identifierURI) +
+        task_logger.info("bcreg_uri=" + str(cred_payload.credentialSubject.issuedToParty.id) +
                          ", for permit_amendment_guid=" + str(row[0]))
         task_logger.warning("unsigned_hash=" + str(record.unsigned_payload_hash))
 
@@ -320,9 +335,21 @@ class VerifiableCredentialManager():
         return credential
 
     @classmethod
-    def produce_untp_cc_map_payload(cls, did: str, permit_amendment: PermitAmendment):
+    def produce_untp_cc_map_payload(cls, did: str,
+                                    permit_amendment: PermitAmendment) -> Tuple[W3CCred, UUID]:
         """Produce payload for Mines Act Permit UNTP Conformity Credential from permit amendment and did."""
-        ANONCRED_SCHEME = "https://hyperledger.github.io/anoncreds-spec/"
+
+        #attributes in anoncreds but not in untp
+        # "latitude": permit_amendment.mine.latitude, but in pluscode
+        # "longitude": permit_amendment.mine.longitude, but in pluscode
+
+        # "bond_total"
+        # "mine_disturbance"
+        # "mine_operation_status"
+        # "mine_operation_status_reason"
+        # "mine_operation_status_sub_reason"
+        # "tsf_operating_count"
+        # "tsf_care_and_maintenance_count"
 
         curr_appt = permit_amendment.permittee_appointments[0]
         for pmt_appt in permit_amendment.permittee_appointments:
@@ -335,72 +362,69 @@ class VerifiableCredentialManager():
         orgbook_entity = curr_appt.party.party_orgbook_entity
         if not orgbook_entity:
             current_app.logger.warning("No Orgbook Entity, do not produce Mines Act Permit UNTP CC")
-            return None
+            return None, None
 
-        untp_party_cpo = base.Entity(
+        untp_party_cpo = base.Identifier(
             id="did:web:untp.traceability.site:parties:regulators:CHIEF-PERMITTING-OFFICER",
             name="Chief Permitting Officer of Mines",
             registeredId=
             "did:web:untp.traceability.site:parties:regulators:CHIEF-PERMITTING-OFFICER",
             idScheme=base.IdentifierScheme(
                 id="https://w3c-ccg.github.io/did-method-web/", name="DID Web"))
+
         orgbook_cred_url = f"https://orgbook.gov.bc.ca/entity/{orgbook_entity.registration_id}/credential/{orgbook_entity.credential_id}"
 
-        #this should have a did:web reference ideally, but orgbook doesn't have those yet.
-        untp_party_business = base.Entity(
+        untp_party_business = base.Party(
             id=orgbook_cred_url,
             name=orgbook_entity.name_text,
-            idScheme=base.IdentifierScheme(id=ANONCRED_SCHEME, name="anoncred"),
             registeredId=str(orgbook_entity.registration_id))
 
         facility = cc.Facility(
-            id="https://mines.nrs.gov.bc.ca/PLACEHOLDER",
+            id=None,
             name=permit_amendment.mine.mine_name,
-            geolocation=
+            registeredId=permit_amendment.mine.mine_no,
+            locationInformation=
             f'https://plus.codes/{plus_code_encode(permit_amendment.mine.latitude, permit_amendment.mine.longitude)}',
-            registeredId="mine_no",
-            idScheme=base.IdentifierScheme(
-                id="https://www2.gov.bc.ca/PLACEHOLDER", name="FACILITY_PLACEHOLDER"),
+            address=None,
             IDverifiedByCAB=True)
 
+        #TODO, can CORE identify commodities by their UNCEFACT code?
         products = [
-            cc.Product(
-                id="https://unstats.un.org/unsd/classifications/Econ/cpc/PLACEHOLDER",
-                name=c,
-                registeredId=c,
-                idScheme=base.IdentifierScheme(
-                    id="https://unstats.un.org/unsd/classifications/Econ/cpc",
-                    name="Central Product Classification (UNCEFACT)"),
-                IDverifiedByCAB=False) for c in permit_amendment.mine.commodities
+            cc.Product(id=None, name=c, IDverifiedByCAB=False)
+            for c in permit_amendment.mine.commodities
         ]
 
-        untp_assessments = [
-            cc.ConformityAssessment(
-                id="https://mines.nrs.gov.bc.ca/ASSESSMENT_ID_PLACEHOLDER",
-                referenceRegulation=cc.Regulation(
-                    id="https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96293_01",
-                    name="BC Mines Act",
-                    jurisdictionCountry="CA",
-                    administeredBy=base.Entity(
-                        id="https://www2.gov.bc.ca/gov/content/home",
-                        name="Government of British Columbia",
-                        registeredId="BC-GOV",
-                        idScheme=base.IdentifierScheme(
-                            id="https://www2.gov.bc.ca/gov/content/home", name="BC-GOV")),
-                    effectiveDate=datetime(2024, 5, 14, tzinfo=ZoneInfo("UTC")).isoformat()),
-                conformityTopic=codes.ConformityTopicCode.Governance_Compliance,
-                                                                                                   # Is there a did:web that attests to that legistlation?
-                assessedFacilities=[facility],
-                assessedProducts=products)
-        ]
         issue_date = permit_amendment.issue_date
         issuance_date_str = datetime(
             issue_date.year, issue_date.month, issue_date.day, 0, 0, 0,
             tzinfo=ZoneInfo("UTC")).isoformat()
 
-        cred = cc.ConformityAttestation(
-            id="http://example.com/govdomain/minesactpermit/123",
-            type="ConformityAttestation",
+        untp_assessment = cc.ConformityAssessment(
+            id=None,
+            assessmentDate=issue_date,
+            referenceRegulation=cc.Regulation(
+                id="https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96293_01",
+                name="BC Mines Act",
+                jurisdictionCountry="CA",
+                administeredBy=base.Identifier(
+                    id="https://www2.gov.bc.ca/gov/content/home",
+                    name="Government of British Columbia",
+                    registeredId="BC-GOV",
+                    idScheme=base.IdentifierScheme(
+                        id="https://www2.gov.bc.ca/gov/content/home", name="BC-GOV")),
+                effectiveDate=datetime(2024, 5, 14, tzinfo=ZoneInfo("UTC")).isoformat()),
+            conformityTopic=codes.ConformityTopicCode.Governance_Compliance,
+            assessedFacility=[facility],
+            assessedProduct=products)
+
+        issuance_date_str = datetime(
+            issue_date.year, issue_date.month, issue_date.day, 0, 0, 0,
+            tzinfo=ZoneInfo("UTC")).isoformat()
+
+        cred = UNTPCCMinesActPermit(
+            id=None,
+            name="Credential for permitNumber=" + permit_amendment.permit_no,
+            permitNumber=permit_amendment.permit_no,
             assessmentLevel=codes.AssessmentLevelCode.GovtApproval,
             attestationType=codes.AttestationType.Certification,
             scope=cc.ConformityAssessmentScheme(
@@ -413,19 +437,20 @@ class VerifiableCredentialManager():
                 name="BC Chief Permitting Officer of Mines",
                 issuingAuthority=untp_party_cpo),
             issuedToParty=untp_party_business,
-            validFrom=issuance_date_str,                                                                                     #shouldn't this just be in the w3c wrapper
-            assessments=untp_assessments)
+            assessment=[untp_assessment])
 
+        new_credential_id = uuid4()
         w3c_cred = W3CCred(
-            context=[
-                "https://www.w3.org/2018/credentials/v1",
-                "https://test.uncefact.org/vocabulary/untp/dcc/0/untp-dcc-context-0.3.10.jsonld", {
-                    "name": "https://schema.org/name"
-                }
+            id=f"{Config.ORGBOOK_CREDENTIAL_BASE_URL}/{new_credential_id}",
+            type=[
+                "VerifiableCredential", "DigitalConformityCredential", "BCMinesActPermitCredential"
             ],
-            type=["VerifiableCredential", "DigitalConformityCredential", "NonProductionCredential"],
             issuer={"id": did},
-            issuanceDate=issuance_date_str,
-            credentialSubject=cred)
+            validFrom=issuance_date_str,                                                            #vcdm1.1, will change to 'validFrom' in vcdm2.0
+            credentialSubject=cred,
+            credentialSchema=[{
+                "id": Config.UNTP_DIGITAL_CONFORMITY_CREDENTIAL_CONTEXT,
+                "type": "JsonSchema"
+            }])
 
-        return w3c_cred
+        return w3c_cred, new_credential_id

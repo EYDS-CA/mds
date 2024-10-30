@@ -1,12 +1,11 @@
 import React, { FC, useEffect, useState } from "react";
 import { withRouter, Link, Prompt, useParams, useHistory, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { reset, getFormValues } from "redux-form";
+import { reset, getFormValues, isDirty } from "redux-form";
 import * as routes from "@/constants/routes";
 import { Button, Col, Row, Tag } from "antd";
 import EnvironmentOutlined from "@ant-design/icons/EnvironmentOutlined";
 import ArrowLeftOutlined from "@ant-design/icons/ArrowLeftOutlined";
-import { getSystemFlag } from "@mds/common/redux/selectors/authenticationSelectors";
 
 import {
   getFormattedProjectSummary,
@@ -19,7 +18,7 @@ import {
   AMS_STATUS_CODES_SUCCESS,
   AMS_STATUS_CODE_FAIL,
   AMS_ENVIRONMENTAL_MANAGEMENT_ACT_TYPES,
-  isFieldDisabled,
+  SystemFlagEnum,
 } from "@mds/common";
 import { getMineById } from "@mds/common/redux/reducers/mineReducer";
 import withFeatureFlag from "@mds/common/providers/featureFlags/withFeatureFlag";
@@ -38,6 +37,8 @@ import ProjectSummaryForm, {
 } from "@mds/common/components/projectSummary/ProjectSummaryForm";
 import { fetchRegions } from "@mds/common/redux/slices/regionsSlice";
 import { clearProjectSummary } from "@mds/common/redux/actions/projectActions";
+import { getSystemFlag } from "@mds/common/redux/selectors/authenticationSelectors";
+import { cancelConfirmWrapper } from "@mds/common/components/forms/RenderCancelButton";
 
 export const ProjectSummary: FC = () => {
   const dispatch = useDispatch();
@@ -51,21 +52,29 @@ export const ProjectSummary: FC = () => {
     mode: string;
   }>();
 
+  const systemFlag = useSelector(getSystemFlag);
+  const isCore = systemFlag === SystemFlagEnum.core;
+
   const mine = useSelector((state) => getMineById(state, mineGuid));
   const formattedProjectSummary = useSelector(getFormattedProjectSummary);
   const project = useSelector(getProject);
   const anyTouched = useSelector(
     (state) => state.form[FORM.ADD_EDIT_PROJECT_SUMMARY]?.anyTouched || false
   );
+  const isFormDirty = useSelector(isDirty(FORM.ADD_EDIT_PROJECT_SUMMARY));
 
   const { isFeatureEnabled } = useFeatureFlag();
   const amsFeatureEnabled = isFeatureEnabled(Feature.AMS_AGENT);
-  const projectFormTabs = getProjectFormTabs(amsFeatureEnabled, true);
+  const projectFormTabs = getProjectFormTabs(
+    amsFeatureEnabled,
+    true,
+    isFeatureEnabled(Feature.MAJOR_PROJECT_REFACTOR)
+  );
 
   const isExistingProject = Boolean(projectGuid && projectSummaryGuid);
   const isDefaultLoaded = isExistingProject
     ? formattedProjectSummary?.project_summary_guid === projectSummaryGuid &&
-      formattedProjectSummary?.project_guid === projectGuid
+    formattedProjectSummary?.project_guid === projectGuid
     : mine?.mine_guid === mineGuid;
   const isDefaultEditMode = !isExistingProject || mode === "edit";
 
@@ -77,7 +86,6 @@ export const ProjectSummary: FC = () => {
   const activeTab = tab ?? projectFormTabs[0];
   const mineName = mine?.mine_name ?? formattedProjectSummary?.mine_name ?? "";
   const formValues = useSelector(getFormValues(FORM.ADD_EDIT_PROJECT_SUMMARY));
-  const systemFlag = useSelector(getSystemFlag);
 
   const handleFetchData = async () => {
     setIsLoaded(false);
@@ -147,6 +155,7 @@ export const ProjectSummary: FC = () => {
         {
           mrc_review_required: payload.mrc_review_required,
           contacts: payload.contacts,
+          project_lead_party_guid: payload.project_lead_party_guid,
         },
         "Successfully updated project.",
         false
@@ -184,11 +193,11 @@ export const ProjectSummary: FC = () => {
     }
     const url = !isNewProject
       ? routes.EDIT_PROJECT_SUMMARY.dynamicRoute(
-          projectGuid,
-          projectSummaryGuid,
-          newTab,
-          !isEditMode
-        )
+        projectGuid,
+        projectSummaryGuid,
+        newTab,
+        !isEditMode
+      )
       : routes.ADD_PROJECT_SUMMARY.dynamicRoute(mineGuid, newTab);
     history.push(url);
   };
@@ -204,13 +213,22 @@ export const ProjectSummary: FC = () => {
     if (!status_code || isNewProject) {
       status_code = "DFT";
     } else if (!newActiveTab) {
-      status_code = "SUB";
+      if (isCore) {
+        status_code = formValues.status_code;
+      } else {
+        status_code = "SUB";
+      }
       is_historic = false;
       if (amsFeatureEnabled) {
         message = null;
       }
     }
-    const values = { ...formValues, status_code: status_code };
+
+    if (isCore && !isNewProject) {
+      status_code = formValues.status_code;
+    }
+
+    const values = { ...formValues, status_code };
 
     try {
       if (isNewProject) {
@@ -235,10 +253,17 @@ export const ProjectSummary: FC = () => {
     ? {}
     : { ...formattedProjectSummary, mrc_review_required: project.mrc_review_required };
 
+  const handleCancel = () => {
+    cancelConfirmWrapper(async () => {
+      await dispatch(reset(FORM.ADD_EDIT_PROJECT_SUMMARY))
+      setIsEditMode(false);
+    }, isFormDirty);
+  }
+
   return (
     <>
       <Prompt
-        when={anyTouched}
+        when={anyTouched && isEditMode}
         message={(location, action) => {
           if (action === "REPLACE") {
             dispatch(reset(FORM.ADD_EDIT_PROJECT_SUMMARY));
@@ -289,7 +314,7 @@ export const ProjectSummary: FC = () => {
             <Button
               disabled={formValues?.status_code === "WDN" || formValues?.status_code === "COM"}
               type="primary"
-              onClick={() => setIsEditMode(!isEditMode)}
+              onClick={isEditMode ? handleCancel : () => setIsEditMode(true)}
             >
               {isEditMode ? "Cancel" : "Edit Project Description"}
             </Button>

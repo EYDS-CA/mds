@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useHistory, useParams } from "react-router-dom";
-import { Row, Col, Typography, Tabs } from "antd";
+import { Col, Row, Tabs, Typography } from "antd";
 import ArrowLeftOutlined from "@ant-design/icons/ArrowLeftOutlined";
 import { IProject } from "@mds/common/interfaces/projects/project.interface";
 import { getMineById } from "@mds/common/redux/selectors/mineSelectors";
@@ -23,6 +23,7 @@ import ProjectDocumentsTab from "@mds/common/components/projects/ProjectDocument
 import ProjectDescriptionTab from "@mds/common/components/project/ProjectDescriptionTab";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 import { Feature } from "@mds/common";
+import { getProjectSummary } from "@mds/common/redux/reducers/projectReducer";
 
 const tabs = [
   "overview",
@@ -47,14 +48,18 @@ const ProjectPage: FC = () => {
   const [activeTab, setActiveTab] = useState(tab ?? tabs[0]);
   const dispatch = useDispatch();
   const project: IProject = useSelector(getProject) ?? {};
+  const projectSummary = useSelector(getProjectSummary) ?? {};
   const {
     mine_guid,
     project_title,
     information_requirements_table,
     major_mine_application,
     mrc_review_required,
-    project_summary,
   } = project;
+
+  const isProjectSummarySubmitted = Boolean(projectSummary?.submission_date);
+  const hasInformationRequirementsTable = Boolean(information_requirements_table?.irt_guid);
+  const hasFinalAplication = Boolean(major_mine_application?.major_mine_application_guid);
 
   const mine = useSelector((state) => getMineById(state, mine_guid)) ?? {};
   const { mine_name } = mine;
@@ -73,6 +78,15 @@ const ProjectPage: FC = () => {
 
   const navigateFromProjectStagesTable = (source, status) => {
     switch (source) {
+      case "DES": {
+        const projectDescriptionTab = document.querySelector('[id*="project-description"]');
+        if (!projectDescriptionTab) {
+          return null;
+        }
+
+        // @ts-ignore
+        return projectDescriptionTab.click();
+      }
       case "IRT": {
         if (status === "APV") {
           return history.push({
@@ -99,8 +113,13 @@ const ProjectPage: FC = () => {
             ),
             state: { current: 2, applicationSubmitted: true },
           });
+        } else {
+          const mmaTab = document.querySelector('[id*="major-mine-application"]') as HTMLElement;
+          if (!mmaTab) {
+            return null;
+          }
+          return mmaTab.click();
         }
-        break;
       case "DFT":
       case "CHR":
         return history.push({
@@ -123,7 +142,10 @@ const ProjectPage: FC = () => {
   };
 
   const handleFetchData = async (includeArchivedDocuments = false) => {
-    if (projectGuid && project?.project_guid !== projectGuid) {
+    if (
+      (projectGuid && project?.project_guid !== projectGuid) ||
+      !projectSummary?.project_summary_guid
+    ) {
       await dispatch(fetchProjectById(projectGuid));
     }
     if (project?.mine_guid && project?.mine_guid !== mine?.mine_guid) {
@@ -156,12 +178,15 @@ const ProjectPage: FC = () => {
                 projectGuid,
                 project?.information_requirements_table?.irt_guid
               )
-            : `/projects/${projectGuid}/information-requirements-table/entry`;
+            : router.PROJECT_STAGE_ENTRY.dynamicRoute(
+                projectGuid,
+                "information-requirements-table"
+              );
         const urlState = irtStatus == "APV" ? { state: { current: 2 } } : {};
         return history.push({ pathname: url, ...urlState });
       }
       case "major-mine-application":
-        url = `/projects/${projectGuid}/major-mine-application/entry`;
+        url = router.PROJECT_STAGE_ENTRY.dynamicRoute(projectGuid, newActiveTab);
         return history.push(url);
 
       default:
@@ -171,7 +196,7 @@ const ProjectPage: FC = () => {
 
   useEffect(() => {
     handleFetchData();
-  }, [project, mine]);
+  }, [project, mine, projectSummary]);
 
   useEffect(() => {
     setActiveTab(tab);
@@ -202,19 +227,19 @@ const ProjectPage: FC = () => {
         </div>
       ),
     },
-    isFeatureEnabled(Feature.AMS_AGENT) &&
-      project_summary?.status_code === "SUB" && {
-        label: "Project Description",
-        key: "project-description",
-        children: (
-          <div className={pageClass}>
-            <ProjectDescriptionTab />
-          </div>
-        ),
-      },
+    isFeatureEnabled(Feature.AMS_AGENT) && {
+      label: "Project Description",
+      key: "project-description",
+      children: (
+        <div className={pageClass}>
+          <ProjectDescriptionTab />
+        </div>
+      ),
+    },
     {
       label: "IRT",
       key: "irt-entry",
+      disabled: !hasInformationRequirementsTable && !isProjectSummarySubmitted,
       children: (
         <div className={pageClass}>
           <InformationRequirementsTableEntryTab
@@ -227,6 +252,7 @@ const ProjectPage: FC = () => {
     {
       label: "Application",
       key: "major-mine-application",
+      disabled: !hasFinalAplication && !isProjectSummarySubmitted,
       children: <div className={pageClass}>{majorMineApplicationTabContent}</div>,
     },
     {
