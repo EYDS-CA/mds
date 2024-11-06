@@ -1,5 +1,7 @@
 # for midware/business level actions between requests and data access
 import json
+import requests
+from datetime import date, datetime, timedelta
 
 from uuid import uuid4, UUID
 from sqlalchemy.exc import IntegrityError
@@ -35,6 +37,26 @@ task_logger = get_task_logger(__name__)
 class UNTPCCMinesActPermit(cc.ConformityAttestation):
     type: List[str] = ["ConformityAttestation", "MinesActPermit"]
     permitNumber: str
+
+
+permit_amendments_for_orgbook_query = """
+    select pa.permit_amendment_guid, poe.party_guid
+
+    from party_orgbook_entity poe
+    inner join party p on poe.party_guid = p.party_guid
+    inner join mine_party_appt mpa on p.party_guid = mpa.party_guid
+    inner join permit pmt on pmt.permit_id = mpa.permit_id
+    inner join permit_amendment pa on pa.permit_id = pmt.permit_id
+    inner join mine m on pa.mine_guid = m.mine_guid
+    
+    where mpa.permit_id is not null
+    and mpa.mine_party_appt_type_code = 'PMT'
+    and mpa.deleted_ind = false
+    and m.major_mine_ind = true
+    
+    group by pa.permit_amendment_guid, pa.description, pa.issue_date, pa.permit_amendment_status_code, mpa.deleted_ind, pmt.permit_no, mpa.permit_id, poe.party_guid, p.party_name, poe.name_text, poe.registration_id
+    order by pmt.permit_no, pa.issue_date;
+"""
 
 
 #this should probably be imported from somewhere.
@@ -129,25 +151,8 @@ def process_all_untp_map_for_orgbook():
 
     # https://metabase-4c2ba9-prod.apps.silver.devops.gov.bc.ca/question/2937-permit-amendments-for-each-party-orgbook-entity
 
-    permit_amendment_query_results = db.session.execute("""
-                        select pa.permit_amendment_guid, poe.party_guid
-
-                        from party_orgbook_entity poe
-                        inner join party p on poe.party_guid = p.party_guid
-                        inner join mine_party_appt mpa on p.party_guid = mpa.party_guid
-                        inner join permit pmt on pmt.permit_id = mpa.permit_id
-                        inner join permit_amendment pa on pa.permit_id = pmt.permit_id
-                        inner join mine m on pa.mine_guid = m.mine_guid
-                        
-                        where mpa.permit_id is not null
-                        and mpa.mine_party_appt_type_code = 'PMT'
-                        and mpa.deleted_ind = false
-                        and m.major_mine_ind = true
-                        
-                        group by pa.permit_amendment_guid, pa.description, pa.issue_date, pa.permit_amendment_status_code, mpa.deleted_ind, pmt.permit_no, mpa.permit_id, poe.party_guid, p.party_name, poe.name_text, poe.registration_id
-                        order by pmt.permit_no, pa.issue_date;
-
-                       """).fetchall()
+    permit_amendment_query_results = db.session.execute(
+        permit_amendments_for_orgbook_query).fetchall()
 
     task_logger.info("Num of results from query to process:" +
                      str(len(permit_amendment_query_results)))
@@ -189,6 +194,8 @@ def process_all_untp_map_for_orgbook():
             permit_amendment_guid=row[0],
             party_guid=row[1],
             unsigned_payload_hash=payload_hash,
+            permit_number=pa_cred.credentialSubject.permitNumber,
+            orgbook_entity_id=pa_cred.credentialSubject.issuedToParty.registeredId,
             orgbook_credential_id=new_id,
         )
         records.append((pa_cred, paob))
@@ -215,16 +222,82 @@ def process_all_untp_map_for_orgbook():
     return [record for payload, record in records]
 
 
-def publish_all_pending_vc_to_orgbook():
+def forward_all_pending_untp_vc_to_orgbook():
     """STUB for celery job to publis all pending vc to orgbook."""
-    ## Orgbook doesn't have this functionality yet.
-    records_to_publish = PermitAmendmentOrgBookPublish.find_all_unpublished(unsafe=True)
+    ## CORE signs and structures the credential, the publisher just validates and forwards it.
+    records_to_forward = PermitAmendmentOrgBookPublish.find_all_unpublished(unsafe=True)
+    ORGBOOK_W3C_CRED_FORWARD = f"{Config.ORGBOOK_CREDENTIAL_BASE_URL}/forward"
 
-    for record in records_to_publish:
-        current_app.logger.warning("NOT sending cred to orgbook")
-        current_app.logger.warning(record.signed_credential)
-        # resp = requests.post(ORGBOOK_W3C_CRED_POST, record.signed_credential)
-        # assert resp.status_code == 200, f"resp={resp.json()}"
+    current_app.logger.warning(f"going to publish {len(records_to_forward)} records to orgbook")
+
+    for record in records_to_forward:
+        current_app.logger.warning(f"publishing record={json.loads(record.signed_credential)}")
+        payload = {
+            "verifiableCredential": json.loads(record.signed_credential),
+            "options": {
+                "entityId": record.orgbook_entity_id,
+                "resourceId": record.permit_number,
+                "credentialId": record.orgbook_credential_id,
+                "credentialType": "BCMinesActPermitCredential"
+            }
+        }
+        resp = requests.post(ORGBOOK_W3C_CRED_FORWARD, json=payload)
+        if resp.status_code == 201:
+            record.publish_state = True
+        else:
+            record.error_msg = resp.text
+        record.save()
+
+
+@celery.task()
+def push_untp_map_data_to_publisher():
+    ## This is a different process that passes the data to the publisher.
+    ## the publisher structures the data and sends it to the orgbook.
+    ## the publisher also manages the BitStringStatusLists.
+    ORGBOOK_W3C_CRED_PUBLISH = f"{Config.ORGBOOK_CREDENTIAL_BASE_URL}/publish"
+
+    records_to_publish = PermitAmendmentOrgBookPublish.find_all_unpublished(unsafe=True)
+    permit_amendment_query_results = db.session.execute(
+        permit_amendments_for_orgbook_query).fetchall()
+    for row in permit_amendment_query_results:
+        pa = PermitAmendment.find_by_permit_amendment_guid(row[0], unsafe=True)
+        pa_cred, new_id = VerifiableCredentialManager.produce_untp_cc_map_payload(
+            Config.CHIEF_PERMITTING_OFFICER_DID_WEB, pa)
+
+        #only one assessment per credential
+        publish_payload = {
+            "type": "BCMinesActPermitCredential",
+            "coreData": {
+                "entityId": pa_cred.credentialSubject.issuedToParty.registeredId,
+                "resourceId": pa_cred.credentialSubject.permitNumber,
+                "validFrom": pa_cred.validFrom,
+                "validUntil": date.fromisoformat(pa_cred.validFrom) + timedelta(years=5)
+            },
+            "subjectData": {
+                "permitNumber": pa_cred.credentialSubject.permitNumber
+            },
+            "untpData": {
+                "assessedFacility": pa_cred.credentialSubject.assessment[0].model_dump(),
+                "assessedProduct": pa_cred.credentialSubject.assessment[0].model_dump(),
+            }
+        }
+        payload_hash = md5(json.dumps(publish_payload).encode('utf-8')).hexdigest()
+
+        current_app.logger.warning(f"publishing record={publish_payload}")
+        post_resp = requests.post(Config.ORGBOOK_W3C_CRED_PUBLISH, json=publish_payload)
+
+        publish_record = PermitAmendmentOrgBookPublish(
+            payload_hash=payload_hash,
+            permit_amendment_guid=row[0],
+            party_guid=row[1],
+            signed_credential="Produced by publisher",
+            publish_state=post_resp.ok,
+            permitNumber=pa_cred.credentialSubject.permitNumber,
+            orgbook_entity_id=pa_cred.credentialSubject.issuedToParty.registeredId,
+            orgbook_credential_id=new_id,
+            error_msg=post_resp.text if not post_resp.ok else None)
+
+        publish_record.save()
 
 
 class VerifiableCredentialManager():
