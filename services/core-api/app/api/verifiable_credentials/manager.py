@@ -226,11 +226,12 @@ def process_all_untp_map_for_orgbook():
     return [record for payload, record in records]
 
 
+@celery.task()
 def forward_all_pending_untp_vc_to_orgbook():
     """STUB for celery job to publis all pending vc to orgbook."""
     ## CORE signs and structures the credential, the publisher just validates and forwards it.
     records_to_forward = PermitAmendmentOrgBookPublish.find_all_unpublished(unsafe=True)
-    ORGBOOK_W3C_CRED_FORWARD = f"{Config.ORGBOOK_CREDENTIAL_BASE_URL}/forward"
+    ORGBOOK_W3C_CRED_FORWARD = f"{Config.ORGBOOK_PUBLISHER_BASE_URL}/credentials/forward"
 
     task_logger.warning(f"going to publish {len(records_to_forward)} records to orgbook")
 
@@ -321,7 +322,7 @@ def push_untp_map_data_to_publisher():
             )
         else:
             success_count += success_count + 1
-        failed_credentials.append(publish_record.unsigned_payload_hash, publish_record.error_msg)
+        failed_credentials.append((publish_record.unsigned_payload_hash, publish_record.error_msg))
 
     return f"num published={success_count}, num failed = {len(failed_credentials)}"
 
