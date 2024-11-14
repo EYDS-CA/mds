@@ -470,3 +470,26 @@ export const WASTE_DISCHARGE_AMENDMENT_AUTHORIZATIONS_URL =
   "https://www2.gov.bc.ca/gov/content/environment/waste-management/waste-discharge-authorization/change";
 export const WASTE_DISCHARGE_AUTHORIZATION_PROCESS =
   "https://www2.gov.bc.ca/gov/content/environment/waste-management/waste-discharge-authorization/process";
+
+export const REPORT_REGULATORY_AUTHORITY_CODES_HASH = {
+  CPO: "Chief Permitting Officer",
+  CIM: "Chief Inspector of Mines",
+  Both: "Both",
+  NONE: "Not Specified",
+};
+
+export const REPORT_MINISTRY_RECIPIENT_HASH = {
+  MMO: "Major Mines Office",
+  HS: "Health and Safety",
+  RO: "Regional Office",
+  MOE: "Ministry of Environment",
+};
+
+export const REPORT_FREQUENCY_HASH = {
+  "Monthly": 1,
+  "Quarterly": 4,
+  "Semi-Annually": 6,
+  "Annually": 12,
+  "Bi-Annually": 24,
+  "Not Specified": 0,
+};
