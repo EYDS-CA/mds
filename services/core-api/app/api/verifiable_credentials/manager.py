@@ -14,7 +14,6 @@ from zoneinfo import ZoneInfo
 from time import sleep
 from typing import List
 from flask import current_app
-from celery.utils.log import get_task_logger
 
 from app.tasks.celery import celery
 
@@ -29,10 +28,9 @@ from app.api.verifiable_credentials.models.credentials import PartyVerifiableCre
 from app.api.verifiable_credentials.models.connection import PartyVerifiableCredentialConnection
 from app.api.verifiable_credentials.models.orgbook_publish_status import PermitAmendmentOrgBookPublish
 from app.api.services.traction_service import TractionService
+from app.api.services.orgbook_publisher import OrgbookPublisherService
 
 from untp_models import codes, base, conformity_credential as cc
-
-task_logger = get_task_logger(__name__)
 
 
 class UNTPCCMinesActPermit(cc.ConformityAttestation):
@@ -43,8 +41,8 @@ class UNTPCCMinesActPermit(cc.ConformityAttestation):
 W3C_CRED_ID_PREFIX = f"{Config.ORGBOOK_PUBLISHER_BASE_URL}/credentials/"
 
 permit_amendments_for_orgbook_query = """
-    select pa.permit_amendment_guid, poe.party_guid
-
+    select pa.permit_amendment_guid, p.party_guid
+ 
     from party_orgbook_entity poe
     inner join party p on poe.party_guid = p.party_guid
     inner join mine_party_appt mpa on p.party_guid = mpa.party_guid
@@ -55,10 +53,13 @@ permit_amendments_for_orgbook_query = """
     where mpa.permit_id is not null
     and mpa.mine_party_appt_type_code = 'PMT'
     and mpa.deleted_ind = false
+    and mpa.start_date <= pa.issue_date
+    and mpa.end_date > pa.issue_date
     and m.major_mine_ind = true
     and pa.deleted_ind = false
-    
-    group by pa.permit_amendment_guid, pa.description, pa.issue_date, pa.permit_amendment_status_code, mpa.deleted_ind, pmt.permit_no, mpa.permit_id, poe.party_guid, p.party_name, poe.name_text, poe.registration_id
+    and pmt.permit_status_code = 'O'
+
+    group by pa.permit_amendment_guid, p.party_guid, pa.description, pa.issue_date, pa.permit_amendment_status_code, pmt.permit_no, mpa.permit_id, poe.party_guid, p.party_name, poe.name_text, poe.registration_id, m.mine_name, mine_party_appt_type_code
     order by pmt.permit_no, pa.issue_date;
 """
 
@@ -79,7 +80,6 @@ class W3CCred(BaseModel):
     id: str | None
     type: List[str]
     issuer: Union[str, dict[str, str]]
-    # TODO: update to `validFrom` for vcdm 2.0 once available in aca-py/traction, which is an optional property
     validFrom: str
     credentialSubject: UNTPCCMinesActPermit
     credentialSchema: List[dict]
@@ -115,7 +115,7 @@ def revoke_all_credentials_for_permit(permit_guid: str, mine_guid: str, reason: 
             #problem reports set the state to abandoned in both agents, cannot continue afterwards
 
     info_str = f"revoked all credentials for permit_guid={permit_guid} and mine_guid={mine_guid}"
-    task_logger.warning(info_str)                # not sure where to find this.
+    current_app.logger.warning(info_str)         # not sure where to find this.
 
     return info_str
 
@@ -148,7 +148,7 @@ def offer_newest_amendment_to_current_permittee(permit_amendment_guid: str,
     map_vc.save()
 
     info_str = f"offer new_cred_exchange{response['credential_exchange_id']} for permit_amendment_guid={newest_amendment.permit_amendment_guid}"
-    task_logger.warning(info_str)                # not sure where to find this.
+    current_app.logger.warning(info_str)         # not sure where to find this.
 
     return info_str
 
@@ -162,8 +162,8 @@ def process_all_untp_map_for_orgbook():
     permit_amendment_query_results = db.session.execute(
         permit_amendments_for_orgbook_query).fetchall()
 
-    task_logger.info("Num of results from query to process:" +
-                     str(len(permit_amendment_query_results)))
+    current_app.logger.info("Num of results from query to process:" +
+                            str(len(permit_amendment_query_results)))
 
     traction_service = TractionService()
     public_did_dict = traction_service.fetch_current_public_did()
@@ -173,7 +173,7 @@ def process_all_untp_map_for_orgbook():
     assert public_did.startswith(
         "did:web:"
     ), f"Config.CHIEF_PERMITTING_OFFICER_DID_WEB = {Config.CHIEF_PERMITTING_OFFICER_DID_WEB} is not a did:web"
-    task_logger.info("public did: " + public_did)
+    current_app.logger.info("public did: " + public_did)
 
     records: List[Tuple[W3CCred,
                         PermitAmendmentOrgBookPublish]] = [] # list of tuples [payload, record]
@@ -181,12 +181,13 @@ def process_all_untp_map_for_orgbook():
     for row in permit_amendment_query_results:
         pa = PermitAmendment.find_by_permit_amendment_guid(row[0], unsafe=True)
         if not pa:
-            task_logger.warning(f"Permit Amendment not found for permit_amendment_guid={row[0]}")
+            current_app.logger.warning(
+                f"Permit Amendment not found for permit_amendment_guid={row[0]}")
             continue
 
         pa_cred = VerifiableCredentialManager.produce_untp_cc_map_payload_without_id(public_did, pa)
         if not pa_cred:
-            task_logger.warning(f"pa_cred could not be created")
+            current_app.logger.warning(f"pa_cred could not be created")
             continue
 
         payload_hash = md5(pa_cred.model_dump_json(by_alias=True).encode('utf-8')).hexdigest()
@@ -211,7 +212,7 @@ def process_all_untp_map_for_orgbook():
         )
         records.append((pa_cred, paob))
 
-    task_logger.info(f"public_verkey={public_verkey}")
+    current_app.logger.info(f"public_verkey={public_verkey}")
     # send to traction to be signed
     for cred_payload, record in records:
         signed_cred = traction_service.sign_add_data_integrity_proof(
@@ -222,13 +223,14 @@ def process_all_untp_map_for_orgbook():
         try:
             record.save()
         except IntegrityError:
-            task_logger.warning(f"ignoring duplicate={str(record.unsigned_payload_hash)}")
+            current_app.logger.warning(f"ignoring duplicate={str(record.unsigned_payload_hash)}")
             continue
-        task_logger.info("bcreg_uri=" + str(cred_payload.credentialSubject.issuedToParty.id) +
-                         ", for permit_amendment_guid=" + str(row[0]))
-        task_logger.warning("unsigned_hash=" + str(record.unsigned_payload_hash))
+        current_app.logger.info("bcreg_uri=" +
+                                str(cred_payload.credentialSubject.issuedToParty.id) +
+                                ", for permit_amendment_guid=" + str(row[0]))
+        current_app.logger.warning("unsigned_hash=" + str(record.unsigned_payload_hash))
 
-    task_logger.info("num of records created: " + str(len(records or [])))
+    current_app.logger.info("num of records created: " + str(len(records or [])))
 
     return [record for payload, record in records]
 
@@ -240,10 +242,10 @@ def forward_all_pending_untp_vc_to_orgbook():
     records_to_forward = PermitAmendmentOrgBookPublish.find_all_unpublished(unsafe=True)
     ORGBOOK_W3C_CRED_FORWARD = f"{Config.ORGBOOK_PUBLISHER_BASE_URL}/credentials/forward"
 
-    task_logger.warning(f"going to publish {len(records_to_forward)} records to orgbook")
+    current_app.logger.warning(f"going to publish {len(records_to_forward)} records to orgbook")
 
     for record in records_to_forward:
-        task_logger.warning(f"publishing record={json.loads(record.signed_credential)}")
+        current_app.logger.warning(f"publishing record={json.loads(record.signed_credential)}")
         payload = {
             "verifiableCredential": json.loads(record.signed_credential),
             "options": {
@@ -266,9 +268,6 @@ def push_untp_map_data_to_publisher():
     ## This is a different process that passes the data to the publisher.
     ## the publisher structures the data and sends it to the orgbook.
     ## the publisher also manages the BitStringStatusLists.
-    ORGBOOK_W3C_CRED_PUBLISH = f"{Config.ORGBOOK_PUBLISHER_BASE_URL}/credentials/publish"
-
-    records_to_publish = PermitAmendmentOrgBookPublish.find_all_unpublished(unsafe=True)
     permit_amendment_query_results = db.session.execute(
         permit_amendments_for_orgbook_query).fetchall()
 
@@ -277,35 +276,44 @@ def push_untp_map_data_to_publisher():
 
     for row in permit_amendment_query_results:
         pa = PermitAmendment.find_by_permit_amendment_guid(row[0], unsafe=True)
+
+        if pa.permit_no[1] in ("X", "x"):
+            current_app.logger.warning(
+                f"exclude exploration permit={pa.permit_no}, they cannot produce goods for sale")
+            continue
+
         pa_cred = VerifiableCredentialManager.produce_untp_cc_map_payload_without_id(
             Config.CHIEF_PERMITTING_OFFICER_DID_WEB, pa)
         if not pa_cred:
-            task_logger.warning(f"pa_cred could not be created for permit_amendment_guid={row[0]}")
+            current_app.logger.warning(
+                f"pa_cred could not be created for permit_amendment_guid={row[0]}")
             continue
         #only one assessment per credential
         publish_payload = {
-            "type": "BCMinesActPermitCredential",
-            "coreData": {
-                "entityId": pa_cred.credentialSubject.issuedToParty.registeredId,
-                "resourceId": pa_cred.credentialSubject.permitNumber,
+            "credential": {
+                "type": "BCMinesActPermitCredential",
                 "validFrom": convert_date_to_iso_datetime(pa.issue_date),
-                "validUntil": convert_date_to_iso_datetime(pa.issue_date + relativedelta(years=5)),
+                "credentialSubject": {
+                    "permitNumber": pa_cred.credentialSubject.permitNumber
+                },
             },
-            "subjectData": {
-                "permitNumber": pa_cred.credentialSubject.permitNumber
-            },
-            "untpData": {
-                "assessedFacility": [
-                    f.model_dump(exclude_none=True)
-                    for f in pa_cred.credentialSubject.assessment[0].assessedFacility
-                ],
-                "assessedProduct": [
-                    p.model_dump(exclude_none=True)
-                    for p in pa_cred.credentialSubject.assessment[0].assessedProduct
-                ],
+            "options": {
+                "entityId": pa_cred.credentialSubject.issuedToParty.registeredId,
+                "credentialId": str(pa.permit_amendment_guid),
+                "cardinalityId": pa_cred.credentialSubject.permitNumber,
+                "additionalData": {
+                    "assessedFacility": [
+                        f.model_dump(exclude_none=True)
+                        for f in pa_cred.credentialSubject.assessment[0].assessedFacility
+                    ],
+                    "assessedProduct": [
+                        p.model_dump(exclude_none=True)
+                        for p in pa_cred.credentialSubject.assessment[0].assessedProduct
+                    ],
+                }
             }
         }
-
+        publisher_service = OrgbookPublisherService()
         current_app.logger.warning(f"publishing record={publish_payload}")
         payload_hash = md5(json.dumps(publish_payload).encode('utf-8')).hexdigest()
         current_app.logger.warning(f"payload hash={payload_hash}")
@@ -322,16 +330,15 @@ def push_untp_map_data_to_publisher():
             error_msg=None)
 
         try:
+            current_app.logger.info(f"saved publish record locally")
             publish_record.save()
 
-            post_resp = requests.post(
-                ORGBOOK_W3C_CRED_PUBLISH,
-                json=publish_payload,
-                headers={"X-API-KEY": Config.ORGBOOK_PUBLISHER_API_KEY})
+            post_resp = publisher_service.publish_cred(publish_payload)
 
             publish_record.publish_state = post_resp.ok
             publish_record.error_msg = post_resp.text if not post_resp.ok else None
-            publish_record.orgbook_credential_id = post_resp.json()["credentialId"]
+            if post_resp.ok:
+                publish_record.orgbook_credential_id = post_resp.json()["credentialId"]
 
             publish_record.save()
 
