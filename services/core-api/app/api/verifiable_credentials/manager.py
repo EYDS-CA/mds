@@ -54,10 +54,11 @@ permit_amendments_for_orgbook_query = """
     and mpa.mine_party_appt_type_code = 'PMT'
     and mpa.deleted_ind = false
     and mpa.start_date <= pa.issue_date
-    and mpa.end_date > pa.issue_date
+    and (mpa.end_date < pa.issue_date OR mpa.end_date is null or mpa.end_date = '9999-12-31')
     and m.major_mine_ind = true
     and pa.deleted_ind = false
     and pmt.permit_status_code = 'O'
+
 
     group by pa.permit_amendment_guid, p.party_guid, pa.description, pa.issue_date, pa.permit_amendment_status_code, pmt.permit_no, mpa.permit_id, poe.party_guid, p.party_name, poe.name_text, poe.registration_id, m.mine_name, mine_party_appt_type_code
     order by pmt.permit_no, pa.issue_date;
@@ -199,7 +200,7 @@ def process_all_untp_map_for_orgbook():
             #this assumes acapy is not changing the result if the payload is unchanged
             continue
 
-        new_credential_id = f"{Config.ORGBOOK_PUBLISHER_BASE_URL}/credentials/{new_credential_id}"
+        new_credential_id = f"{Config.ORGBOOK_PUBLISHER_BASE_URL}/credentials/{uuid4()}"
         pa_cred.id = new_credential_id
 
         paob = PermitAmendmentOrgBookPublish(
@@ -350,9 +351,10 @@ def push_untp_map_data_to_publisher():
             current_app.logger.warning(
                 f"failed to publish unsigned_payload_id={publish_record.unsigned_payload_hash} error={publish_record.error_msg}"
             )
+            failed_credentials.append(
+                (publish_record.unsigned_payload_hash, publish_record.error_msg))
         else:
             success_count = success_count + 1
-        failed_credentials.append((publish_record.unsigned_payload_hash, publish_record.error_msg))
 
     return f"num published={success_count}, num failed = {len(failed_credentials)}"
 
