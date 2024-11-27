@@ -286,7 +286,7 @@ def push_untp_map_data_to_publisher():
         valid_until_date: date | None = None
         # only valid until the next permit_amendment was issued
         try:
-            if permit_amendment_query_results[index + 1][2] == row[2]: #ensure same permit_no
+            if permit_amendment_query_results[index + 1][2] == row[2]: # ensure same permit_no
                 next_pa_guid = permit_amendment_query_results[index + 1][0]
         except IndexError:
             pass
@@ -341,13 +341,13 @@ def push_untp_map_data_to_publisher():
         current_app.logger.debug(f"payload hash={payload_hash}")
 
         #produce a uuid for logging/tracing.
-        publish_payload["options"]["credentialId"] = uuid4()
+        publish_payload["options"]["credentialId"] = str(uuid4())
 
         publish_record = PermitAmendmentOrgBookPublish(
             unsigned_payload_hash=payload_hash,
             permit_amendment_guid=row[0],
             party_guid=row[1],
-            signed_credential=f'Produced by publisher',
+            signed_credential='Produced by publisher',
             publish_state=None,
             permit_number=pa_cred.credentialSubject.permitNumber,
             orgbook_entity_id=pa_cred.credentialSubject.issuedToParty.registeredId,
