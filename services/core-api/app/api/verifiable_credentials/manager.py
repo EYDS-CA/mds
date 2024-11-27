@@ -279,11 +279,23 @@ def push_untp_map_data_to_publisher():
     #token is valid for an hour currently.
     publisher_service = OrgbookPublisherService()
 
-    for row in permit_amendment_query_results:
+    for index, row in enumerate(permit_amendment_query_results):
         pa = PermitAmendment.find_by_permit_amendment_guid(row[0], unsafe=True)
 
+        next_pa_guid: str | None = None
+        valid_until_date: date | None = None
+        # only valid until the next permit_amendment was issued
+        try:
+            next_pa_guid = permit_amendment_query_results[index + 1][0]
+        except IndexError:
+            pass
+
+        if next_pa_guid:
+            next_pa = PermitAmendment.find_by_permit_amendment_guid(next_pa_guid)
+            valid_until_date = next_pa.issue_date
+
         if pa.permit_no[1] in ("X", "x"):
-            current_app.logger.warning(
+            current_app.logger.info(
                 f"exclude exploration permit={pa.permit_no}, they cannot produce goods for sale")
             continue
 
@@ -293,8 +305,9 @@ def push_untp_map_data_to_publisher():
             current_app.logger.warning(
                 f"pa_cred could not be created for permit_amendment_guid={row[0]}")
             continue
+
         #only one assessment per credential
-        publish_payload = {
+        publish_payload: dict[str, object] = {
             "credential": {
                 "type": "BCMinesActPermitCredential",
                 "validFrom": convert_date_to_iso_datetime(pa.issue_date),
@@ -318,9 +331,13 @@ def push_untp_map_data_to_publisher():
                 }
             }
         }
-        current_app.logger.warning(f"publishing record={publish_payload}")
+        #TODO: Combine continous permit_amendments where the contents of the credential and permittee did not change into one credential.
+        if valid_until_date:
+            publish_payload["validUntil"] = convert_date_to_iso_datetime(valid_until_date)
+
+        current_app.logger.debug(f"publishing record={publish_payload}")
         payload_hash = md5(json.dumps(publish_payload).encode('utf-8')).hexdigest()
-        current_app.logger.warning(f"payload hash={payload_hash}")
+        current_app.logger.debug(f"payload hash={payload_hash}")
 
         publish_record = PermitAmendmentOrgBookPublish(
             unsigned_payload_hash=payload_hash,
@@ -373,6 +390,20 @@ class VerifiableCredentialManager():
 
     def __init__(self):
         pass
+
+    @classmethod
+    def delete_any_unsuccessful_untp_push(cls, dry: bool = False) -> int:
+        records = PermitAmendmentOrgBookPublish.find_all_unpublished()
+        delete_count = 0
+
+        for record in records:
+            if dry:
+                current_app.logger.info(f"would delete {record}")
+            else:
+                record.delete()
+            delete_count += 1
+
+        return delete_count
 
     @classmethod
     def collect_attributes_for_mines_act_permit_111(
