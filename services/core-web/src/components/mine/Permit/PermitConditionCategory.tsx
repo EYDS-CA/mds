@@ -3,7 +3,7 @@ import RenderField from "@mds/common/components/forms/RenderField";
 import RenderSubmitButton from "@mds/common/components/forms/RenderSubmitButton";
 import { FORM } from "@mds/common/constants/forms";
 import { IPermitConditionCategory } from "@mds/common/interfaces";
-import { Button, Popconfirm, Row, Tooltip, Typography } from "antd";
+import { Button, Form, Popconfirm, Row, Tooltip, Typography } from "antd";
 import React, { useState } from "react";
 import { Field } from "redux-form";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -66,7 +66,9 @@ export const EditPermitConditionCategoryInline = (props: IPermitConditionCategor
   return (
     <FormWrapper scrollOnToggleEdit={false} name={formName} onSubmit={handleSubmit} initialValues={props.category} isEditMode={isEditMode}>
       <Row className="flex" style={{ gap: '0.5em' }}>
-        <Field name="step" component={RenderField} required={true} validate={[required]} />
+        <Form.Item style={{ marginRight: 0, maxWidth: '40px' }}>
+          <Field name="step" component={RenderField} required={true} validate={[required]} style={{ maxWidth: '100px' }} />
+        </Form.Item>
         <PermitConditionCategorySelector showLabel={false} />
         <Button
           className="icon-button-container"
