@@ -67,7 +67,7 @@ export const EditPermitConditionCategoryInline = (props: IPermitConditionCategor
     <FormWrapper scrollOnToggleEdit={false} name={formName} onSubmit={handleSubmit} initialValues={props.category} isEditMode={isEditMode}>
       <Row className="flex" style={{ gap: '0.5em' }}>
         <Form.Item style={{ marginRight: 0, maxWidth: '40px' }}>
-          <Field name="step" component={RenderField} required={true} validate={[required]} style={{ maxWidth: '100px' }} />
+          <Field name="step" component={RenderField} required={true} validate={[required]} />
         </Form.Item>
         <PermitConditionCategorySelector showLabel={false} />
         <Button
