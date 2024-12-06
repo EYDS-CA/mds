@@ -27,11 +27,13 @@ interface PermitConditionLayerProps {
   isExpanded?: boolean;
   setParentExpand?: () => void;
   userCanEdit?: boolean;
+  conditionSelected?: (condition: IPermitCondition) => void;
 }
 
 const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
   condition,
   isExpanded,
+  conditionSelected,
   level = 0,
   setParentExpand = () => { },
   userCanEdit = false,
@@ -65,6 +67,10 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
       event.stopPropagation();
       setParentExpand();
       setIsEditMode(true);
+    }
+
+    if (conditionSelected) {
+      conditionSelected(condition);
     }
   };
 
@@ -105,6 +111,8 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
       <div className={expandClass}>
         <p>
           {condition.step} {condition.condition}
+
+          {condition.mineReportPermitRequirement ? <FontAwesomeIcon icon={faClipboard} className="margin-medium--left" style={{ color: "red" }} /> : null}
         </p>
         {sectionEdit && canEditPermitConditions && (
           <Row justify="space-between" align="middle">
@@ -208,6 +216,7 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
                 level={level + 1}
                 setParentExpand={handleSetParentExpand}
                 userCanEdit={userCanEdit}
+                conditionSelected={conditionSelected}
               />
             </div>
           );

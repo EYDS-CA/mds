@@ -1,12 +1,11 @@
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.schema import FetchedValue
-from sqlalchemy.ext.hybrid import hybrid_property
-
-from app.api.utils.models_mixins import Base, AuditMixin
+from app.api.utils.models_mixins import AuditMixin, Base
 from app.extensions import db
+from dateutil.relativedelta import relativedelta
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.schema import FetchedValue
 
 
 class MineReportDefinition(Base, AuditMixin):
@@ -14,7 +13,8 @@ class MineReportDefinition(Base, AuditMixin):
     mine_report_definition_id = db.Column(
         db.Integer, primary_key=True, server_default=FetchedValue())
     mine_report_definition_guid = db.Column(UUID(as_uuid=True), nullable=False)
-    report_name = db.Column(db.String, nullable=False)
+    report_name = db.Column(db.String(255), nullable=True)
+    
     description = db.Column(db.String, nullable=False)
     due_date_period_months = db.Column(db.Integer, nullable=False)
     mine_report_due_date_type = db.Column(

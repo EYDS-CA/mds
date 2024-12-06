@@ -6,6 +6,18 @@ export interface IPermitConditionCategory {
   display_order: number;
   step: string;
 }
+
+interface IBoundingBox {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+export interface IPermitConditionMeta {
+  page: number;
+  role: string;
+  bounding_box?: IBoundingBox;
+}
 export interface IPermitCondition {
   permit_condition_id: number;
   permit_amendment_id: number;
@@ -19,4 +31,5 @@ export interface IPermitCondition {
   stepPath?: string;
   display_order: number;
   mineReportPermitRequirement?: IMineReportPermitRequirement;
+  meta?: IPermitConditionMeta
 }

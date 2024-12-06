@@ -5,14 +5,18 @@ from app.api.mines.permits.permit.models.permit import Permit
 from app.api.utils.include.user_info import User
 from app.extensions import db
 from flask import current_app
+from flask.cli import with_appcontext
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy.inspection import inspect
 from tests.factories import (
+    FACTORY_LIST,
     MineFactory,
     MinePartyAppointmentFactory,
     MinespaceSubscriptionFactory,
     MinespaceUserFactory,
     NOWApplicationIdentityFactory,
     NOWSubmissionFactory,
+    get_factory_class,
 )
 
 from .cli_commands.generate_history_table_migration import (
@@ -20,6 +24,17 @@ from .cli_commands.generate_history_table_migration import (
     generate_table_migration,
 )
 
+
+def add_dynamic_options(command):
+
+    from sqlalchemy import inspect
+    for factory in FACTORY_LIST:
+        factory_class = get_factory_class(factory.__name__)
+        if factory_class and hasattr(factory_class._meta, 'model') and factory_class._meta.model:
+            mapper = inspect(factory_class._meta.model)
+            for field in mapper.columns.keys():
+                command = click.option(f'--{field}')(command)
+    return command
 
 def register_commands(app):
 
@@ -134,7 +149,8 @@ def register_commands(app):
     def notify_and_update_expired_party_appointments():
         from app import auth
         from app.api.parties.party_appt import (
-            notify_and_update_expired_party_appointments, )
+            notify_and_update_expired_party_appointments,
+        )
         auth.apply_security = False
 
         with current_app.app_context():
@@ -146,7 +162,8 @@ def register_commands(app):
     def revoke_mines_act_permits_for_permit(credential_exchange_id, permit_guid):
         from app import auth
         from app.api.verifiable_credentials.manager import (
-            revoke_all_credentials_for_permit, )
+            revoke_all_credentials_for_permit,
+        )
         auth.apply_security = False
         with current_app.app_context():
             permit = Permit.query.unbound_unsafe().filter_by(permit_guid=permit_guid).first()
@@ -158,7 +175,8 @@ def register_commands(app):
     def process_all_untp_map_for_orgbook():
         from app import auth
         from app.api.verifiable_credentials.manager import (
-            process_all_untp_map_for_orgbook, )
+            process_all_untp_map_for_orgbook,
+        )
         auth.apply_security = False
         with current_app.app_context() as app:
             result = process_all_untp_map_for_orgbook.apply_async()
@@ -168,7 +186,8 @@ def register_commands(app):
     def forward_all_pending_untp_vc_to_orgbook():
         from app import auth
         from app.api.verifiable_credentials.manager import (
-            forward_all_pending_untp_vc_to_orgbook, )
+            forward_all_pending_untp_vc_to_orgbook,
+        )
         auth.apply_security = False
         with current_app.app_context():
             result = forward_all_pending_untp_vc_to_orgbook.apply_async()
@@ -178,7 +197,8 @@ def register_commands(app):
     def push_untp_map_data_to_publisher():
         from app import auth
         from app.api.verifiable_credentials.manager import (
-            push_untp_map_data_to_publisher, )
+            push_untp_map_data_to_publisher,
+        )
         auth.apply_security = False
         with current_app.app_context():
             result = push_untp_map_data_to_publisher.apply_async()
@@ -188,8 +208,7 @@ def register_commands(app):
     @click.argument('live', required=False, default=False)
     def cleanup_untp_map_data_failures(live: bool = False):
         from app import auth
-        from app.api.verifiable_credentials.manager import (
-            VerifiableCredentialManager, )
+        from app.api.verifiable_credentials.manager import VerifiableCredentialManager
         auth.apply_security = False
         with current_app.app_context():
             if not live:
@@ -225,3 +244,40 @@ def register_commands(app):
             flask generate_table_migration mine_tailings_storage_facility
         """
         generate_table_migration(table)
+
+
+
+
+    @app.cli.command('createentity')
+    @click.argument('model_name', required=False)
+    @click.option('--help', '-h', is_flag=True, help='List all available factories')
+    @add_dynamic_options
+    def createentity(model_name, help, **params):
+        """Create a database record using the specified factory.
+        
+        Example usage:
+        flask createentity MineFactory --mine_name="Test Mine" --mine_no="BC12345"
+        """
+        if help:
+
+            if not model_name:
+                click.echo("Usage: flask createentity [MODEL_NAME] [OPTIONS]")
+                click.echo("Available MODEL_NAME:")
+                for factory in FACTORY_LIST:
+                    click.echo(f" - {factory.__name__}")
+                return
+            else:
+                factory_class = get_factory_class(model_name)
+                if factory_class and hasattr(factory_class._meta, 'model') and factory_class._meta.model:
+                    mapper = inspect(factory_class._meta.model)
+                    click.echo(f"\nAvailable options for {model_name}:")
+                    for field in mapper.columns.keys():
+                        click.echo(f" --{field}")
+                return
+
+
+        from app.cli_commands import create_seed_data
+        with app.app_context():
+            filtered_params = {k: v for k, v in params.items() if v is not None}
+            create_seed_data.create_factory_record(model_name, filtered_params)
+        # create_seed_data.create_factory_record(model_name, params)

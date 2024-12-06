@@ -75,7 +75,7 @@ def permit_condition_pipeline():
     )
 
     temperature = 0.7
-    max_tokens = 4096
+    max_tokens = 16384
 
     llm = CachedAzureOpenAIChatGenerator(
         azure_endpoint=base_url,
@@ -144,7 +144,7 @@ def permit_condition_gpt_pipeline():
     )
 
     temperature = 0.7
-    max_tokens = 4096
+    max_tokens = 16384
 
     llm = CachedAzureOpenAIChatGenerator(
         azure_endpoint=base_url,

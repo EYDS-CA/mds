@@ -16,6 +16,8 @@ user_prompt_meta_questions: |
   "frequency": Frequency of the report - "Yearly", "Monthly", "Daily", "Weekly", "Bi-weekly", "Quarterly", "Semi-annually", "Annually", "Bi-annually", "As needed", "Other" (type: string)
   "mention_chief_inspector": Does this paragraph mention the Chief Inspector? (type: boolean)
   "mention_chief_permitting_officer": Does this paragraph mention the Chief Permitting Officer? (type: boolean)
+  "report_name": Name of the report mentioned (if found) (type: string)
+
 
   Output should be a json structured as follows:
   {

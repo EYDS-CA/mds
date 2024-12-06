@@ -40,6 +40,7 @@ import { uniqBy } from "lodash";
 import { createPermitAmendmentConditionCategory, deletePermitAmendmentConditionCategory, updatePermitAmendmentConditionCategory } from "@mds/common/redux/actionCreators/permitActionCreator";
 import { EditPermitConditionCategoryInline } from "./PermitConditionCategory";
 import { searchConditionCategories } from "@mds/common/redux/slices/permitConditionCategorySlice";
+import { PreviewPermitAmendmentDocument } from "./PreviewPermitAmendmentDocument";
 
 const { Title } = Typography;
 
@@ -59,6 +60,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
   const canEditPermitConditions = isFeatureEnabled(Feature.MODIFY_PERMIT_CONDITIONS) && userCanEdit;
   const { id: mineGuid, permitGuid } = useParams<{ id: string; permitGuid: string, mineGuid: string }>();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedCondition, setSelectedCondition] = useState<IPermitCondition>(null);
 
   const mineReportPermitRequirements: IMineReportPermitRequirement[] = useSelector(
     getMineReportPermitRequirements(permitGuid)
@@ -251,38 +253,40 @@ const PermitConditions: FC<PermitConditionProps> = ({
             </Title>
           </Col>
 
-          <Col>
-            <Row gutter={10}>
-              <Col>
-                <CoreButton
-                  disabled={showLoading}
-                  type="tertiary"
-                  className="fa-icon-container"
-                  icon={<FontAwesomeIcon icon={isExpanded ? faArrowsToLine : faArrowsFromLine} />}
-                  onClick={() => setIsExpanded(!isExpanded)}
-                >
-                  {isExpanded ? "Collapse" : "Expand"} All Conditions
-                </CoreButton>
-              </Col>
-              <Col>
-                <CoreButton type="tertiary" icon={<FileOutlined />} disabled={showLoading}>
-                  Open Permit in Document Viewer
-                </CoreButton>
-              </Col>
-            </Row>
-          </Col>
-
-          <Col>
-            <CoreButton
-              type="tertiary"
-              className="fa-icon-container"
-              disabled={showLoading}
-              icon={<FontAwesomeIcon icon={faBarsStaggered} />}
-            >
-              Reorder
-            </CoreButton>
-          </Col>
           <Col span={24}>
+            <Col>
+              <Row gutter={10}>
+                <Col>
+                  <CoreButton
+                    disabled={showLoading}
+                    type="tertiary"
+                    className="fa-icon-container"
+                    icon={<FontAwesomeIcon icon={isExpanded ? faArrowsToLine : faArrowsFromLine} />}
+                    onClick={() => setIsExpanded(!isExpanded)}
+                  >
+                    {isExpanded ? "Collapse" : "Expand"} All Conditions
+                  </CoreButton>
+                </Col>
+                <Col>
+                  <CoreButton type="tertiary" icon={<FileOutlined />} disabled={showLoading}>
+                    Open Permit in Document Viewer
+                  </CoreButton>
+                </Col>
+              </Row>
+            </Col>
+
+            <Col>
+              <CoreButton
+                type="tertiary"
+                className="fa-icon-container"
+                disabled={showLoading}
+                icon={<FontAwesomeIcon icon={faBarsStaggered} />}
+              >
+                Reorder
+              </CoreButton>
+            </Col>
+          </Col>
+          <Col span={12}>
             <div className="core-page-content">
               <Row gutter={[16, 16]}>
                 {
@@ -326,7 +330,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
                       </Col>
                       {category.conditions.map((sc) => (
                         <Col span={24} key={sc.permit_condition_id} className="fade-in">
-                          <PermitConditionLayer condition={sc} isExpanded={isExpanded} userCanEdit={userCanEdit} />
+                          <PermitConditionLayer condition={sc} isExpanded={isExpanded} userCanEdit={userCanEdit} conditionSelected={setSelectedCondition} />
                         </Col>
                       ))}
                       {conditionsWithRequirements?.length > 0 && (
@@ -361,9 +365,12 @@ const PermitConditions: FC<PermitConditionProps> = ({
               </Row>
             </div>
           </Col>
-        </Row>
+          <Col span={12}>
+            <PreviewPermitAmendmentDocument selectedCondition={selectedCondition} amendment={latestAmendment} documentGuid={permitExtraction?.permit_amendment_document_guid} />
+          </Col>
+        </Row >
       }>
-    </ScrollSidePageWrapper>
+    </ScrollSidePageWrapper >
   );
 };
 

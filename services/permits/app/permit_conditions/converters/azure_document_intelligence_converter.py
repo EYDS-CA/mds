@@ -109,6 +109,7 @@ class AzureDocumentIntelligenceConverter:
                 "left": left,
             },
             "role": p.role,
+            "page": p.bounding_regions[0].page_number,
         }
 
         return Document(content=json.dumps(content, indent=None), meta=meta)
