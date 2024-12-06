@@ -1,6 +1,7 @@
 from enum import Enum
-from flagsmith import Flagsmith
+
 from app.config import Config
+from flagsmith import Flagsmith
 from flask import current_app
 
 

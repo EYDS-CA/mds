@@ -1,13 +1,16 @@
-from sqlalchemy import desc, or_, func
-from app.extensions import db
 import json
-from app.api.mines.mine.models.mine import Mine
-from app.api.parties.party.models.party import Party
-from app.api.mines.permits.permit.models.permit import Permit
+
 from app.api.mines.documents.models.mine_document import MineDocument
-from app.api.mines.permits.permit_amendment.models.permit_amendment_document import PermitAmendmentDocument
+from app.api.mines.mine.models.mine import Mine
+from app.api.mines.permits.permit.models.permit import Permit
+from app.api.mines.permits.permit_amendment.models.permit_amendment_document import (
+    PermitAmendmentDocument,
+)
+from app.api.parties.party.models.party import Party
 from app.api.search.search.permit_search_service import PermitSearchService
-from app.api.utils.feature_flag import is_feature_enabled, Feature
+from app.api.utils.feature_flag import Feature, is_feature_enabled
+from app.extensions import db
+from sqlalchemy import desc, func, or_
 
 common_search_targets = {
     'mine': {
