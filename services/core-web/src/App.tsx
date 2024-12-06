@@ -13,7 +13,7 @@ import { SystemFlagEnum } from "@mds/common";
 export const store = getStore();
 
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type CoreDispatch = typeof store.dispatch;
 
 export const useKey = (test: (e: KeyboardEvent) => boolean, ref) => {
   useEffect(() => {

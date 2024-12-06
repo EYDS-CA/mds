@@ -6,7 +6,7 @@ from app.api.utils.list_lettering_helpers import num_to_letter, num_to_roman
 from app.api.utils.models_mixins import AuditMixin, Base, SoftDeleteMixin
 from app.extensions import db
 from marshmallow import fields, validate
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, validates
 from sqlalchemy.schema import FetchedValue
@@ -40,6 +40,9 @@ class PermitConditions(SoftDeleteMixin, AuditMixin, Base):
     parent_permit_condition_id = db.Column(db.Integer,
                                            db.ForeignKey('permit_conditions.permit_condition_id'))
     display_order = db.Column(db.Integer, nullable=False)
+
+    meta = db.Column(JSONB(astext_type=db.Text()), nullable=True)
+
     _step = db.Column('step', db.String, nullable=True)
 
     __versioned__ = {}

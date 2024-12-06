@@ -14,7 +14,11 @@ from app.api.mines.permits.permit_conditions.models.permit_conditions import (
 from app.api.mines.permits.permit_extraction.models.permit_extraction_task import (
     PermitExtractionTask,
 )
+from app.api.mines.reports.models.mine_report_permit_requirement import (
+    MineReportPermitRequirement,
+)
 from app.extensions import db
+from dateutil.parser import parse
 from flask import current_app
 
 from .models.permit_condition_result import (
@@ -41,64 +45,68 @@ def create_permit_conditions_from_task(task: PermitExtractionTask):
     result = task.task_result
     last_condition_id_by_hierarchy = {}
     current_category = None
+    try:
+        result = CreatePermitConditionsResult.model_validate(result)
 
-    result = CreatePermitConditionsResult.model_validate(result)
+        has_category = any([condition.is_top_level_section for condition in result.conditions])
 
-    has_category = any([condition.is_top_level_section for condition in result.conditions])
-
-    conditions = result.conditions
-    if not has_category:
-        top_level_section = PermitConditionResult(
-            section='A',
-            condition_text=DEFAULT_CATEGORY_TEXT
-        )
-        for c in conditions:
-            c.set_section(top_level_section)
-        conditions = [top_level_section] + conditions
-
-    num_categories = 0
-
-    default_section = None
-
-    for idx, condition in enumerate(conditions):
-        if condition.is_top_level_section:        
-            section_category = _create_permit_condition_category(
-                condition=condition,
-                permit_amendment=task.permit_amendment,
-                display_order=num_categories,
-                step=condition.step
+        conditions = result.conditions
+        if not has_category:
+            top_level_section = PermitConditionResult(
+                section='A',
+                condition_text=DEFAULT_CATEGORY_TEXT
             )
-            if condition.condition_text == DEFAULT_CATEGORY_TEXT:
-                default_section = section_category
-            current_category = section_category
-            num_categories += 1
-        else:            
-            parent = _determine_parent(condition, last_condition_id_by_hierarchy)
-            type_code = _map_condition_to_type_code(condition)
+            for c in conditions:
+                c.set_section(top_level_section)
+            conditions = [top_level_section] + conditions
 
-            title_cond = None
+        num_categories = 0
 
-            if not current_category and not default_section:
-                default_section = _create_permit_condition_category(
-                    condition=PermitConditionResult(
-                        section='A',
-                        condition_text=DEFAULT_CATEGORY_TEXT
-                    ),
+        default_section = None
+
+        for idx, condition in enumerate(conditions):
+            if condition.is_top_level_section:        
+                section_category = _create_permit_condition_category(
+                    condition=condition,
                     permit_amendment=task.permit_amendment,
                     display_order=num_categories,
-                    step='A'
+                    step=condition.step
                 )
+                if condition.condition_text == DEFAULT_CATEGORY_TEXT:
+                    default_section = section_category
+                current_category = section_category
+                num_categories += 1
+            else:            
+                parent = _determine_parent(condition, last_condition_id_by_hierarchy)
+                type_code = _map_condition_to_type_code(condition)
 
-            category_code = current_category or default_section
-            if condition.condition_title:
-                title_cond = _create_title_condition(task, category_code, condition, parent, idx, type_code)
+                title_cond = None
 
-            parent_condition_id = _get_parent_condition_id(title_cond, parent)
-            cond = _create_permit_condition(task, category_code, condition, parent_condition_id, idx, type_code)
+                if not current_category and not default_section:
+                    default_section = _create_permit_condition_category(
+                        condition=PermitConditionResult(
+                            section='A',
+                            condition_text=DEFAULT_CATEGORY_TEXT
+                        ),
+                        permit_amendment=task.permit_amendment,
+                        display_order=num_categories,
+                        step='A'
+                    )
 
-            hierarchy_key = ".".join(condition.numbering_structure)
-            last_condition_id_by_hierarchy[hierarchy_key] = cond
-    db.session.commit()
+                category_code = current_category or default_section
+                if condition.condition_title:
+                    title_cond = _create_title_condition(task, category_code, condition, parent, idx, type_code)
+
+                parent_condition_id = _get_parent_condition_id(title_cond, parent)
+                cond = _create_permit_condition(task, category_code, condition, parent_condition_id, idx, type_code)
+
+                hierarchy_key = ".".join(condition.numbering_structure)
+                last_condition_id_by_hierarchy[hierarchy_key] = cond
+    
+        db.session.commit()
+    except:
+        db.session.rollback()
+        raise
 
     
 
@@ -126,6 +134,7 @@ def _create_title_condition(task, current_category, condition, parent, idx, type
         condition_type_code=type_code,
         parent_permit_condition_id=parent.permit_condition_id if parent else None,
         display_order=idx,
+        meta=condition.meta,
         _step=condition.step,
     )
 
@@ -151,13 +160,99 @@ def _create_permit_condition(task, current_category, condition, parent_condition
         condition_type_code=type_code,
         parent_permit_condition_id=parent_condition_id,
         display_order=idx,
+        meta=condition.meta,
         _step=condition.step if not condition.condition_title else '', # If the condition has a title, the parent is the title condition, which has the numbering associated with it already
     )
     db.session.add(condition)
+
     db.session.flush()  # This assigns an ID to cond without committing the transaction
+
+    report_requirement = _create_permit_condition_report_requirement(task, condition, condition.permit_condition_id)
+
+    if report_requirement:
+        db.session.add(report_requirement)
+        db.session.flush()
 
     return condition
 
+def _create_permit_condition_report_requirement(task, condition: PermitConditionResult, condition_id) -> Optional[MineReportPermitRequirement]:
+    meta = condition.meta or {}
+    questions = meta.get('questions', [])
+
+    # Initialize variables
+    require_report = False
+    recurring = False
+    frequency = None
+    mention_chief_inspector = False
+    mention_chief_permitting_officer = False
+    initial_due_date = None
+    report_name = None
+
+    # Extract answers from the questions
+    for q in questions:
+        key = q.get('question_key')
+        answer = q.get('answer')
+        if key == 'require_report':
+            require_report = answer
+        elif key == 'due_date':
+            initial_due_date = answer  # Parse date if necessary
+        elif key == 'recurring':
+            recurring = answer
+        elif key == 'frequency':
+            frequency = answer
+        elif key == 'mention_chief_inspector':
+            mention_chief_inspector = answer
+        elif key == 'mention_chief_permitting_officer':
+            mention_chief_permitting_officer = answer
+        elif key == 'report_name':
+            report_name = answer
+
+    if not require_report:
+        return None
+    
+    if initial_due_date:
+        try:
+            initial_due_date = parse(initial_due_date)
+        except ValueError:
+            current_app.logger.error(f"Could not parse due date for condition {condition_id}: {initial_due_date}")
+            initial_due_date = None
+
+    # Determine cim_or_cpo based on mentions
+    cim_or_cpo = None
+    if mention_chief_inspector and mention_chief_permitting_officer:
+        cim_or_cpo = 'BOTH'
+    elif mention_chief_inspector:
+        cim_or_cpo = 'CIM'
+    elif mention_chief_permitting_officer:
+        cim_or_cpo = 'CPO'
+
+    # Calculate due_date_period_months based on frequency
+    due_date_period_months = None
+    if recurring and frequency:
+        frequency_mapping = {
+            'daily': 1 / 30,
+            'weekly': 1 / 4,
+            'monthly': 1,
+            'quarterly': 3,
+            'semi-annual': 6,
+            'annual': 12,
+            'biennial': 24,
+            'triennial': 36,
+        }
+        due_date_period_months = frequency_mapping.get(frequency.lower())
+
+    # Create the MineReportPermitRequirement
+    mine_report_permit_requirement = MineReportPermitRequirement(
+        report_name=report_name,
+        permit_condition_id=condition_id,
+        permit_amendment_id=task.permit_amendment.permit_amendment_id,
+        cim_or_cpo=cim_or_cpo,
+        due_date_period_months=due_date_period_months or 0,
+        initial_due_date=initial_due_date,
+        ministry_recipient=None,  # Adjust as needed
+    )
+
+    return mine_report_permit_requirement
 
 def _determine_parent(condition: PermitConditionResult, last_condition_id_by_number_structure) -> Optional[PermitConditionResult]:
     """

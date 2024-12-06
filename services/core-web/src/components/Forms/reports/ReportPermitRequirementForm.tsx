@@ -24,6 +24,7 @@ import RenderGroupCheckbox, {
 } from "@mds/common/components/forms/RenderGroupCheckbox";
 import { getLatestAmendmentByPermitGuid } from "@mds/common/redux/selectors/permitSelectors";
 import RenderRadioButtons from "@mds/common/components/forms/RenderRadioButtons";
+import { maxLength } from "@common/utils/Validate";
 
 interface ReportPermitRequirementProps {
   onSubmit: (values: Partial<IMineReport>) => void | Promise<void>;
@@ -54,28 +55,38 @@ export const ReportPermitRequirementForm: FC<ReportPermitRequirementProps> = ({
         initialValues={
           mineReportPermitRequirement
             ? {
-                ...mineReportPermitRequirement,
-                stepPath: condition.stepPath,
-                permit_amendment_id: latestPermitAmendment.permit_amendment_id,
-              }
+              ...mineReportPermitRequirement,
+              stepPath: condition.stepPath,
+              permit_amendment_id: latestPermitAmendment.permit_amendment_id,
+            }
             : {
-                mine_report_status_code: MINE_REPORT_SUBMISSION_CODES.NON,
-                stepPath: condition.stepPath,
-                permit_condition_category_code: condition.condition_category_code,
-                permit_condition_type_code: REPORT_TYPE_CODES.PRR,
-                permit_condition_id: condition.permit_condition_id,
-                permit_guid: permitGuid,
-                permit_amendment_id: latestPermitAmendment.permit_amendment_id,
-              }
+              mine_report_status_code: MINE_REPORT_SUBMISSION_CODES.NON,
+              stepPath: condition.stepPath,
+              permit_condition_category_code: condition.condition_category_code,
+              permit_condition_type_code: REPORT_TYPE_CODES.PRR,
+              permit_condition_id: condition.permit_condition_id,
+              permit_guid: permitGuid,
+              permit_amendment_id: latestPermitAmendment.permit_amendment_id,
+            }
         }
       >
         <Row gutter={[16, 16]}>
-          <Col span={24}>
+          <Col span={12}>
             <Field
               name="stepPath"
               label="Condition"
               required
               validate={required}
+              component={RenderField}
+              disabled
+            />
+          </Col>
+          <Col md={12} sm={24}>
+            <Field
+              name="report_name"
+              label="Report Name"
+              required
+              validate={[required, maxLength(512)]}
               component={RenderField}
               disabled
             />
@@ -101,7 +112,6 @@ export const ReportPermitRequirementForm: FC<ReportPermitRequirementProps> = ({
               label="Initial Due Date"
               placeholder="Select date"
               required
-              validate={[required]}
               formatViewDate
               component={RenderDate}
             />

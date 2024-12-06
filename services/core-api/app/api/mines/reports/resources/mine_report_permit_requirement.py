@@ -1,21 +1,23 @@
 from datetime import datetime
 
-from flask import current_app
-from werkzeug.exceptions import NotFound, BadRequest
-
 from app.api.mines.mine.models.mine import Mine
 from app.api.mines.permits.permit.models.permit import Permit
-from app.api.mines.permits.permit_amendment.models.permit_amendment import PermitAmendment
+from app.api.mines.permits.permit_amendment.models.permit_amendment import (
+    PermitAmendment,
+)
 from app.api.mines.permits.permit_conditions.models import PermitConditions
+from app.api.mines.reports.models.mine_report_permit_requirement import (
+    CimOrCpo,
+    MineReportPermitRequirement,
+)
 from app.api.mines.response_models import MINE_REPORT_PERMIT_REQUIREMENT
-from app.api.utils.access_decorators import requires_any_of, EDIT_REPORT
-from app.extensions import api
-
-from flask_restx import Resource
-
-from app.api.mines.reports.models.mine_report_permit_requirement import CimOrCpo, MineReportPermitRequirement
+from app.api.utils.access_decorators import EDIT_REPORT, requires_any_of
 from app.api.utils.custom_reqparser import CustomReqparser
 from app.api.utils.resources_mixins import UserMixin
+from app.extensions import api
+from flask import current_app
+from flask_restx import Resource
+from werkzeug.exceptions import BadRequest, NotFound
 
 
 class MineReportPermitRequirementResource(Resource, UserMixin):
@@ -62,6 +64,7 @@ class MineReportPermitRequirementResource(Resource, UserMixin):
             cim_or_cpo = CimOrCpo(cim_or_cpo)
 
         mine_report_permit_requirement = MineReportPermitRequirement.create(
+            report_name=data.get('report_name'),
             due_date_period_months=data.get('due_date_period_months'),
             initial_due_date=data.get('initial_due_date'),
             cim_or_cpo=cim_or_cpo,
@@ -71,4 +74,3 @@ class MineReportPermitRequirementResource(Resource, UserMixin):
         )
 
         return mine_report_permit_requirement, 201
-

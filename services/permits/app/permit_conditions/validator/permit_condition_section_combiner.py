@@ -1,8 +1,11 @@
+import csv
+import io
 import json
 import logging
 import os
 from typing import List, Optional
 
+import pandas as pd
 from app.permit_conditions.validator.parse_hierarchy import parse_hierarchy
 from app.permit_conditions.validator.permit_condition_model import (
     PermitCondition,
@@ -26,6 +29,7 @@ class PermitConditionSectionCombiner:
 
     @component.output_types(
         conditions=PermitConditions,
+        permit_condition_csv=List[Document],
     )
     def run(self, documents: List[Document]):
         """
@@ -141,8 +145,9 @@ class PermitConditionSectionCombiner:
                         meta=p.get("meta"),
                     )
                 )
+                
 
-        return {"conditions": PermitConditions(conditions=conditions)}
+        return {"conditions": PermitConditions(conditions=conditions), "permit_condition_csv": _create_csv_representation(conditions)}
 
     def _combine_bounding_boxes(self, p, matching_cond):
         matching_cond.meta["bounding_box"]["bottom"] = max(
@@ -161,3 +166,20 @@ class PermitConditionSectionCombiner:
             matching_cond.meta["bounding_box"]["right"],
             p["meta"]["bounding_box"]["right"],
         )
+
+def _create_csv_representation(conditions: List[PermitCondition]) -> List[Document]:
+    jsn = [{"id": c.id, "text": c.formatted_text} for c in conditions]
+
+    content = json.dumps(jsn)
+    jsn = pd.read_json(io.StringIO(content))
+
+
+    cs = jsn.to_csv(
+        index=False,
+        header=True,
+        quoting=csv.QUOTE_ALL,
+        encoding="utf-8",
+        sep=",",
+        columns=["id", "text"],
+    )
+    return [Document(content=cs)]

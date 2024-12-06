@@ -39,7 +39,7 @@ class AzureDocumentIntelligenceConverter:
     """
 
     @component.output_types(
-        documents=List[Document], permit_condition_csv=List[Document]
+        documents=List[Document]
     )
     def run(
         self,
@@ -76,11 +76,8 @@ class AzureDocumentIntelligenceConverter:
 
             docs.append(doc)
 
-        permit_condition_csv = _create_csv_representation(docs)
-
         return {
             "documents": docs,
-            "permit_condition_csv": [Document(content=permit_condition_csv)],
         }
 
     def add_metadata_to_document(self, idx, p):
@@ -112,6 +109,7 @@ class AzureDocumentIntelligenceConverter:
                 "left": left,
             },
             "role": p.role,
+            "page": p.bounding_regions[0].page_number,
         }
 
         return Document(content=json.dumps(content, indent=None), meta=meta)
@@ -149,18 +147,3 @@ class AzureDocumentIntelligenceConverter:
             logger.info("No cache entry found. Quering Azure Document Intelligence")
             result = None
         return result
-
-
-def _create_csv_representation(docs):
-    content = json.dumps([json.loads(doc.content) for doc in docs])
-    jsn = pd.read_json(io.StringIO(content))
-
-    cs = jsn.to_csv(
-        index=False,
-        header=True,
-        quoting=csv.QUOTE_ALL,
-        encoding="utf-8",
-        sep=",",
-        columns=["id", "text"],
-    )
-    return cs

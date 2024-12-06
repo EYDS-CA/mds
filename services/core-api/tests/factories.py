@@ -1,44 +1,110 @@
 import uuid
-from datetime import datetime, timedelta, date, time
-from pytz import timezone, utc
+from datetime import date, datetime, time, timedelta
 from random import randrange
+
 import factory
 import factory.fuzzy
-
+from app.api.activity.models.activity_notification import ActivityNotification
+from app.api.constants import PERMIT_LINKED_CONTACT_TYPES, TSF_ALLOWED_CONTACT_TYPES
 from app.api.dams import Dam
-from app.api.dams.models.dam import DamType, OperatingStatus, ConsequenceClassification
-from app.api.mines.documents.models.mine_document_bundle import MineDocumentBundle
-from app.api.mines.explosives_permit_amendment.models.explosives_permit_amendment import ExplosivesPermitAmendment
-from app.api.mines.reports.models.mine_report_definition_compliance_article_xref import \
-    MineReportDefinitionComplianceArticleXref
-from app.api.mines.reports.models.mine_report_permit_requirement import MineReportPermitRequirement, OfficeDestination
-from app.api.projects.project_link.models.project_link import ProjectLink
-from app.api.projects.project_summary.models.project_summary_ministry_comment import ProjectSummaryMinistryComment
-from app.extensions import db
-from tests.status_code_gen import *
+from app.api.dams.models.dam import ConsequenceClassification, DamType, OperatingStatus
+from app.api.EMLI_contacts.models.EMLI_contact import EMLIContact
+from app.api.EMLI_contacts.models.EMLI_contact_type import EMLIContactType
+from app.api.incidents.models.mine_incident import MineIncident
+from app.api.incidents.models.mine_incident_note import MineIncidentNote
+from app.api.mines.alerts.models.mine_alert import MineAlert
+from app.api.mines.comments.models.mine_comment import MineComment
 from app.api.mines.documents.models.mine_document import MineDocument
+from app.api.mines.documents.models.mine_document_bundle import MineDocumentBundle
+from app.api.mines.explosives_permit.models.explosives_permit import (
+    ExplosivesPermit,
+    ExplosivesPermitMagazine,
+)
+from app.api.mines.explosives_permit_amendment.models.explosives_permit_amendment import (
+    ExplosivesPermitAmendment,
+)
+from app.api.mines.incidents.models.mine_incident_document_xref import (
+    MineIncidentDocumentXref,
+)
 from app.api.mines.mine.models.mine import Mine
 from app.api.mines.mine.models.mine_type import MineType
 from app.api.mines.mine.models.mine_type_detail import MineTypeDetail
 from app.api.mines.mine.models.mine_verified_status import MineVerifiedStatus
-from app.api.incidents.models.mine_incident import MineIncident
-from app.api.incidents.models.mine_incident_note import MineIncidentNote
-from app.api.mines.incidents.models.mine_incident_document_xref import MineIncidentDocumentXref
+from app.api.mines.permits.permit.models.mine_permit_xref import MinePermitXref
+from app.api.mines.permits.permit.models.permit import Permit
+from app.api.mines.permits.permit_amendment.models.permit_amendment import (
+    PermitAmendment,
+)
+from app.api.mines.permits.permit_amendment.models.permit_amendment_document import (
+    PermitAmendmentDocument,
+)
+from app.api.mines.permits.permit_conditions.models.permit_conditions import (
+    PermitConditions,
+)
+from app.api.mines.permits.permit_conditions.models.standard_permit_conditions import (
+    StandardPermitConditions,
+)
+from app.api.mines.reports.models.mine_report import MineReport
+from app.api.mines.reports.models.mine_report_comment import MineReportComment
+from app.api.mines.reports.models.mine_report_definition_compliance_article_xref import (
+    MineReportDefinitionComplianceArticleXref,
+)
+from app.api.mines.reports.models.mine_report_permit_requirement import (
+    MineReportPermitRequirement,
+    OfficeDestination,
+)
+from app.api.mines.reports.models.mine_report_submission import MineReportSubmission
 from app.api.mines.status.models.mine_status import MineStatus
 from app.api.mines.subscription.models.subscription import Subscription
-from app.api.mines.tailings.models.tailings import MineTailingsStorageFacility, StorageLocation, FacilityType, \
-    TailingsStorageFacilityType
+from app.api.mines.tailings.models.tailings import (
+    FacilityType,
+    MineTailingsStorageFacility,
+    StorageLocation,
+    TailingsStorageFacilityType,
+)
+from app.api.notice_of_departure.models.notice_of_departure import (
+    NodStatus,
+    NodType,
+    NoticeOfDeparture,
+)
+from app.api.parties.party.models.address import Address
 from app.api.parties.party.models.party import Party
 from app.api.parties.party.models.party_orgbook_entity import PartyOrgBookEntity
-from app.api.parties.party.models.address import Address
 from app.api.parties.party_appt.models.mine_party_appt import MinePartyAppointment
-from app.api.mines.permits.permit.models.permit import Permit
-from app.api.mines.permits.permit.models.mine_permit_xref import MinePermitXref
-from app.api.mines.permits.permit_amendment.models.permit_amendment import PermitAmendment
-from app.api.mines.permits.permit_conditions.models.permit_conditions import PermitConditions
-from app.api.mines.permits.permit_conditions.models.standard_permit_conditions import StandardPermitConditions
-from app.api.mines.permits.permit_amendment.models.permit_amendment_document import PermitAmendmentDocument
-from app.api.notice_of_departure.models.notice_of_departure import NoticeOfDeparture, NodType, NodStatus
+from app.api.parties.party_appt.models.party_business_role_appt import (
+    PartyBusinessRoleAppointment,
+)
+from app.api.projects.information_requirements_table.models.information_requirements_table import (
+    InformationRequirementsTable,
+)
+from app.api.projects.information_requirements_table.models.information_requirements_table_document_xref import (
+    InformationRequirementsTableDocumentXref,
+)
+from app.api.projects.major_mine_application.models.major_mine_application import (
+    MajorMineApplication,
+)
+from app.api.projects.project.models.project import Project
+from app.api.projects.project_contact.models.project_contact import ProjectContact
+from app.api.projects.project_decision_package.models.project_decision_package import (
+    ProjectDecisionPackage,
+)
+from app.api.projects.project_decision_package.models.project_decision_package_document_xref import (
+    ProjectDecisionPackageDocumentXref,
+)
+from app.api.projects.project_link.models.project_link import ProjectLink
+from app.api.projects.project_summary.models.project_summary import ProjectSummary
+from app.api.projects.project_summary.models.project_summary_authorization import (
+    ProjectSummaryAuthorization,
+)
+from app.api.projects.project_summary.models.project_summary_contact import (
+    ProjectSummaryContact,
+)
+from app.api.projects.project_summary.models.project_summary_document_xref import (
+    ProjectSummaryDocumentXref,
+)
+from app.api.projects.project_summary.models.project_summary_ministry_comment import (
+    ProjectSummaryMinistryComment,
+)
 from app.api.securities.models.bond import Bond
 from app.api.securities.models.reclamation_invoice import ReclamationInvoice
 from app.api.users.core.models.core_user import CoreUser, IdirUserDetail
@@ -46,28 +112,10 @@ from app.api.users.minespace.models.minespace_user import MinespaceUser
 from app.api.users.minespace.models.minespace_user_mine import MinespaceUserMine
 from app.api.variances.models.variance import Variance
 from app.api.variances.models.variance_document_xref import VarianceDocumentXref
-from app.api.parties.party_appt.models.party_business_role_appt import PartyBusinessRoleAppointment
-from app.api.mines.reports.models.mine_report import MineReport
-from app.api.mines.reports.models.mine_report_submission import MineReportSubmission
-from app.api.mines.reports.models.mine_report_comment import MineReportComment
-from app.api.mines.comments.models.mine_comment import MineComment
-from app.api.constants import PERMIT_LINKED_CONTACT_TYPES, TSF_ALLOWED_CONTACT_TYPES
-from app.api.mines.explosives_permit.models.explosives_permit import ExplosivesPermit, ExplosivesPermitMagazine
-from app.api.projects.project.models.project import Project
-from app.api.projects.project_contact.models.project_contact import ProjectContact
-from app.api.projects.project_summary.models.project_summary import ProjectSummary
-from app.api.projects.project_summary.models.project_summary_contact import ProjectSummaryContact
-from app.api.projects.project_summary.models.project_summary_authorization import ProjectSummaryAuthorization
-from app.api.projects.project_summary.models.project_summary_document_xref import ProjectSummaryDocumentXref
-from app.api.projects.information_requirements_table.models.information_requirements_table import InformationRequirementsTable
-from app.api.projects.information_requirements_table.models.information_requirements_table_document_xref import InformationRequirementsTableDocumentXref
-from app.api.projects.project_decision_package.models.project_decision_package_document_xref import ProjectDecisionPackageDocumentXref
-from app.api.projects.major_mine_application.models.major_mine_application import MajorMineApplication
-from app.api.EMLI_contacts.models.EMLI_contact_type import EMLIContactType
-from app.api.EMLI_contacts.models.EMLI_contact import EMLIContact
-from app.api.activity.models.activity_notification import ActivityNotification
-from app.api.projects.project_decision_package.models.project_decision_package import ProjectDecisionPackage
-from app.api.mines.alerts.models.mine_alert import MineAlert
+from app.extensions import db
+from flask import current_app
+from pytz import timezone, utc
+from tests.status_code_gen import *
 
 GUID = factory.LazyFunction(uuid.uuid4)
 TODAY = factory.LazyFunction(datetime.now)
@@ -101,6 +149,13 @@ class FactoryRegistry:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         FACTORY_LIST.append(cls)
+
+
+def get_factory_class(factory_name):
+    """Get factory class by name from factories module"""
+    # Get all available factory classes
+    factories = {f.__name__.split('.')[-1]: f for f in FACTORY_LIST}
+    return factories.get(f"{factory_name}")
 
 
 class BaseFactory(factory.alchemy.SQLAlchemyModelFactory, FactoryRegistry):
