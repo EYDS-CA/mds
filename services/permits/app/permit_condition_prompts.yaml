@@ -6,9 +6,9 @@ permit_document_prompt_meta_questions: |
   {{documents[0].content}}
 
 user_prompt_meta_questions: |
-  Your task is to answer questions for each of the paragraphs in the input text and return the answers in a JSON format.
+  You are given a list of sections extracted from a mining permit. These sections may have a reporting requirement. Your task is to identify the sections that have a reporting requirement. A reporting requirement means that a report is mentioned that needs submission, such as an annual report, an entity needs to be notified when something happens, or something needs to be submitted to an entity.
 
-  You will be given a mining permit and should answer the questions for each condition of the text in the text. The questions are as follows:
+  For each of the identified sections that require a report you need to extract the following information:
 
   "require_report": Does this paragraph require a report to be submitted? (type: boolean)
   "due_date": When is the report due date? (type: date)
@@ -33,13 +33,6 @@ user_prompt_meta_questions: |
       ...
     ]
   }
-
-  The input is a csv file with the following columns. The values in each column are quoted with ""
-  - id: id of the paragraph
-  - text: The text of the paragraph
-
-  Each line in the input should have a corresponding output if an answer to any of the questions is found.
-
   Very Important: Output the full json structure without code blocks or other text. Do not output any other explanation or questions that is not in the json format.
 
   Here's the CSV input (delimited by ---------)

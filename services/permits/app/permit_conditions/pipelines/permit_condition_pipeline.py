@@ -113,7 +113,7 @@ def permit_condition_pipeline():
     index_pipeline.connect("filter_paragraphs", "parse_hierarchy")
 
     index_pipeline.connect(
-        "pdf_converter.permit_condition_csv", "prompt_builder.documents"
+        "parse_hierarchy.permit_condition_csv", "prompt_builder.documents"
     )
     index_pipeline.connect("prompt_builder", "llm")
     index_pipeline.connect("llm", "json_fixer")
