@@ -20,7 +20,9 @@ class PaginatedChatPromptBuilder(ChatPromptBuilder):
     Component that renders chat prompts using Jinja templates for the use
     in further steps of the pipeline.
 
-    This component extends the ChatPromptBuilder component to support pagination of the chat prompts
+    This component extends the ChatPromptBuilder component to support pagination of the chat prompts.
+
+    The output of this component is a list of chat prompt "groups" where each group contains a list of chat prompts related to a subset of the permit conditions.
     """
 
     @component.output_types(data=ChatData)
@@ -65,6 +67,20 @@ class PaginatedChatPromptBuilder(ChatPromptBuilder):
         return {"data": ChatData(prompts, kwargs["documents"])}
 
     def split_conditions(self, conditions: List[PermitCondition]) -> List[List[PermitCondition]]:
+        """
+        Splits a list of permit conditions into smaller groups based on section and paragraph numbers.
+        - A group is created per section
+        - A new group is created when the paragraph number changes and the current group has 30 or more conditions
+        - Conditions within the same section and paragraph are kept together unless the group size limit is reached
+
+        Why? Accuracy of GPT4 seems to decrease for long prompts.
+        Args:
+            conditions (List[PermitCondition]): A list of PermitCondition objects to be grouped
+        Returns:
+            List[List[PermitCondition]]: A list of groups, where each group is a list of PermitCondition objects
+            that share the same section and (usually) the same paragraph number
+        """
+
         grouped_conditions = []
         current_group = []
         current_section = None
