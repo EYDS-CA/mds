@@ -3,14 +3,13 @@ import pickle
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-from haystack import Document
-
 from app.permit_conditions.pipelines.CachedAzureOpenAIChatGenerator import (
     CachedAzureOpenAIChatGenerator,
 )
 from app.permit_conditions.pipelines.chat_data import ChatData
-from haystack.dataclasses import ChatMessage
+from haystack import Document
 from haystack.components.caching import CacheChecker
+from haystack.dataclasses import ChatMessage
 
 logger = MagicMock()
 
@@ -29,7 +28,7 @@ patch.dict(
 
 
 def test_run_with_valid_data():
-    data = ChatData(messages=[ChatMessage.from_user("test_message")], documents=[])
+    data = ChatData(messages=[[ChatMessage.from_user("test_message")]], documents=[])
     generation_kwargs = {}
     expected_reply = ChatMessage(
         content="Mocked reply",
@@ -47,11 +46,11 @@ def test_run_with_valid_data():
         generator = CachedAzureOpenAIChatGenerator()
 
         result = generator.run(data, generation_kwargs)
-        assert result["data"].messages[0].content == expected_reply.content
+        assert result["data"].messages[0][0].content == expected_reply.content
 
 
 def test_run_with_valid_data_multiple_iterations():
-    data = ChatData(messages=[ChatMessage.from_user("test_message")], documents=[])
+    data = ChatData(messages=[[ChatMessage.from_user("test_message")]], documents=[])
     generation_kwargs = {}
 
     # Test a scenario where the response is too long for GPT4 (stops with reason: length) and require
@@ -88,17 +87,17 @@ def test_run_with_valid_data_multiple_iterations():
         chat_response = result["data"].messages[0]
 
         # Response for each continuation request should be concatinated
-        assert chat_response.content == "Mocked replyreply continued"
+        assert chat_response[0].content == "Mocked replyreply continued"
 
         # and the usage tokens should be summed up
-        assert chat_response.meta["usage"]["total_tokens"] == 18
-        assert chat_response.meta["usage"]["completion_tokens"] == 11
-        assert chat_response.meta["usage"]["prompt_tokens"] == 7
+        assert chat_response[0].meta["usage"]["total_tokens"] == 18
+        assert chat_response[0].meta["usage"]["completion_tokens"] == 11
+        assert chat_response[0].meta["usage"]["prompt_tokens"] == 7
 
         # Make sure the second iteration contained the reply from the first iteration
         # and a command to continue the generation
         mock_fetch_result.assert_called_with(
-            data.messages + [expected_reply, ChatMessage.from_user("Your response got cut off. Continue from where you left off.")], {}
+            data.messages[0] + [expected_reply, ChatMessage.from_user("Your response got cut off. Continue from where you left off.")], {}
         )
 
 
@@ -147,7 +146,7 @@ def test_fetch_result_with_cache_hit():
 
                     mock_hash_messages.assert_called_once()
                     mock_cache_checker_instance.run.assert_called_once_with(items=['mock_cache_key'])
-
+                    assert result is not None
                     assert result.content == expected_reply.content
                     assert result.name == expected_reply.name
                     assert result.role == expected_reply.role
@@ -155,3 +154,40 @@ def test_fetch_result_with_cache_hit():
 
                     MockElasticsearchDocumentStore.assert_called_once()
 
+def test_run_with_multiple_message_groups_calls_gpt_for_both():
+    messages1 = [ChatMessage.from_user("test_message_1")]
+    messages2 = [ChatMessage.from_user("test_message_2")] 
+    data = ChatData(messages=[messages1, messages2], documents=[])
+    generation_kwargs = {}
+
+    expected_reply1 = ChatMessage(
+        content="Mocked reply 1",
+        role="assistant",
+        name=None,
+        meta={
+            "usage": {"completion_tokens": 10, "prompt_tokens": 5, "total_tokens": 15},
+            "finish_reason": "stop",
+        },
+    )
+
+    expected_reply2 = ChatMessage(
+        content="Mocked reply 2", 
+        role="assistant",
+        name=None,
+        meta={
+            "usage": {"completion_tokens": 8, "prompt_tokens": 4, "total_tokens": 12},
+            "finish_reason": "stop",
+        },
+    )
+
+    with patch.object(
+            CachedAzureOpenAIChatGenerator,
+            "fetch_result",
+            side_effect=[expected_reply1, expected_reply2],
+    ):
+        generator = CachedAzureOpenAIChatGenerator()
+        result = generator.run(data, generation_kwargs)
+
+        assert len(result["data"].messages) == 2
+        assert result["data"].messages[0][0].content == expected_reply1.content
+        assert result["data"].messages[1][0].content == expected_reply2.content

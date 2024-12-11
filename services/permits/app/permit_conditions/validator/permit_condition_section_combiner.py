@@ -146,7 +146,7 @@ class PermitConditionSectionCombiner:
                 )
                 
 
-        return {"conditions": PermitConditions(conditions=conditions), "permit_condition_csv": _create_csv_representation(conditions)}
+        return {"conditions": PermitConditions(conditions=conditions)}
 
     def _combine_bounding_boxes(self, p, matching_cond):
         matching_cond.meta["bounding_box"]["bottom"] = max(
@@ -165,20 +165,3 @@ class PermitConditionSectionCombiner:
             matching_cond.meta["bounding_box"]["right"],
             p["meta"]["bounding_box"]["right"],
         )
-
-def _create_csv_representation(conditions: List[PermitCondition]) -> List[Document]:
-    jsn = [{"id": c.id, "text": c.formatted_text} for c in conditions]
-
-    content = json.dumps(jsn)
-    jsn = pd.read_json(io.StringIO(content))
-
-
-    cs = jsn.to_csv(
-        index=False,
-        header=True,
-        quoting=csv.QUOTE_ALL,
-        encoding="utf-8",
-        sep=",",
-        columns=["id", "text"],
-    )
-    return [Document(content=cs)]
