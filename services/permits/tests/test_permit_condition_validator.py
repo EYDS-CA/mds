@@ -47,7 +47,7 @@ def test_run_with_invalid_replies():
         messages=[
             [ChatMessage.from_system(invalid_reply_content)],
         ],
-        documents=[]],
+        documents=[],
     )
     with pytest.raises(json.JSONDecodeError):
         validator.run(chat_data)
