@@ -71,7 +71,7 @@ export const ReportPermitRequirementForm: FC<ReportPermitRequirementProps> = ({
         }
       >
         <Row gutter={[16, 16]}>
-          <Col span={12}>
+          <Col span={24}>
             <Field
               name="stepPath"
               label="Condition"
@@ -81,14 +81,12 @@ export const ReportPermitRequirementForm: FC<ReportPermitRequirementProps> = ({
               disabled
             />
           </Col>
-          <Col md={12} sm={24}>
+          <Col span={24}>
             <Field
               name="report_name"
-              label="Report Name"
-              required
-              validate={[required, maxLength(512)]}
+              label="Report Type"
+              validate={[maxLength(512)]}
               component={RenderField}
-              disabled
             />
           </Col>
           <Col span={12}>
@@ -111,7 +109,6 @@ export const ReportPermitRequirementForm: FC<ReportPermitRequirementProps> = ({
               name="initial_due_date"
               label="Initial Due Date"
               placeholder="Select date"
-              required
               formatViewDate
               component={RenderDate}
             />

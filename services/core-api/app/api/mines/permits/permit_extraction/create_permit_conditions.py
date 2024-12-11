@@ -210,6 +210,9 @@ def _create_permit_condition_report_requirement(task, condition: PermitCondition
     if not require_report:
         return None
     
+    if initial_due_date == '':
+        initial_due_date = None
+
     if initial_due_date:
         try:
             initial_due_date = parse(initial_due_date)
@@ -230,16 +233,32 @@ def _create_permit_condition_report_requirement(task, condition: PermitCondition
     due_date_period_months = None
     if recurring and frequency:
         frequency_mapping = {
-            'daily': 1 / 30,
-            'weekly': 1 / 4,
             'monthly': 1,
+            'per month': 1,
+            'every month': 1,
             'quarterly': 3,
-            'semi-annual': 6,
+            'every quarter': 3,
+            'semiannually': 6,
+            'semiannual': 6,
+            'biannual': 6,
+            'biannualy': 6,
+            'every six months': 6,
+            'twice yearly': 6,
+            'annually': 12,
+            'yearly': 12,
             'annual': 12,
-            'biennial': 24,
-            'triennial': 36,
+            'per year': 12,
+            'every year': 12,
+            'biannually': 24,
+            'biannual': 24,
+            'asneeded': 0,
+            'as needed': 0,
+            'as required': 0,
         }
-        due_date_period_months = frequency_mapping.get(frequency.lower())
+        # Clean frequency string by removing spaces and special characters before lookup
+        frequency = ''.join(e for e in frequency.lower() if e.isalnum() or e.isspace()).strip()
+        frequency = ' '.join(frequency.split())
+        due_date_period_months = frequency_mapping.get(frequency)
 
     # Create the MineReportPermitRequirement
     mine_report_permit_requirement = MineReportPermitRequirement(

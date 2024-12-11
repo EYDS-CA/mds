@@ -28,8 +28,7 @@ class ExtractionIteration(BaseModel):
 class PermitConditionSectionCombiner:
 
     @component.output_types(
-        conditions=PermitConditions,
-        permit_condition_csv=List[Document],
+        conditions=PermitConditions
     )
     def run(self, documents: List[Document]):
         """
