@@ -80,13 +80,10 @@ class PermitConditions(SoftDeleteMixin, AuditMixin, Base):
         # and is used to determine the display format of the step.
         # If not set (for manually added condtitions), we auto-generate the step
         if self._step:
-            # Format the first level with a trailing dot - A. B. C. and the rest with () - (a), (i), (ii)
-            if depth == 0:
-                return f"{self._step}."
-            return f"({self._step})"
-        if self._step == "":
-            return ""
-
+            return self._step
+        if self._step == '':
+            return ''
+    
         step_format = depth % 3
         if step_format == 0:
             return str(self.display_order) + "."
