@@ -21,7 +21,7 @@ import Condition from "@/components/Forms/permits/conditions/Condition";
 import NOWActionWrapper from "@/components/noticeOfWork/NOWActionWrapper";
 import * as Permission from "@/constants/permissions";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
-import { IDraftPermitAmendment } from "@mds/common";
+import { IDraftPermitAmendment } from "@mds/common/interfaces";
 
 interface AddCondtionProps {
   initialValues: any;

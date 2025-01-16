@@ -25,7 +25,7 @@ import {
   wholeNumber,
 } from "@mds/common/redux/utils/Validate";
 import * as Strings from "@mds/common/constants/strings";
-import { USER_ROLES } from "@mds/common";
+import { USER_ROLES } from "@mds/common/constants/environment";
 import { getNoticeOfWorkEditableTypes } from "@mds/common/redux/selectors/noticeOfWorkSelectors";
 import RenderField from "@mds/common/components/forms/RenderField";
 import RenderRadioButtons from "@mds/common/components/forms/RenderRadioButtons";

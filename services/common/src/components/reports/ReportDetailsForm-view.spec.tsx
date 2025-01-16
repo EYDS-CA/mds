@@ -5,8 +5,9 @@ import ReportDetailsForm from "./ReportDetailsForm";
 import { Button } from "antd";
 import { AUTHENTICATION, STATIC_CONTENT } from "@mds/common/constants/reducerTypes";
 import * as MOCK from "@mds/common/tests/mocks/dataMocks";
-import { IMineReportSubmission } from "../..";
-import { SystemFlagEnum, USER_ROLES } from "@mds/common/constants";
+import { SystemFlagEnum } from "@mds/common/constants/enums";
+import { USER_ROLES } from "@mds/common/constants/environment";
+import { IMineReportSubmission } from "@mds/common/interfaces/reports/mineReportSubmission.interface";
 
 const mineReportSubmission = MOCK.MINE_REPORT_SUBMISSIONS[0];
 const initialState = {
@@ -49,7 +50,7 @@ describe("ReportDetailsForm", () => {
               <Button htmlType="submit">Submit</Button>
             </div>
           }
-          handleSubmit={() => {}}
+          handleSubmit={() => { }}
         />
       </ReduxWrapper>
     );

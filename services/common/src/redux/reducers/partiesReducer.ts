@@ -70,13 +70,13 @@ export const partiesReducer = (state = initialState, action) => {
 
       const eorRecords = tsfGuid
         ? action.payload.filter(
-            (p) => p.mine_party_appt_type_code === "EOR" && p.related_guid === tsfGuid
-          )
+          (p) => p.mine_party_appt_type_code === "EOR" && p.related_guid === tsfGuid
+        )
         : [];
       const qfpRecords = tsfGuid
         ? action.payload.filter(
-            (p) => p.mine_party_appt_type_code === "QFP" && p.related_guid === tsfGuid
-          )
+          (p) => p.mine_party_appt_type_code === "QFP" && p.related_guid === tsfGuid
+        )
         : [];
 
       return {

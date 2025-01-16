@@ -4,7 +4,7 @@ import { formatDate } from "@mds/common/redux/utils/helpers";
 import * as Strings from "@/constants/strings";
 import { CalendarOutlined, MailOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons";
 import { AntdIconProps } from "@ant-design/icons/lib/components/AntdIcon";
-import { IPermitPartyRelationship } from "@mds/common";
+import { IPermitPartyRelationship } from "@mds/common/interfaces";
 
 interface ContactCardRowProps {
   Icon: React.ComponentType<AntdIconProps>;

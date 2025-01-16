@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import { Badge, TablePaginationConfig } from "antd";
 import { formatComplianceCodeValueOrLabel } from "@mds/common/redux/utils/helpers";
 import { getMineReportDefinitionHash } from "@mds/common/redux/selectors/staticContentSelectors";
-import { IMineReport, MINE_REPORT_STATUS_HASH, MINE_REPORT_SUBMISSION_CODES } from "@mds/common";
 import {
   renderActionsColumn,
   renderTextColumn,
@@ -11,6 +10,9 @@ import {
 import EyeOutlined from "@ant-design/icons/EyeOutlined";
 import { ColumnsType } from "antd/es/table";
 import CoreTable from "@mds/common/components/common/CoreTable";
+import { MINE_REPORT_SUBMISSION_CODES } from "@mds/common/constants/enums";
+import { IMineReport } from "@mds/common/interfaces/reports/mineReport.interface";
+import { MINE_REPORT_STATUS_HASH } from "@mds/common/constants/strings";
 
 interface ReportsTableProps {
   mineReports: IMineReport[];

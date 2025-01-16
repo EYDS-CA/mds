@@ -26,7 +26,7 @@ import {
   INodDocumentPayload,
   INoticeOfDeparture,
   INoDPermit,
-} from "@mds/common";
+} from "@mds/common/interfaces";
 import { AxiosResponse } from "axios";
 import { useDispatch } from "react-redux";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";

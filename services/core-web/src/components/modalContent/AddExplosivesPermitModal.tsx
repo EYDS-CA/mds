@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { IOption, IGroupedDropdownList, IExplosivesPermitDocument } from "@mds/common";
+import { IOption, IGroupedDropdownList, IExplosivesPermitDocument } from "@mds/common/interfaces";
 import ExplosivesPermitFormNew from "@/components/Forms/ExplosivesPermit/ExplosivesPermitFormNew";
 
 interface ExplosivesPermitModalProps {

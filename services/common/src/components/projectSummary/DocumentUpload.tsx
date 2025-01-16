@@ -10,11 +10,6 @@ import {
   uploadedByColumn,
 } from "../documents/DocumentColumns";
 import ProjectSummaryFileUpload from "./ProjectSummaryFileUpload";
-import {
-  ENVIRONMENT,
-  FORM,
-  PROJECT_SUMMARY_DOCUMENT_TYPE_CODE,
-} from "@mds/common/constants";
 import { postNewDocumentVersion } from "@mds/common/redux/actionCreators/documentActionCreator";
 import LinkButton from "../common/LinkButton";
 import * as API from "@mds/common/constants/API";
@@ -23,8 +18,12 @@ import AddSpatialDocumentsModal from "../documents/spatial/AddSpatialDocumentsMo
 import SpatialDocumentTable from "../documents/spatial/SpatialDocumentTable";
 import { FormContext } from "../forms/FormWrapper";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
-import { Feature, IProjectSummaryForm } from "../..";
 import { removeDocumentFromProjectSummary } from "@mds/common/redux/actionCreators/projectActionCreator";
+import { IProjectSummaryForm } from "@mds/common/interfaces";
+import { Feature } from "@mds/common/utils";
+import { PROJECT_SUMMARY_DOCUMENT_TYPE_CODE } from "@mds/common/constants/strings";
+import { FORM } from "@mds/common/constants/forms";
+import { ENVIRONMENT } from "@mds/common/constants/environment";
 
 const RenderOldDocuments = ({
   documents,
@@ -173,16 +172,16 @@ export const DocumentUpload: FC<DocumentUploadProps> = ({ docFieldsDisabled, del
   };
 
   const onDeleteDocument = (event, key: string) => {
-    const document = documents.find( (doc) => key === doc.mine_document_guid);
-    if(document){
+    const document = documents.find((doc) => key === doc.mine_document_guid);
+    if (document) {
       dispatch(
         removeDocumentFromProjectSummary(
           project_guid,
           project_summary_guid,
           document.mine_document_guid
-      )).then( () => {
-        removeFile(document);
-      })
+        )).then(() => {
+          removeFile(document);
+        })
     }
   }
 

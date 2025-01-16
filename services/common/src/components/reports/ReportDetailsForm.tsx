@@ -32,16 +32,9 @@ import {
   IMineReportSubmission,
   IParty,
   IPartyAppt,
-  MINE_REPORTS_ENUM,
-  MinePartyAppointmentTypeCodeEnum,
-  REPORT_TYPE_CODES,
-  SystemFlagEnum,
-  REPORT_REGULATORY_AUTHORITY_CODES,
-  REPORT_REGULATORY_AUTHORITY_ENUM,
   IMine,
   IMinistryContact,
-  MINE_REPORT_SUBMISSION_CODES,
-} from "../..";
+} from "@mds/common/interfaces";
 import RenderAutoSizeField from "../forms/RenderAutoSizeField";
 import { BaseViewInput } from "../forms/BaseInput";
 import {
@@ -67,6 +60,7 @@ import { getMineById } from "@mds/common/redux/selectors/mineSelectors";
 import { fetchMinistryContactsByRegion } from "@mds/common/redux/actionCreators/minespaceActionCreator";
 import { getMinistryContactsByRegion } from "@mds/common/redux/selectors/minespaceSelector";
 import { useParams } from "react-router-dom";
+import { MINE_REPORT_SUBMISSION_CODES, MINE_REPORTS_ENUM, MinePartyAppointmentTypeCodeEnum, REPORT_REGULATORY_AUTHORITY_CODES, REPORT_REGULATORY_AUTHORITY_ENUM, REPORT_TYPE_CODES, SystemFlagEnum } from "@mds/common/constants/enums";
 
 const RenderContacts: FC<any> = ({ fields, isEditMode, mineSpaceEdit, hasSubmissions }) => {
   const canEdit = isEditMode && (!mineSpaceEdit || !hasSubmissions);

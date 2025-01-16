@@ -1,7 +1,8 @@
 import { createAppSlice, rejectHandler } from "@mds/common/redux/createAppSlice";
 import { hideLoading, showLoading } from "react-redux-loading-bar";
 import CustomAxios from "@mds/common/redux/customAxios";
-import { ENVIRONMENT, PERMIT_AMENDMENT_CONDITION_ASSIGN_REVIEWER } from "@mds/common/constants";
+import { ENVIRONMENT } from "@mds/common/constants/environment";
+import { PERMIT_AMENDMENT_CONDITION_ASSIGN_REVIEWER } from "@mds/common/constants/API";
 import { IPermitConditionCategory } from "@mds/common/interfaces";
 import { notification } from "antd";
 

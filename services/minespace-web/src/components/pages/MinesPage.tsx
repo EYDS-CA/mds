@@ -10,7 +10,8 @@ import * as routes from "@/constants/routes";
 import * as Strings from "@/constants/strings";
 import Map from "@/components/common/Map";
 import UnauthenticatedNotice from "../common/UnauthenticatedNotice";
-import { IMine, detectDevelopmentEnvironment } from "@mds/common";
+import { detectDevelopmentEnvironment } from "@mds/common/utils/environmentUtils";
+import { IMine } from "@mds/common/interfaces/mine.interface";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faCircleMinus } from "@fortawesome/pro-regular-svg-icons";
 

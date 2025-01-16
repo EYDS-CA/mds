@@ -1,7 +1,8 @@
-import { userReducer, fetchUser, searchUsers, getUser, getSearchUsers } from "./userSlice"; // Adjust the path as required
-import { ENVIRONMENT, USER_PROFILE, USER_SEARCH } from "@mds/common/constants";
-import CustomAxios from "@mds/common/redux/customAxios";
 import { configureStore } from "@reduxjs/toolkit";
+import { userReducer, fetchUser, searchUsers, getUser, getSearchUsers } from "./userSlice"; // Adjust the import path as necessary
+import CustomAxios from "@mds/common/redux/customAxios";
+import { USER_PROFILE, USER_SEARCH } from "@mds/common/constants/API";
+import { ENVIRONMENT } from "@mds/common/constants/environment";
 
 const showLoadingMock = jest
   .fn()

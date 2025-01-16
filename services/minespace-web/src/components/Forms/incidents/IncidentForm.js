@@ -27,7 +27,7 @@ import {
   getDropdownIncidentFollowupActionOptions,
 } from "@mds/common/redux/selectors/staticContentSelectors";
 import { closeModal, openModal } from "@mds/common/redux/actions/modalActions";
-import { INCIDENT_CONTACT_METHOD_OPTIONS } from "@mds/common";
+import { INCIDENT_CONTACT_METHOD_OPTIONS } from "@mds/common/constants/strings";
 import * as FORM from "@/constants/forms";
 import DocumentTable from "@mds/common/components/documents/DocumentTable";
 import {

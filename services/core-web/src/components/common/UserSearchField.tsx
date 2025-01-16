@@ -4,7 +4,7 @@ import { debounce } from "lodash";
 import { Field } from "redux-form";
 import { getSearchUsers, searchUsers } from "@mds/common/redux/slices/userSlice";
 import RenderSelect from "@mds/common/components/forms/RenderSelect";
-import { IOption } from "@mds/common";
+import { IOption } from "@mds/common/interfaces";
 
 interface UserSelectFieldProps {
   id?: string;
@@ -26,7 +26,7 @@ const transformUserData = (users) => {
 };
 
 export const UserSelectField: FC<UserSelectFieldProps> = ({
-  onSelect = () => {},
+  onSelect = () => { },
   validate = [],
   disabled = false,
   required = false,

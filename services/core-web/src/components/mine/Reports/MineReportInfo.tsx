@@ -19,11 +19,11 @@ import AuthorizationWrapper from "@/components/common/wrappers/AuthorizationWrap
 import MineReportTable from "@/components/mine/Reports/MineReportTable";
 import ReportFilterForm from "@/components/Forms/reports/ReportFilterForm";
 import * as routes from "@/constants/routes";
-import { MINE_REPORTS_ENUM, MineReportParams, MineReportType } from "@mds/common";
-
 import PlusOutlined from "@ant-design/icons/PlusOutlined";
 import { RequestReportForm } from "@/components/Forms/reports/RequestReportForm";
 import ResponsivePagination from "@mds/common/components/common/ResponsivePagination";
+import { MineReportParams } from "@mds/common/interfaces/reports";
+import { MINE_REPORTS_ENUM, MineReportType } from "@mds/common/constants/enums";
 
 const defaultParams: MineReportParams = {
   report_name: undefined,

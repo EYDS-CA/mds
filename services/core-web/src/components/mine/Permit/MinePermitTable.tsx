@@ -11,7 +11,6 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
-import { Feature, USER_ROLES } from "@mds/common/index";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 import { formatDate } from "@common/utils/helpers";
 import {
@@ -25,7 +24,7 @@ import CoreTable from "@mds/common/components/common/CoreTable";
 import DocumentLink from "@/components/common/DocumentLink";
 import * as route from "@/constants/routes";
 import { VIEW_MINE_PERMIT } from "@/constants/routes";
-import { IMineDocument, IPermit, IPermitAmendment } from "@mds/common";
+import { IMineDocument, IPermit, IPermitAmendment } from "@mds/common/interfaces";
 import { ColumnsType } from "antd/lib/table";
 import {
   ITableAction,
@@ -36,6 +35,8 @@ import {
 import { getDocumentDownloadToken } from "@mds/common/redux/utils/actionlessNetworkCalls";
 import { downloadDocument, waitFor } from "@/components/common/downloads/helpers";
 import { userHasRole } from "@mds/common/redux/selectors/authenticationSelectors";
+import { USER_ROLES } from "@mds/common/constants/environment";
+import { Feature } from "@mds/common/utils/featureFlag";
 
 /**
  * @class  MinePermitTable - displays a table of permits and permit amendments
@@ -276,7 +277,7 @@ export const MinePermitTable: React.FC<MinePermitTableProps> = ({
           ) : null;
         const onOk = isDeletionAllowed
           ? () => handleDeletePermit((record.permit as IPermit).permit_guid)
-          : () => {};
+          : () => { };
         return Modal.confirm({
           title,
           content,
@@ -391,7 +392,7 @@ export const MinePermitTable: React.FC<MinePermitTableProps> = ({
           title =
             "You cannot delete permit amendment generated in Core with associated NoW application.";
           okText = "Ok";
-          onOk = () => {};
+          onOk = () => { };
         }
         return Modal.confirm({ title, okText, cancelText: "Cancel", onOk });
       },

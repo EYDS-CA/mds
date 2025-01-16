@@ -36,13 +36,13 @@ import {
   ICreateTailingsStorageFacility,
   IMine,
   ITailingsStorageFacility,
-  MinePartyAppointmentTypeCodeEnum,
-} from "@mds/common";
-import { Feature } from "@mds/common";
+} from "@mds/common/interfaces";
+import { Feature } from "@mds/common/utils/featureFlag";
 import FeatureFlagGuard from "@/components/common/featureFlag.guard";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
 import { getUserAccessData } from "@mds/common/redux/selectors/authenticationSelectors";
-import { USER_ROLES } from "@mds/common";
+import { USER_ROLES } from "@mds/common/constants/environment";
+import { MinePartyAppointmentTypeCodeEnum } from "@mds/common/constants/enums";
 
 interface TailingsSummaryPageProps {
   form: string;

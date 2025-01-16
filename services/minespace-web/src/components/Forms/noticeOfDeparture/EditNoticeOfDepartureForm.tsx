@@ -17,7 +17,8 @@ import RenderRadioButtons from "@mds/common/components/forms/RenderRadioButtons"
 import { documentSection } from "@/components/dashboard/mine/noticeOfDeparture/NoticeOfDepartureDetails";
 import NoticeOfDepartureCallout from "@/components/dashboard/mine/noticeOfDeparture/NoticeOfDepartureCallout";
 import { renderContacts } from "@/components/Forms/noticeOfDeparture/AddNoticeOfDepartureForm";
-import { INodDocumentPayload, INoticeOfDeparture, NodStatusSaveEnum } from "@mds/common";
+import { INodDocumentPayload, INoticeOfDeparture } from "@mds/common/interfaces";
+import { NodStatusSaveEnum } from "@mds/common/constants/enums";
 import { compose } from "redux";
 import { connect, useDispatch, useSelector } from "react-redux";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";

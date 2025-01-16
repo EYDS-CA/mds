@@ -9,7 +9,7 @@ import { renderConfig } from "@/components/common/config";
 import { TRASHCAN } from "@/constants/assets";
 import * as FORM from "@/constants/forms";
 import ExplosivesPermitFileUpload from "@/components/Forms/ExplosivesPermit/ExplosivesPermitFileUpload";
-import { IExplosivesPermitDocument, IOption } from "@mds/common";
+import { IExplosivesPermitDocument, IOption } from "@mds/common/interfaces";
 
 interface DocumentCategoryFormProps {
   documents: IExplosivesPermitDocument[];

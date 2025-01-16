@@ -12,8 +12,7 @@ import {
     faTrashCan,
     faXmark,
 } from "@fortawesome/pro-regular-svg-icons";
-import { FORM, IPermitCondition } from "@mds/common";
-import { IGroupedDropdownList } from "@mds/common/interfaces/common/option.interface";
+import { IPermitCondition, IGroupedDropdownList } from "@mds/common/interfaces";
 import { ERROR } from "@mds/common/constants/actionTypes";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";
 import RenderAutoSizeField from "@mds/common/components/forms/RenderAutoSizeField";
@@ -27,6 +26,7 @@ import { createMineReportPermitRequirement } from "@mds/common/redux/slices/mine
 import RenderField from "@mds/common/components/forms/RenderField";
 import { deleteConfirmWrapper } from "@mds/common/components/common/ActionMenu";
 import { formatPermitConditionStep, parsePermitConditionStep } from "@mds/common/utils/helpers";
+import { FORM } from "@mds/common/constants/forms";
 import RenderGroupedSelect from "@mds/common/components/forms/RenderGroupedSelect";
 
 

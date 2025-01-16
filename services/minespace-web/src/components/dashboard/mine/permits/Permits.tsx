@@ -7,7 +7,7 @@ import { openModal } from "@mds/common/redux/actions/modalActions";
 import { getPermits } from "@mds/common/redux/selectors/permitSelectors";
 import { getExplosivesPermits } from "@mds/common/redux/selectors/explosivesPermitSelectors";
 import PermitsTable from "@/components/dashboard/mine/permits/PermitsTable";
-import { IExplosivesPermit, IMine, IPermit } from "@mds/common";
+import { IExplosivesPermit, IMine, IPermit } from "@mds/common/interfaces";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
 
 interface PermitsProps {

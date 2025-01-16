@@ -4,7 +4,7 @@ import RenderDateTimeTz from "./RenderDateTimeTz";
 import { inputMeta, inputProps } from "./testHelper";
 import { normalizeDatetime } from "@mds/common/redux/utils/helpers";
 import { ReduxWrapper } from "@mds/common/tests/utils/ReduxWrapper";
-import { DEFAULT_TIMEZONE } from "@mds/common/constants";
+import { DEFAULT_TIMEZONE } from "@mds/common/constants/strings";
 
 const initialState = {
     form: {

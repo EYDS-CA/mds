@@ -5,18 +5,15 @@ import FormWrapper from "../../forms/FormWrapper";
 import { change, Field, getFormValues, reset, touch } from "redux-form";
 import RenderFileUpload from "../../forms/RenderFileUpload";
 import { spatialDocumentBundle } from "@mds/common/redux/utils/Validate";
-import {
-  OTHER_SPATIAL,
-  SPATIAL_DATA_STANDARDS_URL,
-  XML,
-  MAX_DOCUMENT_NAME_LENGTHS,
-} from "../../..";
 import { Alert, Button, Row, Steps, Typography } from "antd";
 import RenderCancelButton from "../../forms/RenderCancelButton";
 import RenderSubmitButton from "../../forms/RenderSubmitButton";
 import { closeModal } from "@mds/common/redux/actions/modalActions";
 import ViewSpatialDetail from "./ViewSpatialDetail";
 import { createDocmanSpatialBundle } from "@mds/common/redux/slices/spatialDataSlice";
+import { OTHER_SPATIAL, XML } from "@mds/common/constants/fileTypes";
+import { SPATIAL_DATA_STANDARDS_URL } from "@mds/common/constants/strings";
+import { MAX_DOCUMENT_NAME_LENGTHS } from "@mds/common/constants/enums";
 
 interface AddSpatialDocumentsModalProps {
   formName: string;

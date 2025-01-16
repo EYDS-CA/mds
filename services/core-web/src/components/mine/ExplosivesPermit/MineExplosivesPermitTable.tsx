@@ -11,8 +11,7 @@ import { CoreTooltip } from "@/components/common/CoreTooltip";
 import {
   IExplosivesPermit,
   IExplosivesPermitAmendment,
-  ESUP_DOCUMENT_GENERATED_TYPES,
-} from "@mds/common";
+} from "@mds/common/interfaces";
 import { ColumnType } from "antd/lib/table";
 import moment from "moment-timezone";
 import {
@@ -28,6 +27,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFiles } from "@fortawesome/pro-light-svg-icons";
 import { COLOR } from "@/constants/styles";
 import { ColumnsType } from "antd/es/table";
+import { ESUP_DOCUMENT_GENERATED_TYPES } from "@mds/common/constants/strings";
 
 interface MineExplosivesPermitTableProps {
   data: IExplosivesPermit[];

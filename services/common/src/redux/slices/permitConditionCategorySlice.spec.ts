@@ -1,3 +1,4 @@
+import { ENVIRONMENT } from "@mds/common/constants/environment";
 import {
   searchConditionCategories,
   searchConditionCategoriesReducer,
@@ -5,7 +6,6 @@ import {
   unassignReviewer,
   assignReviewer,
 } from "./permitConditionCategorySlice";
-import { ENVIRONMENT } from "@mds/common/constants";
 import CustomAxios from "@mds/common/redux/customAxios";
 import { configureStore } from "@reduxjs/toolkit";
 import { notification } from "antd";

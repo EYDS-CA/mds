@@ -26,9 +26,9 @@ import DownloadOutlined from "@ant-design/icons/DownloadOutlined";
 import EyeOutlined from "@ant-design/icons/EyeOutlined";
 import { deleteConfirmWrapper } from "@mds/common/components/common/ActionMenu";
 import { userHasRole } from "@mds/common/redux/selectors/authenticationSelectors";
-import { USER_ROLES } from "@mds/common";
 import { getDocumentDownloadToken } from "@mds/common/redux/utils/actionlessNetworkCalls";
 import { waitFor, downloadDocument } from "@/components/common/downloads/helpers";
+import { USER_ROLES } from "@mds/common/constants/environment";
 
 const propTypes = {
   mineReports: PropTypes.arrayOf(CustomPropTypes.mineReport).isRequired,

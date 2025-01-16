@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useState } from "react";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";
-import { FORM, IPermitConditionCategory, USER_ROLES } from "@mds/common";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Col, Popconfirm, Row, Typography } from "antd";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
@@ -14,6 +13,9 @@ import {
 import { userHasRole } from "@mds/common/redux/selectors/authenticationSelectors";
 import { faXmark } from "@fortawesome/pro-light-svg-icons";
 import { getUser } from "@mds/common/redux/slices/userSlice";
+import { IPermitConditionCategory } from "@mds/common/interfaces";
+import { USER_ROLES } from "@mds/common/constants/environment";
+import { FORM } from "@mds/common/constants/forms";
 
 interface PermitConditionReviewAssignmentProps {
   category: IPermitConditionCategory;
@@ -28,20 +30,20 @@ const PermitConditionReviewAssignment: FC<PermitConditionReviewAssignmentProps> 
   const user = useSelector(getUser);
   const [assignedReviewUserInitialValues, setAssignedReviewUserIntitialValues] = useState<
     | [
-        {
-          label: string;
-          value: string;
-        },
-      ]
+      {
+        label: string;
+        value: string;
+      },
+    ]
     | undefined
   >(
     category?.assigned_review_user?.sub
       ? [
-          {
-            value: category?.assigned_review_user?.sub || "",
-            label: category?.assigned_review_user?.display_name || "",
-          },
-        ]
+        {
+          value: category?.assigned_review_user?.sub || "",
+          label: category?.assigned_review_user?.display_name || "",
+        },
+      ]
       : undefined
   );
 

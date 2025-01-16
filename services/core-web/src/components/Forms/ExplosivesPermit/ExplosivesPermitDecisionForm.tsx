@@ -8,7 +8,7 @@ import { resetForm } from "@common/utils/helpers";
 import { renderConfig } from "@/components/common/config";
 import * as FORM from "@/constants/forms";
 import { getGenerateDocumentFormField } from "@/components/common/GenerateDocumentFormField";
-import { IExplosivesPermitDocumentType, IParty } from "@mds/common";
+import { IExplosivesPermitDocumentType, IParty } from "@mds/common/interfaces";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";
 
 interface ExplosivesPermitDecisionFormProps {

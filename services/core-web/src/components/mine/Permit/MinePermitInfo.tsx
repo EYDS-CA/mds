@@ -30,10 +30,11 @@ import * as ModalContent from "@/constants/modalContent";
 import { modalConfig } from "@/components/modalContent/config";
 import { getExplosivesPermits } from "@mds/common/redux/selectors/explosivesPermitSelectors";
 import { getUserAccessData } from "@mds/common/redux/selectors/authenticationSelectors";
-import { IPermit, IMine, IExplosivesPermit, Feature } from "@mds/common";
+import { IPermit, IMine, IExplosivesPermit } from "@mds/common/interfaces";
 import { ActionCreator } from "@mds/common/interfaces/actionCreator";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 import { DigitalPermitCredential } from "@/components/mine/DigitalPermitCredential/DigitalPermitCredential";
+import { Feature } from "@mds/common/utils/featureFlag";
 /**
  * @class  MinePermitInfo - contains all permit information
  */

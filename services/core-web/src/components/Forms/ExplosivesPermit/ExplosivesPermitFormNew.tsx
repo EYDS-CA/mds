@@ -15,9 +15,8 @@ import {
   IimportedNOWApplication,
   IOption,
   IGroupedDropdownList,
-  ESUP_DOCUMENT_GENERATED_TYPES,
   IExplosivesPermitDocument,
-} from "@mds/common";
+} from "@mds/common/interfaces";
 import { getNoticeOfWorkList } from "@mds/common/redux/selectors/noticeOfWorkSelectors";
 import {
   dateNotInFuture,
@@ -41,6 +40,7 @@ import {
   supportingDocColumns,
 } from "@mds/common/components/explosivespermits/ExplosivesPermitViewModal";
 import ExplosivesPermitMap from "@mds/common/components/explosivespermits/ExplosivesPermitMap";
+import { ESUP_DOCUMENT_GENERATED_TYPES } from "@mds/common/constants/strings";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";
 import RenderSubmitButton from "@mds/common/components/forms/RenderSubmitButton";
 import RenderCancelButton from "@mds/common/components/forms/RenderCancelButton";

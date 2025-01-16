@@ -6,7 +6,7 @@ import { fetchMineReports } from "@mds/common/redux/actionCreators/reportActionC
 import { getMineReports, getReportsPageData } from "@mds/common/redux/selectors/reportSelectors";
 import ReportsTable from "@/components/dashboard/mine/reports/ReportsTable";
 import AuthorizationWrapper from "@/components/common/wrappers/AuthorizationWrapper";
-import { IMine, IMineReport, IPageData } from "@mds/common";
+import { IMine, IMineReport, IPageData } from "@mds/common/interfaces";
 import { Link, useHistory } from "react-router-dom";
 import * as routes from "@/constants/routes";
 import { Link as ScrollLink, Element } from "react-scroll";

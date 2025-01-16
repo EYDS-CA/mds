@@ -25,13 +25,6 @@ import {
   phoneNumber,
   required,
 } from "@mds/common/redux/utils/Validate";
-import {
-  ICreateNoD,
-  IMine,
-  INoDContactInterface,
-  INoticeOfDeparture,
-  USER_ROLES,
-} from "@mds/common";
 import { getUserAccessData } from "@mds/common/redux/selectors/authenticationSelectors";
 import CoreTable from "@mds/common/components/common/CoreTable";
 import {
@@ -49,6 +42,8 @@ import { renderDocumentLinkColumn } from "../common/DocumentColumns";
 import FormWrapper from "@mds/common/components/forms/FormWrapper";
 import RenderSubmitButton from "@mds/common/components/forms/RenderSubmitButton";
 import RenderCancelButton from "@mds/common/components/forms/RenderCancelButton";
+import { ICreateNoD, IMine, INoDContactInterface, INoticeOfDeparture } from "@mds/common/interfaces";
+import { USER_ROLES } from "@mds/common/constants/environment";
 
 interface RenderContactsProps {
   fields: INoDContactInterface[];
