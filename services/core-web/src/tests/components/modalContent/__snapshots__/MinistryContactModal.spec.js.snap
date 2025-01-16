@@ -2,7 +2,7 @@
 
 exports[`MinistryContactModal renders properly 1`] = `
 <div>
-  <Connect(ReduxForm)
+  <Connect(MinistryContactForm)
     MinistryContactTypes={Array []}
     closeModal={[MockFunction]}
     initialValues={Object {}}

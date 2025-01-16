@@ -11,6 +11,8 @@ interface RenderSubmitButtonProps {
   disableOnClean?: boolean;
   iconButton?: boolean;
   icon?: ReactNode;
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 const RenderSubmitButton: FC<RenderSubmitButtonProps> = ({
@@ -18,12 +20,14 @@ const RenderSubmitButton: FC<RenderSubmitButtonProps> = ({
   buttonProps,
   disableOnClean = true,
   iconButton = false,
-  icon
+  icon,
+  ...props
 }) => {
   const { formName, isEditMode } = useContext(FormContext);
   const submitting = useSelector(isSubmitting(formName));
   const isFormDirty = useSelector(isDirty(formName));
-  const disabled = submitting || (!isFormDirty && disableOnClean);
+  const disabled = props.disabled || submitting || (!isFormDirty && disableOnClean);
+  const className = `${buttonProps?.className ?? ""} form-btn`;
 
   return (
     <>
@@ -31,11 +35,12 @@ const RenderSubmitButton: FC<RenderSubmitButtonProps> = ({
         <Button
           type="primary"
           disabled={disabled}
-          loading={submitting}
+          loading={submitting || props.loading}
           htmlType="submit"
           icon={icon}
           aria-label="Submit"
           {...buttonProps}
+          className={className}
         >
           {!iconButton && buttonText}
         </Button>

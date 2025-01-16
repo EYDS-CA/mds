@@ -8,10 +8,10 @@ import { Field, FieldArray, getFormValues } from "redux-form";
 import { ADD_EDIT_INCIDENT } from "@/constants/forms";
 import { Button, Col, Row, Typography } from "antd";
 import { renderConfig } from "@/components/common/config";
-import { required, validateSelectOptions } from "@common/utils/Validate";
-import RenderDateTimeTz from "@/components/common/RenderDateTimeTz";
+import RenderDateTimeTz from "@mds/common/components/forms/RenderDateTimeTz";
 import { normalizeDatetime } from "@mds/common/redux/utils/helpers";
 import {
+  required, requiredRadioButton,
   dateNotBeforeStrictOther,
   dateNotInFutureTZ,
   requiredList,
@@ -76,7 +76,8 @@ const IncidentFormMinistryFollowup: FC<IncidentFormMinistryFollowupProps> = ({
               component={renderConfig.SELECT}
               data={incidentDeterminationOptions}
               disabled={!isEditMode}
-              validate={[validateSelectOptions(incidentDeterminationOptions)]}
+              required
+              validate={[required]}
             />
           </Col>
           {formValues?.determination_type_code &&
@@ -88,6 +89,7 @@ const IncidentFormMinistryFollowup: FC<IncidentFormMinistryFollowupProps> = ({
                   name="determination_inspector_party_guid"
                   component={renderConfig.GROUPED_SELECT}
                   data={inspectorOptions}
+                  required
                   validate={[required]}
                   disabled={!isEditMode}
                 />
@@ -103,6 +105,7 @@ const IncidentFormMinistryFollowup: FC<IncidentFormMinistryFollowupProps> = ({
                   placeholder="Please choose one or more..."
                   component={renderConfig.MULTI_SELECT}
                   data={dangerousOccurenceSubparagraphOptions}
+                  required
                   validate={[requiredList]}
                   disabled={!isEditMode}
                 />
@@ -135,7 +138,8 @@ const IncidentFormMinistryFollowup: FC<IncidentFormMinistryFollowupProps> = ({
               component={renderConfig.RADIO}
               customOptions={filteredFollowUpActions}
               disabled={!isEditMode}
-              validate={validateSelectOptions(filteredFollowUpActions)}
+              required
+              validate={requiredRadioButton}
             />
           </Col>
           <Col span={24}>

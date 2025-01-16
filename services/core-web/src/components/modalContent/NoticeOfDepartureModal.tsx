@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Col, Popconfirm, Row } from "antd";
-import { Form } from "@ant-design/compatible";
+import { Button, Col, Popconfirm, Row, Form } from "antd";
 import { connect } from "react-redux";
 import { bindActionCreators, compose } from "redux";
 import {
@@ -10,7 +9,7 @@ import {
   NOTICE_OF_DEPARTURE_STATUS_VALUES,
   NOTICE_OF_DEPARTURE_TYPE,
 } from "@mds/common/constants/strings";
-import { formatDate, normalizePhone, resetForm } from "@common/utils/helpers";
+import { formatDate, normalizePhone } from "@common/utils/helpers";
 import {
   addDocumentToNoticeOfDeparture,
   fetchDetailedNoticeOfDeparture,
@@ -19,14 +18,13 @@ import {
   updateNoticeOfDeparture,
 } from "@mds/common/redux/actionCreators/noticeOfDepartureActionCreator";
 import { getNoticeOfDeparture } from "@mds/common/redux/selectors/noticeOfDepartureSelectors";
-import { Field, FieldArray, InjectedFormProps, reduxForm } from "redux-form";
+import { Field, FieldArray, change } from "redux-form";
 import {
   email,
   maxLength,
   phoneNumber,
   required,
-  validateSelectOptions,
-} from "@common/utils/Validate";
+} from "@mds/common/redux/utils/Validate";
 import {
   ICreateNoD,
   IMine,
@@ -48,12 +46,15 @@ import FileUpload from "@/components/common/FileUpload";
 import { DOCUMENT, EXCEL } from "@/constants/fileTypes";
 import * as Permission from "@/constants/permissions";
 import { renderDocumentLinkColumn } from "../common/DocumentColumns";
+import FormWrapper from "@mds/common/components/forms/FormWrapper";
+import RenderSubmitButton from "@mds/common/components/forms/RenderSubmitButton";
+import RenderCancelButton from "@mds/common/components/forms/RenderCancelButton";
 
-interface renderContactsProps {
+interface RenderContactsProps {
   fields: INoDContactInterface[];
 }
 
-export const renderContacts: React.FC<renderContactsProps> = (props, disabled = false) => {
+export const renderContacts: React.FC<RenderContactsProps> = (props, disabled = false) => {
   const { fields } = props;
 
   return (
@@ -70,6 +71,7 @@ export const renderContacts: React.FC<renderContactsProps> = (props, disabled = 
               name={`${contact}.first_name`}
               placeholder="First Name"
               component={renderConfig.FIELD}
+              required
               validate={[required, maxLength(200)]}
               disabled={disabled}
             />
@@ -81,6 +83,7 @@ export const renderContacts: React.FC<renderContactsProps> = (props, disabled = 
               name={`${contact}.last_name`}
               placeholder="Last Name"
               component={renderConfig.FIELD}
+              required
               validate={[required, maxLength(200)]}
               disabled={disabled}
             />
@@ -104,6 +107,7 @@ export const renderContacts: React.FC<renderContactsProps> = (props, disabled = 
               name={`${contact}.email`}
               component={renderConfig.FIELD}
               placeholder="example@example.com"
+              required
               validate={[email, required]}
               disabled={disabled}
             />
@@ -122,21 +126,19 @@ interface NoticeOfDepartureModalProps {
   fetchNoticesOfDeparture: any;
   updateNoticeOfDeparture: any;
   addDocumentToNoticeOfDeparture: any;
-  handleSubmit: (event?: any) => void;
-  pristine: boolean;
   mine: IMine;
   userRoles: string[];
-  change: (field: string, value: never) => void;
+  change: (formName: string, field: string, value: any) => void;
 }
 
-const NoticeOfDepartureModal: React.FC<InjectedFormProps<ICreateNoD> &
-  NoticeOfDepartureModalProps> = (props) => {
+const NoticeOfDepartureModal: React.FC<NoticeOfDepartureModalProps> = (props) => {
   const [statusOptions, setStatusOptions] = React.useState([]);
   const [documentArray, setDocumentArray] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const formName = FORM.NOTICE_OF_DEPARTURE_FORM;
 
-  const { noticeOfDeparture, mine, handleSubmit, pristine, change } = props;
+  const { noticeOfDeparture, mine, change } = props;
   const { nod_guid } = noticeOfDeparture;
 
   const hasEditPermission = props.userRoles.includes(USER_ROLES[Permission.EDIT_PERMITS]);
@@ -185,7 +187,7 @@ const NoticeOfDepartureModal: React.FC<InjectedFormProps<ICreateNoD> &
   };
 
   useEffect(() => {
-    change("uploadedFiles", documentArray);
+    change(formName, "uploadedFiles", documentArray);
   }, [documentArray]);
 
   const onRemoveFile = (_, fileItem) => {
@@ -237,37 +239,45 @@ const NoticeOfDepartureModal: React.FC<InjectedFormProps<ICreateNoD> &
       ...(disabled
         ? []
         : [
-            {
-              key: "actions",
-              render: (record) => (
-                <div className="btn--middle flex">
-                  <Popconfirm
-                    placement="topRight"
-                    title="Are you sure you want to delete this file?"
-                    onConfirm={() =>
-                      handleDeleteANoticeOfDepartureDocument({
-                        mine_guid: mine.mine_guid,
-                        nod_guid,
-                        ...record,
-                      })
-                    }
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <button type="button">
-                      <img src={TRASHCAN} alt="Remove Document" />
-                    </button>
-                  </Popconfirm>
-                </div>
-              ),
-            },
-          ]),
+          {
+            key: "actions",
+            render: (record) => (
+              <div className="btn--middle flex">
+                <Popconfirm
+                  placement="topRight"
+                  title="Are you sure you want to delete this file?"
+                  onConfirm={() =>
+                    handleDeleteANoticeOfDepartureDocument({
+                      mine_guid: mine.mine_guid,
+                      nod_guid,
+                      ...record,
+                    })
+                  }
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <button type="button">
+                    <img src={TRASHCAN} alt="Remove Document" />
+                  </button>
+                </Popconfirm>
+              </div>
+            ),
+          },
+        ]),
     ];
   };
 
   return (
     <div>
-      <Form layout="vertical" onSubmit={handleSubmit(updateNoticeOfDepartureSubmit)}>
+      <FormWrapper
+        name={FORM.NOTICE_OF_DEPARTURE_FORM}
+        initialValues={props.initialValues}
+        reduxFormConfig={{
+          touchOnBlur: false,
+          forceUnregisterOnUnmount: true,
+          enableReinitialize: true,
+        }}
+        onSubmit={updateNoticeOfDepartureSubmit}>
         <h4 className="nod-modal-section-header">Basic Information</h4>
         <div className="content--light-grey nod-section-padding">
           <div className="inline-flex padding-sm">
@@ -356,16 +366,13 @@ const NoticeOfDepartureModal: React.FC<InjectedFormProps<ICreateNoD> &
           <Col span={12}>
             <p className="field-title">NOD Review Status</p>
             <div>
-              <Form.Item>
-                <Field
-                  id="nod_status"
-                  name="nod_status"
-                  validate={[validateSelectOptions(statusOptions)]}
-                  component={renderConfig.SELECT}
-                  data={statusOptions}
-                  disabled={disabled}
-                />
-              </Form.Item>
+              <Field
+                id="nod_status"
+                name="nod_status"
+                component={renderConfig.SELECT}
+                data={statusOptions}
+                disabled={disabled}
+              />
             </div>
           </Col>
         </Row>
@@ -380,28 +387,12 @@ const NoticeOfDepartureModal: React.FC<InjectedFormProps<ICreateNoD> &
             </Button>
           ) : (
             <>
-              <Popconfirm
-                placement="top"
-                title="Are you sure you want to cancel?"
-                okText="Yes"
-                cancelText="No"
-                onConfirm={props.closeModal}
-              >
-                <Button className="full-mobile">Cancel</Button>
-              </Popconfirm>
-              <Button
-                className="full-mobile nod-update-button"
-                type="primary"
-                htmlType="submit"
-                onClick={handleSubmit(updateNoticeOfDepartureSubmit)}
-                disabled={(pristine && documentArray.length === 0) || uploading}
-              >
-                Update
-              </Button>
+              <RenderCancelButton />
+              <RenderSubmitButton disabled={documentArray.length == 0 || uploading} buttonText="Update" disableOnClean={false} />
             </>
           )}
         </div>
-      </Form>
+      </FormWrapper>
     </div>
   );
 };
@@ -419,17 +410,11 @@ const mapDispatchToProps = (dispatch) =>
       updateNoticeOfDeparture,
       fetchNoticesOfDeparture,
       addDocumentToNoticeOfDeparture,
+      change,
     },
     dispatch
   );
 
 export default compose(
-  connect(mapStateToProps, mapDispatchToProps),
-  reduxForm({
-    form: FORM.NOTICE_OF_DEPARTURE_FORM,
-    onSubmitSuccess: resetForm(FORM.NOTICE_OF_DEPARTURE_FORM),
-    touchOnBlur: false,
-    forceUnregisterOnUnmount: true,
-    enableReinitialize: true,
-  })
-)(NoticeOfDepartureModal) as React.FC<NoticeOfDepartureModalProps>;
+  connect(mapStateToProps, mapDispatchToProps)
+)(NoticeOfDepartureModal as any) as React.FC<NoticeOfDepartureModalProps>;

@@ -852,7 +852,7 @@ exports[`PermitConditions renders properly 1`] = `
                                     >
                                       <button
                                         aria-label="Submit"
-                                        class="ant-btn ant-btn-primary ant-btn-icon-only"
+                                        class="ant-btn ant-btn-primary ant-btn-icon-only  form-btn"
                                         disabled=""
                                         type="submit"
                                       >
@@ -1099,7 +1099,7 @@ exports[`PermitConditions renders properly 1`] = `
                                     >
                                       <button
                                         aria-label="Submit"
-                                        class="ant-btn ant-btn-primary ant-btn-icon-only"
+                                        class="ant-btn ant-btn-primary ant-btn-icon-only  form-btn"
                                         disabled=""
                                         type="submit"
                                       >
@@ -1328,7 +1328,7 @@ exports[`PermitConditions renders properly 1`] = `
                                     >
                                       <button
                                         aria-label="Submit"
-                                        class="ant-btn ant-btn-primary ant-btn-icon-only"
+                                        class="ant-btn ant-btn-primary ant-btn-icon-only  form-btn"
                                         disabled=""
                                         type="submit"
                                       >

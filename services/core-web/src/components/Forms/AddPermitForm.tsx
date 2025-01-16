@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Field, change, FormSection, getFormValues } from "redux-form";
-import { Col, Row, Divider, Alert } from "antd";
+import { Col, Row, Divider, Alert, Typography } from "antd";
 import {
   required,
   dateNotInFuture,
@@ -144,11 +144,11 @@ export const AddPermitForm: FC<AddPermitFormProps> = (props) => {
 
   return (
     <FormWrapper onSubmit={props.onSubmit} name={FORM.ADD_PERMIT}
-                 isModal
-                 reduxFormConfig={{
-                   validate: validateBusinessRules,
-                   touchOnBlur: false,
-                 }}
+      isModal
+      reduxFormConfig={{
+        validate: validateBusinessRules,
+        touchOnBlur: false,
+      }}
     >
       {(permitPrefixCoalOrMineral || is_exploration) && (
         <>
@@ -192,6 +192,11 @@ export const AddPermitForm: FC<AddPermitFormProps> = (props) => {
               validate={[requiredRadioButton]}
             />
           )}
+          {permit_type &&
+            <Typography.Paragraph>
+              {permit_type}{is_exploration ? "X" : ""} -
+            </Typography.Paragraph>
+          }
           <Field
             id="permit_no"
             name="permit_no"
@@ -199,10 +204,6 @@ export const AddPermitForm: FC<AddPermitFormProps> = (props) => {
             required
             component={renderConfig.FIELD}
             validate={[required, maxLength(9)]}
-            inlineLabel={
-              permit_type &&
-              `${permit_type}${is_exploration ? "X" : ""} -`
-            }
           />
           <Field
             id="permit_status_code"
@@ -294,8 +295,8 @@ export const AddPermitForm: FC<AddPermitFormProps> = (props) => {
               data={
                 mine_tenure_type_code
                   ? conditionalCommodityOptions[
-                    mine_tenure_type_code
-                    ]
+                  mine_tenure_type_code
+                  ]
                   : []
               }
             />
@@ -306,8 +307,8 @@ export const AddPermitForm: FC<AddPermitFormProps> = (props) => {
               data={
                 mine_tenure_type_code
                   ? conditionalDisturbanceOptions[
-                    mine_tenure_type_code
-                    ]
+                  mine_tenure_type_code
+                  ]
                   : []
               }
               label="Disturbance"
