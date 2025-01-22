@@ -4,13 +4,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClipboard, faClockRotateLeft } from "@fortawesome/pro-regular-svg-icons";
 import { CheckCircleOutlined, CheckOutlined } from "@ant-design/icons";
 import CoreButton from "@mds/common/components/common/CoreButton";
-import { useDispatch } from "react-redux";
-import { updatePermitCondition } from "@mds/common/redux/actionCreators/permitActionCreator";
 import { IPermitCondition } from "@mds/common/interfaces/permits";
 import { PERMIT_CONDITION_STATUS_CODE } from "@mds/common/constants/enums";
 
+import { useDispatch } from "react-redux";
+import { updatePermitCondition } from "@mds/common/redux/actionCreators/permitActionCreator";
+import { openModal } from "@mds/common/redux/actions/modalActions";
+import ComparePermitConditionHistoryModal from "./ComparePermitConditionHistoryModal";
+import { usePermitConditions } from "./PermitConditionsContext";
+
 interface PermitConditionStatusProps {
   condition: IPermitCondition;
+  previousCondition?: IPermitCondition;
   isDisabled?: boolean;
   canEditPermitConditions?: boolean;
   permitAmendmentGuid: string;
@@ -19,11 +24,14 @@ interface PermitConditionStatusProps {
 
 export const PermitConditionStatus: FC<PermitConditionStatusProps> = ({
   condition,
+  previousCondition,
   isDisabled,
   canEditPermitConditions = false,
   permitAmendmentGuid,
   refreshData,
 }) => {
+
+  const { mineGuid, permitGuid, latestAmendment } = usePermitConditions();
 
   const handleCompleteReview = async (values) => {
     const payload = values.step
@@ -50,6 +58,24 @@ export const PermitConditionStatus: FC<PermitConditionStatusProps> = ({
     return result;
   };
 
+  const openConditionHistoryModal = () => {
+    dispatch(
+      openModal({
+        props: {
+          title: `Compare Conditions`,
+          currentAmendmentCondition: condition,
+          previousAmendmentCondition: previousCondition,
+          mineGuid,
+          permitGuid,
+          latestAmendment
+        },
+        width: 2048,
+        content: ComparePermitConditionHistoryModal,
+      })
+    );
+
+  }
+
   const requirements = getConditionsWithRequirements([condition]);
 
   const dispatch = useDispatch();
@@ -66,8 +92,12 @@ export const PermitConditionStatus: FC<PermitConditionStatusProps> = ({
             Has {requirements.length} report{requirements.length > 1 && "s"}
           </Tag>
         }
+
+        <Tag className="View History" color="blue" icon={<FontAwesomeIcon className="margin-small--right" icon={faClipboard} />} onClick={openConditionHistoryModal}>View History</Tag>
+
       </Space>
-      {canEditPermitConditions && condition.permit_condition_status_code !== PERMIT_CONDITION_STATUS_CODE.COM &&
+      {
+        canEditPermitConditions && condition.permit_condition_status_code !== PERMIT_CONDITION_STATUS_CODE.COM &&
         <CoreButton
           type="primary"
           disabled={isDisabled}
@@ -76,6 +106,6 @@ export const PermitConditionStatus: FC<PermitConditionStatusProps> = ({
           <CheckOutlined /> Complete Review
         </CoreButton>
       }
-    </Row>
-  </Col>
+    </Row >
+  </Col >
 };

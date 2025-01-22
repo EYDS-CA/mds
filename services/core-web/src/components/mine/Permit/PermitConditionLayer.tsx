@@ -6,6 +6,7 @@ import { IGroupedDropdownList } from "@mds/common/interfaces/common/option.inter
 import { PermitConditionStatus } from "./PermitConditionStatus";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 import { Feature } from "@mds/common/utils/featureFlag";
+import { IPermitAmendment } from "@mds/common/interfaces";
 
 interface PermitConditionLayerProps {
   isExtracted: boolean;
@@ -23,6 +24,9 @@ interface PermitConditionLayerProps {
   refreshData: () => Promise<void>;
   conditionSelected?: (condition: IPermitCondition) => void;
   categoryOptions?: IGroupedDropdownList[];
+  previousAmendment?: IPermitAmendment;
+  mineGuid?: string;
+  permitAmendment: IPermitAmendment;
 }
 
 const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
@@ -41,6 +45,9 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
   permitAmendmentGuid,
   refreshData,
   categoryOptions,
+  previousAmendment,
+  mineGuid,
+  permitAmendment,
 }) => {
   const editingCondition = editingConditionGuid === condition.permit_condition_guid;
   const [isAddingListItem, setIsAddingListItem] = useState<boolean>(false);
@@ -87,6 +94,13 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
     await handleMoveCondition(condition, false);
   };
 
+  let matchingCondition = null;
+  if (level === 0) {
+    matchingCondition = previousAmendment?.conditions.find(c => {
+      return !c.parent_permit_condition_id && c.step === condition.step && c.condition === condition.condition;
+    });
+  }
+
   return (
     <div
       className={`${className} ${editingCondition ? "condition-layer--editing" : ""}`}
@@ -114,6 +128,8 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
             <div key={subCondition.permit_condition_id}>
               <PermitConditionLayer
                 isExtracted={isExtracted}
+                mineGuid={mineGuid}
+                permitAmendment={permitAmendment}
                 permitAmendmentGuid={permitAmendmentGuid}
                 condition={subCondition}
                 level={level + 1}
@@ -143,6 +159,7 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
       {level == 0 && isFeatureEnabled(Feature.MODIFY_PERMIT_CONDITIONS) && (
         <PermitConditionStatus
           condition={condition}
+          previousCondition={matchingCondition}
           canEditPermitConditions={canEditPermitConditions}
           isDisabled={isAddingListItem || isExpanded}
           permitAmendmentGuid={permitAmendmentGuid}
