@@ -26,7 +26,6 @@ interface PermitConditionLayerProps {
   categoryOptions?: IGroupedDropdownList[];
   previousAmendment?: IPermitAmendment;
   mineGuid?: string;
-  permitAmendment: IPermitAmendment;
 }
 
 const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
@@ -47,7 +46,6 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
   categoryOptions,
   previousAmendment,
   mineGuid,
-  permitAmendment,
 }) => {
   const editingCondition = editingConditionGuid === condition.permit_condition_guid;
   const [isAddingListItem, setIsAddingListItem] = useState<boolean>(false);
@@ -129,7 +127,6 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
               <PermitConditionLayer
                 isExtracted={isExtracted}
                 mineGuid={mineGuid}
-                permitAmendment={permitAmendment}
                 permitAmendmentGuid={permitAmendmentGuid}
                 condition={subCondition}
                 level={level + 1}
@@ -161,7 +158,7 @@ const PermitConditionLayer: FC<PermitConditionLayerProps> = ({
           condition={condition}
           previousCondition={matchingCondition}
           canEditPermitConditions={canEditPermitConditions}
-          isDisabled={isAddingListItem || isExpanded}
+          isDisabled={isAddingListItem}
           permitAmendmentGuid={permitAmendmentGuid}
           refreshData={refreshData}
         />

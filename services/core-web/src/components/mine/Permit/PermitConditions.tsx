@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { Col, Collapse, Row, Skeleton, Space, Typography } from "antd";
+import { Alert, Button, Col, Collapse, Row, Skeleton, Space, Typography } from "antd";
 import FileOutlined from "@ant-design/icons/FileOutlined";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,12 +15,13 @@ import {
 import { getPermitConditionCategoryOptions } from "@mds/common/redux/selectors/staticContentSelectors";
 import PermitConditionLayer from "./PermitConditionLayer";
 import {
+  getConditionsWithRequirements,
   IMineReportPermitRequirement,
   IPermitAmendment,
   IPermitCondition,
   IPermitConditionCategory,
 } from "@mds/common/interfaces/permits";
-import { VIEW_MINE_PERMIT } from "@/constants/routes";
+import { VIEW_MINE_PERMIT_AMENDMENT } from "@/constants/routes";
 import ScrollSidePageWrapper from "@mds/common/components/common/ScrollSidePageWrapper";
 import { useFeatureFlag } from "@mds/common/providers/featureFlags/useFeatureFlag";
 import { Feature } from "@mds/common/utils/featureFlag";
@@ -60,14 +61,17 @@ import { PERMIT_CONDITION_STATUS_CODE } from "@mds/common/constants/enums";
 import { PermitReviewBanner } from "./PermitReviewBanner";
 import { COLOR } from "@/constants/styles";
 import { PermitConditionsProvider } from "./PermitConditionsContext";
+import PermitConditionReportRequirements from "./PermitConditionReportRequirements";
+import { useAppDispatch } from "@mds/common/redux/rootState";
 
 const { Title } = Typography;
 
 interface PermitConditionProps {
+  latestAmendment: IPermitAmendment;
   previousAmendment: IPermitAmendment;
   isReviewComplete: boolean;
   isExtracted: boolean;
-  latestAmendment: IPermitAmendment;
+  currentAmendment: IPermitAmendment;
   canStartExtraction: boolean;
   userCanEdit: boolean;
 }
@@ -76,13 +80,15 @@ const PermitConditions: FC<PermitConditionProps> = ({
   isReviewComplete,
   isExtracted,
   latestAmendment,
+  currentAmendment,
   previousAmendment,
   canStartExtraction,
   userCanEdit,
 }) => {
   const { isFeatureEnabled } = useFeatureFlag();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const user = useSelector(getUser);
+  const history = useHistory();
 
   const userIsAssigned = (category?: IPermitConditionCategory): boolean => {
     return user?.sub && (user.sub === category?.assigned_review_user?.sub);
@@ -108,11 +114,13 @@ const PermitConditions: FC<PermitConditionProps> = ({
     getMineReportPermitRequirements(permitGuid)
   );
 
+  console.log('CurrentAmendment', currentAmendment?.permit_amendment_guid);
+
   const isLoading = useSelector(getIsFetching(NetworkReducerTypes.GET_PERMITS));
 
-  const permitConditions = latestAmendment?.conditions;
+  const permitConditions = currentAmendment?.conditions;
   const permitExtraction = useSelector(
-    getPermitExtractionByGuid(latestAmendment?.permit_amendment_id)
+    getPermitExtractionByGuid(currentAmendment?.permit_amendment_id)
   );
 
   const refreshData = async () => {
@@ -136,7 +144,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
   const isExtractionComplete = permitExtraction?.task_status === PermitExtractionStatus.complete;
 
   const permitConditionCategoryOptions: IPermitConditionCategory[] = uniqBy(
-    latestAmendment?.condition_categories.concat(condWithoutConditionsText) ?? [],
+    currentAmendment?.condition_categories.concat(condWithoutConditionsText) ?? [],
     "condition_category_code"
   );
 
@@ -248,12 +256,12 @@ const PermitConditions: FC<PermitConditionProps> = ({
 
   const scrollSideMenuProps = {
     menuOptions: permitConditionCategories,
-    featureUrlRoute: VIEW_MINE_PERMIT.hashRoute,
-    featureUrlRouteArguments: [mineGuid, permitGuid, "conditions"],
+    featureUrlRoute: VIEW_MINE_PERMIT_AMENDMENT.hashRoute,
+    featureUrlRouteArguments: [mineGuid, permitGuid, currentAmendment?.permit_amendment_guid, "conditions"],
   };
 
   const customCategories = createDropDownList(
-    latestAmendment?.condition_categories ?? [],
+    currentAmendment?.condition_categories ?? [],
     "description",
     "condition_category_code"
   );
@@ -299,7 +307,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
               createPermitAmendmentConditionCategory(
                 mineGuid,
                 permitGuid,
-                latestAmendment.permit_amendment_guid,
+                currentAmendment.permit_amendment_guid,
                 {
                   ...category,
                   display_order: permitConditionCategories.length,
@@ -320,7 +328,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
       updatePermitAmendmentConditionCategory(
         mineGuid,
         permitGuid,
-        latestAmendment.permit_amendment_guid,
+        currentAmendment.permit_amendment_guid,
         category
       )
     );
@@ -331,7 +339,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
       deletePermitAmendmentConditionCategory(
         mineGuid,
         permitGuid,
-        latestAmendment.permit_amendment_guid,
+        currentAmendment.permit_amendment_guid,
         category.condition_category_code
       )
     );
@@ -347,7 +355,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
       updatePermitAmendmentConditionCategory(
         mineGuid,
         permitGuid,
-        latestAmendment.permit_amendment_guid,
+        currentAmendment.permit_amendment_guid,
         updatedCat
       )
     );
@@ -363,40 +371,61 @@ const PermitConditions: FC<PermitConditionProps> = ({
     await dispatch(
       updatePermitCondition(
         condition.permit_condition_guid,
-        latestAmendment.permit_amendment_guid,
+        currentAmendment.permit_amendment_guid,
         updatedCond
       )
     );
     await refreshData();
   };
-
-  if (isExtractionInProgress) {
-    return <RenderExtractionProgress />;
-  }
-  if (!isExtractionComplete && permitExtraction?.task_status === "Error Extracting") {
-    return <RenderExtractionError />;
-  }
-  if (canStartExtraction) {
-    return <RenderExtractionStart />;
+  const viewPermitAmendment = (e) => {
+    e.preventDefault();
+    history.push(VIEW_MINE_PERMIT_AMENDMENT.dynamicRoute(mineGuid, permitGuid, latestAmendment?.permit_amendment_guid, "conditions"));
   }
 
-  const showLoading = !latestAmendment || isLoading;
 
-  const getConditionsWithRequirements = (conditions: IPermitCondition[]) => {
-    let result = [];
+  const LatestAmendmentWarning: FC = () => {
+    return latestAmendment?.permit_amendment_guid !== currentAmendment?.permit_amendment_guid ? (
+      <Col span={24}>
+        {!latestAmendment?.conditions?.length ? <Alert
+          message="Extract and review the latest permit amendment"
+          description="The current permit conditions reflect the last permit reviewed and verified. Minespace users are seeing the last reviewed version. Conditions not amended will remain unchanged."
+          type="warning"
+          action={
+            <Button onClick={viewPermitAmendment}>
+              Extract Permit Conditions
+            </Button>
+          }
+          showIcon /> :
+          <Alert
+            message="Review and update the latest permit amendment conditions"
+            description="MineSpace users will continue to see the last reviewed and verified permit conditions until the new amendment completes review."
+            type="warning"
+            action={
+              <Button onClick={viewPermitAmendment}>
+                Review Permit Conditions
+              </Button>
+            }
+            showIcon />
+        }
+      </Col>) : <></>;
 
-    conditions.forEach((condition) => {
-      if (condition.mineReportPermitRequirement) {
-        result.push(condition);
-      }
+  }
 
-      if (condition.sub_conditions && condition.sub_conditions.length > 0) {
-        result = result.concat(getConditionsWithRequirements(condition.sub_conditions));
-      }
-    });
+  const isViewingLatestAmendment = latestAmendment?.permit_amendment_guid === currentAmendment?.permit_amendment_guid;
 
-    return result;
-  };
+  if (isViewingLatestAmendment && isExtractionInProgress) {
+    return <><LatestAmendmentWarning /><RenderExtractionProgress /></>;
+  }
+  if (isViewingLatestAmendment && !isExtractionComplete && permitExtraction?.task_status === "Error Extracting") {
+    return <><LatestAmendmentWarning /><RenderExtractionError /></>;
+  }
+  if (isViewingLatestAmendment && canStartExtraction) {
+    return <><LatestAmendmentWarning /><RenderExtractionStart /></>;
+  }
+
+  const showLoading = !currentAmendment || isLoading;
+
+
 
   const AddConditionModalContent = (
     <Typography.Paragraph
@@ -429,6 +458,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
             view={isReviewComplete ? "anchor" : "steps"}
             content={
               <Row align="middle" justify="space-between" gutter={[10, 16]}>
+                <LatestAmendmentWarning />
                 <Col span={24}>
                   <Title className="margin-none" level={2}>
                     Permit Conditions
@@ -524,7 +554,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
                                 <PermitConditionLayer
                                   previousAmendment={previousAmendment}
                                   isExtracted={isExtracted}
-                                  permitAmendmentGuid={latestAmendment.permit_amendment_guid}
+                                  permitAmendmentGuid={currentAmendment?.permit_amendment_guid}
                                   condition={sc}
                                   isExpanded={isExpanded}
                                   handleMoveCondition={handleMoveCondition}
@@ -545,7 +575,7 @@ const PermitConditions: FC<PermitConditionProps> = ({
                               <Col span={24}>
                                 <SubConditionForm
                                   conditionCategory={category}
-                                  permitAmendmentGuid={latestAmendment.permit_amendment_guid}
+                                  permitAmendmentGuid={currentAmendment.permit_amendment_guid}
                                   handleCancel={() => setAddingToCategoryCode(null)}
                                   onSubmit={handleAddCondition}
                                   categoryOptions={dropdownCategories}
@@ -555,30 +585,11 @@ const PermitConditions: FC<PermitConditionProps> = ({
                                 <Title level={4} className="primary-colour">
                                   Report Requirements
                                 </Title>
-                                <Collapse expandIconPosition="end">
-                                  {conditionsWithRequirements.map((cond: IPermitCondition, index) => (
-                                    <Collapse.Panel
-                                      key={cond.permit_condition_id}
-                                      header={
-                                        <Typography.Text strong>
-                                          Report #{index + 1}
-                                          {cond.mineReportPermitRequirement?.report_name
-                                            ? ` - ${cond.mineReportPermitRequirement.report_name}`
-                                            : ""}
-                                        </Typography.Text>
-                                      }
-                                      className="report-collapse"
-                                    >
-                                      <ReportPermitRequirementForm
-                                        modalView={false}
-                                        onSubmit={handleEditReportRequirement}
-                                        condition={cond}
-                                        permitGuid={permitGuid}
-                                        mineReportPermitRequirement={cond.mineReportPermitRequirement}
-                                      />
-                                    </Collapse.Panel>
-                                  ))}
-                                </Collapse>
+                                <PermitConditionReportRequirements
+                                  conditionsWithRequirements={conditionsWithRequirements}
+                                  handleEditReportRequirement={handleEditReportRequirement}
+                                  permitGuid={permitGuid}
+                                />
                               </div>
                             )}
                           </React.Fragment>
@@ -590,22 +601,23 @@ const PermitConditions: FC<PermitConditionProps> = ({
               </Row>
             }
           ></ScrollSidePageWrapper>
-        </Col>
-        {canViewPdfSplitScreen ? (
-          <Col style={{ padding: "16px", height: "inherit" }} span={8}>
-            <div style={{ position: "sticky", top: "225px" }}>
-              <PreviewPermitAmendmentDocument
-                amendment={latestAmendment}
-                documentGuid={permitExtraction.permit_amendment_document_guid}
-                selectedCondition={selectedCondition}
-              />
-            </div>
-          </Col>
-        ) : (
-          ""
-        )}
-      </Row>
-    </PermitConditionsProvider>
+        </Col >
+        {
+          canViewPdfSplitScreen ? (
+            <Col style={{ padding: "16px", height: "inherit" }} span={8} >
+              <div style={{ position: "sticky", top: "225px" }}>
+                <PreviewPermitAmendmentDocument
+                  amendment={currentAmendment}
+                  documentGuid={permitExtraction.permit_amendment_document_guid}
+                  selectedCondition={selectedCondition}
+                />
+              </div>
+            </Col >
+          ) : (
+            ""
+          )}
+      </Row >
+    </PermitConditionsProvider >
   </>
   );
 };
